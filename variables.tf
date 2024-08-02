@@ -212,6 +212,74 @@ variable "key_vault_private_dns_zone" {
 }
 
 
+# ------ AKS ------ #
+variable "aks_kubernetes_version" {
+  description = "The Kubernetes version to use."
+  default     = "1.29.5"
+  type        = string
+}
+variable "aks_sku_tier" {
+  description = "The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads."
+  default     = "Stanard"
+  type        = string
+}
+variable "aks_api_server_allowed_ip_addresses" {
+  description = "Map containing the IP addresses that are allwed to access the AKS API Server. The keys of the map are used only for documentation purpose."
+  type        = map(string)
+  default     = {}
+}
+variable "aks_nodes_subnet_name" {
+  description = "Name of the subnet to be used for provisioning AKS nodes."
+  type        = string
+}
+variable "aks_nodes_virtual_network_name" {
+  description = "Name of the virtual network to be used for provisioning AKS nodes."
+  type        = string
+}
+variable "aks_net_profile_service_cidr" {
+  type        = string
+  description = "The Network Range used by the Kubernetes service. Must not overlap with the AKS Nodes address space. Example: 10.32.0.0/24"
+}
+variable "aks_net_profile_dns_service_ip" {
+  type        = string
+  description = " IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
+}
+variable "aks_log_analytics_workspace" {
+  description = " Existing azurerm_log_analytics_workspace to attach azurerm_log_analytics_solution. Providing the config disables creation of azurerm_log_analytics_workspace."
+  type = object({
+    id                  = string
+    name                = string
+    location            = optional(string)
+    resource_group_name = optional(string)
+  })
+  default = null
+}
+variable "aks_cluster_admin_object_ids" {
+  description = "Object IDs that will be granted the Cluster Admin role over the AKS cluster"
+  type        = set(string)
+}
+variable "aks_sys_pool" {
+  description = "The configuration of the AKS System Nodes Pool."
+  type = object({
+    vm_size : string
+    nodes_max_pods : number
+    name : string
+    availability_zones : list(string)
+    disk_size_gb : number
+    disk_type : string
+    nodes_labels : optional(map(string), {})
+    nodes_tags : optional(map(string), {})
+    only_critical_addons_enabled : optional(bool, false)
+    # Auto-scaling settings
+    nodes_count : optional(number, null)
+    enable_auto_scaling : optional(bool, false)
+    agents_min_count : optional(number, null)
+    agents_max_count : optional(number, null)
+  })
+}
+
+
+
 # ------ External credentials ------ #
 variable "openai_api_key" {
   description = "The API Key used for authenticating with OpenAI."

@@ -20,6 +20,9 @@ terraform {
 
 # ------ Locals ------ #
 locals {
+  aks_cluster_name = format("%snebuly", var.resource_prefix)
+
+
   postgres_server_name = format("%snebuly", var.resource_prefix)
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
@@ -35,12 +38,21 @@ locals {
 }
 
 
+
+
 # ------ Data Sources ------ #
 data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 data "azurerm_client_config" "current" {
 }
+data "azurerm_subnet" "aks_nodes" {
+  resource_group_name  = data.azurerm_resource_group.main.name
+  virtual_network_name = var.aks_nodes_virtual_network_name
+  name                 = var.aks_nodes_subnet_name
+}
+
+
 
 
 # ------ Key Vault ------ #
@@ -105,6 +117,8 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
 }
+
+
 
 
 # ------ Database Server ------ #
@@ -269,3 +283,79 @@ resource "azurerm_key_vault_secret" "postgres_passwords" {
 
 
 
+
+# ------ AKS ------ #
+resource "tls_private_key" "aks" {
+  algorithm = "RSA" # Azure VMs currently do not support ECDSA
+  rsa_bits  = "4096"
+}
+module "aks" {
+  source  = "Azure/aks/azurerm"
+  version = "9.1.0"
+
+
+  prefix              = var.resource_prefix
+  cluster_name        = local.aks_cluster_name
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main
+
+  kubernetes_version   = var.aks_kubernetes_version
+  orchestrator_version = var.aks_kubernetes_version
+  sku_tier             = var.aks_sku_tier
+
+  vnet_subnet_id = data.azurerm_subnet.aks_nodes.id
+
+  net_profile_service_cidr   = var.aks_net_profile_service_cidr
+  net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
+  api_server_authorized_ip_ranges = [
+    for _, ip in var.aks_api_server_allowed_ip_addresses : "${ip}/32"
+  ]
+
+  azure_policy_enabled = true
+
+  rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids
+  rbac_aad_managed                  = true
+  role_based_access_control_enabled = true
+  local_account_disabled            = true
+  private_cluster_enabled           = false
+
+  log_analytics_workspace = var.aks_log_analytics_workspace
+
+  temporary_name_for_rotation = "systemback"
+
+  os_disk_size_gb              = var.aks_sys_pool.disk_size_gb
+  os_disk_type                 = var.aks_sys_pool.disk_type
+  enable_auto_scaling          = var.aks_sys_pool.enable_auto_scaling
+  agents_size                  = var.aks_sys_pool.vm_size
+  agents_min_count             = var.aks_sys_pool.agents_min_count
+  agents_max_count             = var.aks_sys_pool.agents_max_count
+  agents_count                 = var.aks_sys_pool.nodes_count
+  agents_max_pods              = var.aks_sys_pool.nodes_max_pods
+  agents_pool_name             = var.aks_sys_pool.name
+  agents_availability_zones    = var.aks_sys_pool.availability_zones
+  only_critical_addons_enabled = var.aks_sys_pool.only_critical_addons_enabled
+  agents_type                  = "VirtualMachineScaleSets"
+
+  agents_labels = merge(var.aks_sys_pool.nodes_labels, {
+    "nodepool" : "defaultnodepool"
+  })
+
+  agents_tags = merge(var.aks_sys_pool.nodes_tags, {
+    "Agent" : "defaultnodepoolagent"
+  })
+
+  network_policy = "azure"
+  network_plugin = "azure"
+
+  # Azure CNI requrires the cluster identity to have at least Network Contributor
+  # permissions on the subnet. See:
+  # https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni
+  create_role_assignment_network_contributor = true
+
+  key_vault_secrets_provider_enabled = true
+  public_ssh_key                     = tls_private_key.aks.public_key_openssh
+
+  storage_profile_blob_driver_enabled = true
+
+  tags = var.tags
+}

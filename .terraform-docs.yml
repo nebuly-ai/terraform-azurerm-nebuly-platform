@@ -1,0 +1,77 @@
+formatter: "markdown" # this is required
+
+version: ""
+
+header-from: main.tf
+footer-from: ""
+
+recursive:
+  enabled: false
+  path: modules
+
+sections:
+  hide: []
+  show: []
+
+content: |-
+  # Nebuly Platform (Azure)
+
+  Terraform module for provisioning Nebuly Platform resources on Microsoft Azure.
+
+  Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-ai/nebuly-platform/azurerm/latest).
+
+  ## Examples
+
+  ### Basic usage
+  ```hcl
+  {{ include "examples/basic/main.tf" }}
+  ```
+
+
+  {{ .Header }}
+
+
+  {{ .Providers }}
+
+
+  {{ .Outputs }}
+
+
+  {{ .Inputs }}
+
+  ## Resources
+
+  {{ range .Module.Resources }}
+  - {{ .GetMode }}.{{ .Spec }} ({{ .Position.Filename }}#{{ .Position.Line }})
+  {{- end }}
+
+output:
+  file: ""
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+output-values:
+  enabled: false
+  from: ""
+
+sort:
+  enabled: true
+  by: name
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: false
+  escape: true
+  hide-empty: false
+  html: true
+  indent: 2
+  lockfile: true
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true

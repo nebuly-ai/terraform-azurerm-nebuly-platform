@@ -20,7 +20,14 @@ terraform {
 # ------ Locals ------ #
 locals {
   postgres_server_name = format("%snebulyplatform", var.resource_prefix)
-
+  postgres_server_configurations = {
+    "azure.extensions" : "vector,pgaudit",
+    "shared_preload_libraries" : "pgaudit",
+  }
+  postgres_databases = toset([
+    "analytics",
+    "auth",
+  ])
 }
 
 # ------ Data Sources ------ #
@@ -28,7 +35,7 @@ data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 
-# ------ Database ------ #
+# ------ Database Server ------ #
 resource "random_password" "postgres_server_admin_password" {
   length           = 16
   special          = true
@@ -77,4 +84,91 @@ resource "azurerm_postgresql_flexible_server" "main" {
       high_availability.0.standby_availability_zone,
     ]
   }
+}
+resource "azurerm_postgresql_flexible_server_configuration" "optional_configurations" {
+  for_each = var.postgres_server_optional_configurations
+
+  name      = each.key
+  server_id = azurerm_postgresql_flexible_server.main.id
+  value     = each.value
+}
+resource "azurerm_postgresql_flexible_server_configuration" "mandatory_configurations" {
+  for_each = local.postgres_server_configurations
+
+  name      = each.key
+  server_id = azurerm_postgresql_flexible_server.main.id
+  value     = each.value
+}
+resource "azurerm_postgresql_flexible_server_firewall_rule" "main" {
+  for_each = { for o in var.postgres_server_networking.allowed_ip_ranges : o.name => o }
+
+  name             = each.key
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = each.value.start_ip_address
+  end_ip_address   = each.value.end_ip_address
+}
+resource "azurerm_postgresql_flexible_server_database" "main" {
+  for_each = local.postgres_databases
+
+  name      = each.value
+  server_id = azurerm_postgresql_flexible_server.main.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+resource "azurerm_management_lock" "postgres_server" {
+  count = var.postgres_server_lock.enabled ? 1 : 0
+
+  name       = var.postgres_server_lock.name
+  scope      = azurerm_postgresql_flexible_server.main.id
+  lock_level = "CanNotDelete"
+  notes      = var.postgres_server_lock.notes
+}
+resource "azurerm_monitor_metric_alert" "postgres_server_alerts" {
+  for_each = var.postgres_server_alert_rules
+
+  description = each.value.description
+  frequency   = each.value.frequency
+  window_size = each.value.window_size
+
+  name = format(
+    "%s-%s",
+    local.postgres_server_name,
+    each.key,
+  )
+
+  resource_group_name = data.azurerm_resource_group.main.name
+  severity            = each.value.severity
+  scopes              = [azurerm_postgresql_flexible_server.main.id]
+
+  target_resource_type = "Microsoft.DBforPostgreSQL/flexibleServers"
+
+  action {
+    action_group_id    = each.value.action_group_id
+    webhook_properties = {}
+  }
+
+  dynamic "criteria" {
+    for_each = each.value.criteria == null ? {} : { "" : each.value.criteria }
+    content {
+      aggregation            = criteria.value.aggregation
+      metric_name            = criteria.value.metric_name
+      metric_namespace       = "Microsoft.DBforPostgreSQL/flexibleServers"
+      operator               = criteria.value.operator
+      skip_metric_validation = false
+      threshold              = criteria.value.threshold
+    }
+  }
+
+  dynamic "dynamic_criteria" {
+    for_each = each.value.dynamic_criteria == null ? {} : { "" : each.value.dynamic_criteria }
+    content {
+      aggregation       = dynamic_criteria.value.aggregation
+      metric_name       = dynamic_criteria.value.metric_name
+      metric_namespace  = "Microsoft.DBforPostgreSQL/flexibleServers"
+      operator          = dynamic_criteria.value.operator
+      alert_sensitivity = dynamic_criteria.value.alert_sensitivity
+    }
+  }
+
+  tags = var.tags
 }

@@ -98,6 +98,65 @@ variable "postgres_server_point_in_time_backup" {
   }
   description = "The backup settings of the PostgreSQL Server."
 }
+variable "postgres_server_optional_configurations" {
+  type        = map(string)
+  description = "Optional Flexible PostgreSQL configurations. Defaults to recommended configurations."
+  default = {
+    # PGAudit Settings
+    "pgaudit.log" : "WRITE",
+    # Query performance settings
+    "pg_qs.query_capture_mode" : "ALL",
+    "pg_qs.retention_period_in_days" : "7",
+    "pg_qs.store_query_plans" : "on",
+    "pgms_wait_sampling.query_capture_mode" : "ALL",
+    "track_io_timing" : "on",
+    # Performance tuning
+    "intelligent_tuning" : "on",
+    "intelligent_tuning.metric_targets" : "ALL",
+    # Enhanced metrics
+    "metrics.collector_database_activity" : "on",
+    "metrics.autovacuum_diagnostics" : "on",
+  }
+}
+variable "postgres_server_lock" {
+  type = object({
+    enabled = optional(bool, false)
+    notes   = optional(string, "Cannot be deleted.")
+    name    = optional(string, "terraform-lock")
+  })
+  default = {
+    enabled = true
+  }
+  description = "Optionally lock the PostgreSQL server to prevent deletion."
+}
+variable "postgres_server_alert_rules" {
+  description = "The Azure Monitor alert rules to set on the provisioned PostgreSQL server."
+  type = map(object({
+    description     = string
+    frequency       = string
+    window_size     = string
+    action_group_id = string
+    severity        = number
+
+    criteria = optional(
+      object({
+        aggregation = string
+        metric_name = string
+        operator    = string
+        threshold   = number
+      })
+    , null)
+    dynamic_criteria = optional(
+      object({
+        aggregation       = string
+        metric_name       = string
+        operator          = string
+        alert_sensitivity = string
+      })
+    , null)
+  }))
+  default = {}
+}
 variable "postgres_version" {
   type        = string
   default     = "16"

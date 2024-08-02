@@ -16,5 +16,10 @@ run "smoke_test_plan" {
   command = plan
 
   variables {
+    resource_group_name = "rg-platform-inttest"
+    location = "EastUS"
+
+    # PostgreSQL Database #
+    postgres_server_networking = { }
   }
 }

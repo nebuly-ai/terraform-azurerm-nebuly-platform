@@ -47,6 +47,10 @@ variable "postgres_server_high_availability" {
     mode : string
     standby_availability_zone : optional(string, null)
   })
+  default = {
+    enabled = true
+    mode    = "SameZone"
+  }
 }
 variable "postgres_server_maintenance_window" {
   type = object({
@@ -88,6 +92,10 @@ variable "postgres_server_point_in_time_backup" {
     geo_redundant : optional(bool, true)
     retention_days : optional(number, 30)
   })
+  default = {
+    geo_redundant  = true
+    retention_days = 30
+  }
   description = "The backup settings of the PostgreSQL Server."
 }
 variable "postgres_version" {

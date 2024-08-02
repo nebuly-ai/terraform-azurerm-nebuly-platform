@@ -58,8 +58,8 @@ resource "azurerm_postgresql_flexible_server" "main" {
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}
     content {
-      mode                      = high_availability.mode
-      standby_availability_zone = high_availability.standby_availability_zone
+      mode                      = high_availability.value.mode
+      standby_availability_zone = high_availability.value.standby_availability_zone
     }
   }
 

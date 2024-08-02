@@ -19,7 +19,11 @@ run "smoke_test_plan" {
     resource_group_name = "rg-platform-inttest"
     location = "EastUS"
 
-    # PostgreSQL Database #
+    # ------ PostgreSQL Database  ------ #
     postgres_server_networking = { }
+
+    
+    # ------ Key Vault ------ #
+    key_vault_public_network_access_enabled = true
   }
 }

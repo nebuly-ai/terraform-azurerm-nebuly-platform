@@ -32,6 +32,13 @@ No outputs.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_key_vault_network_acls"></a> [key\_vault\_network\_acls](#input\_key\_vault\_network\_acls) | Optional configuration of network ACLs. | <pre>object({<br>    bypass : string<br>    default_action : string<br>    ip_rules : list(string)<br>    virtual_network_subnet_ids : list(string)<br>  })</pre> | `null` | no |
+| <a name="input_key_vault_private_dns_zone"></a> [key\_vault\_private\_dns\_zone](#input\_key\_vault\_private\_dns\_zone) | Optional Private DNS Zone to link with the Key Vault when private endpoint integration is enabled. | <pre>object({<br>    id : string<br>    name : string<br>  })</pre> | `null` | no |
+| <a name="input_key_vault_private_endpoints"></a> [key\_vault\_private\_endpoints](#input\_key\_vault\_private\_endpoints) | Optional Private Endpoints to link with the Key Vault. | <pre>map(object({<br>    subnet_id = string<br>    vnet_id   = string<br>  }))</pre> | `{}` | no |
+| <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet? | `bool` | n/a | yes |
+| <a name="input_key_vault_purge_protection_enabled"></a> [key\_vault\_purge\_protection\_enabled](#input\_key\_vault\_purge\_protection\_enabled) | Is purge protection enabled for the Key Vault? | `bool` | `false` | no |
+| <a name="input_key_vault_sku_name"></a> [key\_vault\_sku\_name](#input\_key\_vault\_sku\_name) | The SKU of the Key Vault. | `string` | `"Standard"` | no |
+| <a name="input_key_vault_soft_delete_retention_days"></a> [key\_vault\_soft\_delete\_retention\_days](#input\_key\_vault\_soft\_delete\_retention\_days) | The number of days that items should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days. | `number` | `7` | no |
 | <a name="input_location"></a> [location](#input\_location) | The region where to provision the resources. | `string` | n/a | yes |
 | <a name="input_openai_api_key"></a> [openai\_api\_key](#input\_openai\_api\_key) | The API Key used for authenticating with OpenAI. | `string` | n/a | yes |
 | <a name="input_postgres_server_admin_username"></a> [postgres\_server\_admin\_username](#input\_postgres\_server\_admin\_username) | The username of the admin user of the PostgreSQL Server. | `string` | `"nebulyadmin"` | no |
@@ -52,12 +59,15 @@ No outputs.
 ## Resources
 
 
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#118)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#126)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#44)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#95)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#88)
-- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#110)
-- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#102)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#39)
-- data source.azurerm_resource_group.main (/terraform-docs/main.tf#34)
+- resource.azurerm_key_vault.main (/terraform-docs/main.tf#187)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#126)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#134)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#52)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#103)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#96)
+- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#118)
+- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#110)
+- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#213)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#47)
+- data source.azurerm_client_config.current (/terraform-docs/main.tf#42)
+- data source.azurerm_resource_group.main (/terraform-docs/main.tf#39)

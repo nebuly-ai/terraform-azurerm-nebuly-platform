@@ -17,9 +17,10 @@ terraform {
   }
 }
 
+
 # ------ Locals ------ #
 locals {
-  postgres_server_name = format("%snebulyplatform", var.resource_prefix)
+  postgres_server_name = format("%snebuly", var.resource_prefix)
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
@@ -28,12 +29,83 @@ locals {
     "analytics",
     "auth",
   ])
+
+
+  key_vault_name = format("%snebulykv", var.resource_prefix)
 }
+
 
 # ------ Data Sources ------ #
 data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
+data "azurerm_client_config" "current" {
+}
+
+
+# ------ Key Vault ------ #
+resource "azurerm_key_vault" "main" {
+  name                = local.key_vault_name
+  location            = var.location
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  resource_group_name = data.azurerm_resource_group.main.name
+
+  enable_rbac_authorization = true
+
+  soft_delete_retention_days    = var.key_vault_soft_delete_retention_days
+  purge_protection_enabled      = var.key_vault_purge_protection_enabled
+  public_network_access_enabled = var.key_vault_public_network_access_enabled
+
+  sku_name = lower(var.key_vault_sku_name)
+
+  dynamic "network_acls" {
+    for_each = var.key_vault_network_acls == null ? {} : { "" : "" }
+    content {
+      bypass                     = var.network_acls.bypass
+      default_action             = var.network_acls.default_action
+      ip_rules                   = var.network_acls.ip_rules
+      virtual_network_subnet_ids = var.network_acls.virtual_network_subnet_ids
+    }
+  }
+
+  tags = var.tags
+}
+resource "azurerm_private_endpoint" "key_vault" {
+  for_each = var.key_vault_private_endpoints
+
+  name                = "${azurerm_key_vault.main.name}-${each.key}"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = each.value.subnet_id
+
+
+  private_service_connection {
+    name                           = "${azurerm_key_vault.main.name}-${each.key}-pe"
+    private_connection_resource_id = azurerm_key_vault.main.id
+    is_manual_connection           = false
+    subresource_names              = ["vault"]
+  }
+
+  private_dns_zone_group {
+    name = "privatelink-vaultcore-azure-net"
+    private_dns_zone_ids = [
+      var.key_vault_private_dns_zone.id
+    ]
+  }
+
+  tags = var.tags
+}
+resource "azurerm_role_assignment" "key_vault_secret_user__aks" {
+  scope                = azurerm_key_vault.main.id
+  principal_id         = "" # TODO
+  role_definition_name = "Key Vault Secrets User"
+}
+resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 
 # ------ Database Server ------ #
 resource "random_password" "postgres_server_admin_password" {
@@ -172,3 +244,28 @@ resource "azurerm_monitor_metric_alert" "postgres_server_alerts" {
 
   tags = var.tags
 }
+resource "azurerm_key_vault_secret" "postgres_users" {
+  for_each = local.postgres_databases
+
+  name         = "${var.resource_prefix}-${each.key}-postgres-user"
+  value        = var.postgres_server_admin_username
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
+resource "azurerm_key_vault_secret" "postgres_passwords" {
+  for_each = local.postgres_databases
+
+  name         = "${var.resource_prefix}-${each.key}-postgres-password"
+  value        = random_password.postgres_server_admin_password.result
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
+
+
+

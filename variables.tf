@@ -164,6 +164,53 @@ variable "postgres_version" {
 }
 
 
+# ------ Key Vault ------ #
+variable "key_vault_sku_name" {
+  type        = string
+  default     = "Standard"
+  description = "The SKU of the Key Vault."
+}
+variable "key_vault_public_network_access_enabled" {
+  type        = bool
+  description = "Can the Key Vault be accessed from the Internet?"
+}
+variable "key_vault_soft_delete_retention_days" {
+  type        = number
+  default     = 7
+  description = "The number of days that items should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days."
+}
+variable "key_vault_purge_protection_enabled" {
+  type        = bool
+  default     = false
+  description = "Is purge protection enabled for the Key Vault?"
+}
+variable "key_vault_network_acls" {
+  type = object({
+    bypass : string
+    default_action : string
+    ip_rules : list(string)
+    virtual_network_subnet_ids : list(string)
+  })
+  default     = null
+  description = "Optional configuration of network ACLs."
+}
+variable "key_vault_private_endpoints" {
+  type = map(object({
+    subnet_id = string
+    vnet_id   = string
+  }))
+  default     = {}
+  description = "Optional Private Endpoints to link with the Key Vault."
+}
+variable "key_vault_private_dns_zone" {
+  type = object({
+    id : string
+    name : string
+  })
+  default     = null
+  description = "Optional Private DNS Zone to link with the Key Vault when private endpoint integration is enabled."
+}
+
 
 # ------ External credentials ------ #
 variable "openai_api_key" {

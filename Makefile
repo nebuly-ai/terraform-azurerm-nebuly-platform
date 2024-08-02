@@ -19,3 +19,12 @@ lint: ## Lint the codebase
 test: ## Run the tests
 	terraform test --verbose
 
+.PHONY: formatting
+formatting:
+	@echo "Checking formatting"
+	terraform fmt -check
+	@echo "Formatting OK"
+
+.PHONY: check
+check: formatting test
+

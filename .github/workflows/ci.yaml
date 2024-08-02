@@ -1,0 +1,33 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - ".github/**"
+      - "*.md"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_VAR_tenant_id: ${{secrets.TENANT_ID }}
+  TF_VAR_subscription_id: ${{secrets.SUBSCRIPTION_ID }}
+  TF_VAR_client_id: ${{secrets.CLIENT_ID }}
+  TF_VAR_client_secret: ${{secrets.CLIENT_SECRET }}
+
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.3"
+      - run: terraform init
+      - run: make check

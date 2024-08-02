@@ -1,0 +1,260 @@
+strimzi:
+  enabled: true
+
+imagePullSecrets:
+  - name: ${image_pull_secret_name}
+
+backend:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-backend"
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: /backend(/|$)(.*)
+            pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
+
+  volumeMounts:
+    - name: secrets-store
+      mountPath: /mnt/secrets-store
+      readOnly: true
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: ${secret_provider_class_name}
+
+eventIngestion:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-event-ingestion"
+
+  rootPath: "/event-ingestion"
+
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: /event-ingestion(/|$)(.*)
+            pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
+
+azureml:
+  enabled: false
+
+aiModels:
+  registry: azure_storage
+  azure:
+    storageAccountName: ${storage_account_name}
+    storageContainerName: ${storage_container_name}
+    tenantId: ${tenant_id}
+    managedIdentityClientId: ${kubelet_identity_client_id}
+
+  sync:
+    enabled: true
+    source:
+      existingSecret:
+        name: ${secret_provider_class_secret_name}
+        clientIdKey: ${k8s_secret_key_nebuly_client_id}
+        clientSecretKey: ${k8s_secret_key_nebuly_client_secret}
+
+lionLinguist:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-lion-linguist"
+
+  # TODO: will be updated when we implement CPU + Batch Job mode
+  modelsCache:
+    enabled: true
+    storageClassName: managed-csi-zrs
+    accessModes:
+      - ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: "1"
+    limits:
+      memory: 8Gi
+      nvidia.com/gpu: 1
+
+  volumeMounts:
+    - name: secrets-store
+      mountPath: /mnt/secrets-store
+      readOnly: true
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: ${secret_provider_class_name}
+
+ingestionWorker:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-ingestion-worker"
+
+  volumeMounts:
+    - name: secrets-store
+      mountPath: /mnt/secrets-store
+      readOnly: true
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: ${secret_provider_class_name}
+
+actionsProcessing:
+  schedule: "0 23 * * *" # Every day at 11:00 PM, cluster's timezone
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nebuly.com/accelerator
+                operator: In
+                values:
+                  - nvidia-ampere-a100
+  tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+
+kafka:
+  external: false
+  zookeeper:
+    replicas: 1
+    storage:
+      class: managed-csi-zrs
+  replicas: 1
+  config:
+    offsets.topic.replication.factor: 1
+    replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
+  storage:
+    class: managed-csi-zrs
+    size: 32Gi
+  resources:
+    limits:
+      memory: 6Gi
+    requests:
+      memory: 6Gi
+
+analyticDatabase:
+  server: "${postgres_server_url}"
+  name: ${postgres_analytics_database_name}
+  existingSecret:
+    name: ${secret_provider_class_secret_name}
+    userKey: ${k8s_secret_key_db_username}
+    passwordKey: ${k8s_secret_key_db_password}
+
+auth:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-tenant-registry"
+
+  postgresServer: "${postgres_server_url}"
+  postgresDatabase: ${postgres_auth_database_name}
+  existingSecret:
+    name: ${secret_provider_class_secret_name}
+    postgresUserKey: ${k8s_secret_key_db_username}
+    postgresPasswordKey: ${k8s_secret_key_db_password}
+    jwtSigningKey: ${k8s_secret_key_jwt_signing_key}
+
+  loginModes: "password"
+
+  # TODO: optional Microsoft SSO
+  microsoft:
+    enabled: false
+  # TODO: optional Okta SSO
+
+  volumeMounts:
+    - name: secrets-store
+      mountPath: /mnt/secrets-store
+      readOnly: true
+  volumes:
+    - name: secrets-store
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: ${secret_provider_class_name}
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/auth/$2"
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: "/backend/auth(/|$)(.*)"
+            pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
+
+frontend:
+  image:
+    repository: "ghcr.io/nebuly-ai/nebuly-frontend"
+
+  rootUrl: https://${platform_domain}
+  backendApiUrl: https://${platform_domain}/backend
+  authApiUrl: https://${platform_domain}/backend/auth
+  ingress:
+    enabled: true
+    annotations:
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    className: "nginx"
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
+
+openAi:
+  enabled: true
+  frustrationDetectionDeployment: ${openai_frustration_deployment}
+  endpoint: ${openai_endpoint}
+
+  existingSecret:
+    name: ${secret_provider_class_secret_name}
+    apiKey: ${k8s_secret_key_openai_api_key}

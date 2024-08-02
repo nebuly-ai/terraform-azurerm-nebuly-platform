@@ -1,0 +1,53 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - ".github/**"
+      - "*.md"
+      - "docs/**"
+      - "!README.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  CI:
+    env:
+      ARM_TENANT_ID: ${{secrets.TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{secrets.SUBSCRIPTION_ID }}
+      ARM_CLIENT_ID: ${{secrets.CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{secrets.CLIENT_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.3"
+
+      - name: Check is doc is update to date
+        run: |
+          make doc
+          if ! git diff --exit-code; then
+              echo "Documentation not up to date. Please run \"make doc\" and commit changes!" >&2
+              exit 1
+          fi
+
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - run: terraform init
+
+      - run: make check

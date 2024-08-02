@@ -1,3 +1,5 @@
+OK?=\033[0;32m[Ok]\033[0m
+
 ##@ General
 .PHONY: help
 help: ## Display this help.
@@ -21,9 +23,8 @@ test: ## Run the tests
 
 .PHONY: formatting
 formatting:
-	@echo "Checking formatting"
-	terraform fmt -check
-	@echo "Formatting OK"
+	@echo "\033[0;33m[Checking formatting...]\033[0m"
+	@terraform fmt -check && echo "${OK}"
 
 .PHONY: check
 check: formatting test

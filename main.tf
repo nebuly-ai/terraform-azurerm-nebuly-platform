@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~>3.6"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~>4.0"
+    }
   }
 }
 
@@ -118,6 +122,13 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
+
+# ------ External Secrets ------ #
+resource "azurerm_key_vault_secret" "openai_api_key" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = "${var.resource_prefix}-openai-api-key"
+  value        = var.openai_api_key
+}
 
 
 

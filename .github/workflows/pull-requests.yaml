@@ -6,10 +6,10 @@ on:
     branches:
       - "main"
     paths-ignore:
-      - "!README.md"
       - ".github/**"
       - "*.md"
       - "docs/**"
+      - "!README.md"
 
 jobs:
   CI:

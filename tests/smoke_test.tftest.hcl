@@ -20,6 +20,10 @@ run "smoke_test_plan__default_values" {
     location            = "EastUS"
     platform_domain     = "intest.nebuly.ai"
 
+    # ------ Networking ------#
+    virtual_network_name = run.setup.azurerm_virtual_network.name
+    subnet_name_aks_nodes          = run.setup.azurerm_subnet.name
+
     # ------ PostgreSQL Database  ------ #
     postgres_server_networking = {}
 
@@ -28,10 +32,6 @@ run "smoke_test_plan__default_values" {
 
     # ------ External Secrets ------ #
     openai_api_key = "my-key"
-
-    # ------ AKS ------ #
-    aks_nodes_virtual_network_name = run.setup.azurerm_virtual_network.name
-    aks_nodes_subnet_name          = run.setup.azurerm_subnet.name
 
     aks_net_profile_service_cidr   = "10.32.0.0/24"
     aks_net_profile_dns_service_ip = "10.32.0.10"

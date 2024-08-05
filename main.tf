@@ -50,13 +50,81 @@ data "azurerm_resource_group" "main" {
 }
 data "azurerm_client_config" "current" {
 }
+data "azurerm_virtual_network" "main" {
+  resource_group_name = var.resource_group_name
+  name                = var.virtual_network_name
+}
 data "azurerm_subnet" "aks_nodes" {
   resource_group_name  = data.azurerm_resource_group.main.name
-  virtual_network_name = var.aks_nodes_virtual_network_name
-  name                 = var.aks_nodes_subnet_name
+  virtual_network_name = var.virtual_network_name
+  name                 = var.subnet_name_aks_nodes
+}
+data "azurerm_subnet" "private_endpoints" {
+  count = var.subnet_name_private_endpoints == null ? 0 : 1
+
+  resource_group_name  = data.azurerm_resource_group.main.name
+  virtual_network_name = var.virtual_network_name
+  name                 = var.subnet_name_private_endpoints
 }
 
 
+
+
+# ------ Networking: Private DNS Zones ------ #
+resource "azurerm_private_dns_zone" "file" {
+  count = var.private_dns_zones.file == null ? 1 : 0
+
+  name                = "privatelink.file.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "file" {
+  count = var.private_dns_zones.file == null ? 1 : 0
+
+  name = format(
+    "%s-file-%s",
+    var.resource_prefix,
+    data.azurerm_virtual_network.main.name
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = data.azurerm_virtual_network.main.id
+  private_dns_zone_name = azurerm_private_dns_zone.file[0].name
+}
+resource "azurerm_private_dns_zone" "blob" {
+  count = var.private_dns_zones.blob == null ? 1 : 0
+
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
+  count = var.private_dns_zones.blob == null ? 1 : 0
+
+  name = format(
+    "%s-blob-%s",
+    var.resource_prefix,
+    data.azurerm_virtual_network.main.name
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = data.azurerm_virtual_network.main.id
+  private_dns_zone_name = azurerm_private_dns_zone.blob[0].name
+}
+resource "azurerm_private_dns_zone" "dfs" {
+  count = var.private_dns_zones.dfs == null ? 1 : 0
+
+  name                = "privatelink.dfs.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
+  count = var.private_dns_zones.dfs == null ? 1 : 0
+
+  name = format(
+    "%s-dfs-%s",
+    var.resource_prefix,
+    data.azurerm_virtual_network.main.name
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = data.azurerm_virtual_network.main.id
+  private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
+}
 
 
 # ------ Key Vault ------ #
@@ -121,6 +189,7 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
 }
+
 
 
 # ------ External Secrets ------ #
@@ -292,6 +361,83 @@ resource "azurerm_key_vault_secret" "postgres_passwords" {
   ]
 }
 
+
+
+# ------ Model Registry ------ #
+resource "azurerm_storage_account" "main" {
+  name                = format("%s%s", var.resource_prefix, "models")
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  access_tier              = "Hot"
+
+  public_network_access_enabled = false
+  is_hns_enabled                = false
+
+  tags = var.tags
+}
+resource "azurerm_private_endpoint" "blob" {
+  name                = "${azurerm_storage_account.main.name}-blob"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.main.name}-blob"
+    private_connection_resource_id = azurerm_storage_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = [
+      length(azurerm_private_dns_zone.blob) > 0 ? azurerm_private_dns_zone.blob[0].id : var.private_dns_zones.blob.id
+    ]
+  }
+}
+resource "azurerm_private_endpoint" "file" {
+  name                = "${azurerm_storage_account.main.name}-file"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.main.name}-file"
+    private_connection_resource_id = azurerm_storage_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["file"]
+  }
+
+  private_dns_zone_group {
+    name = "privatelink-file-core-windows-net"
+    private_dns_zone_ids = [
+      length(azurerm_private_dns_zone.file) > 0 ? azurerm_private_dns_zone.file[0].id : var.private_dns_zones.file.id
+    ]
+  }
+}
+resource "azurerm_private_endpoint" "dfs" {
+  name                = "${azurerm_storage_account.main.name}-dfs"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.main.name}-dfs"
+    private_connection_resource_id = azurerm_storage_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["dfs"]
+  }
+
+  private_dns_zone_group {
+    name = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = [
+      length(azurerm_private_dns_zone.dfs) > 0 ? azurerm_private_dns_zone.dfs[0].id : var.private_dns_zones.dfs.id
+    ]
+  }
+}
 
 
 

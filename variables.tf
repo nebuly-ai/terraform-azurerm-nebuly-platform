@@ -221,6 +221,46 @@ variable "key_vault_private_dns_zone" {
 }
 
 
+# ------ Networking ------ #
+variable "virtual_network_name" {
+  description = "Name of the virtual network in which to create the resources."
+  type        = string
+}
+variable "subnet_name_aks_nodes" {
+  description = "Name of the subnet to be used for provisioning AKS nodes."
+  type        = string
+}
+variable "subnet_name_private_endpoints" {
+  description = <<EOT
+  Optional name of the subnet to which attach the Private Endpoints. 
+  If not provided, the same network used for AKS nodes will be used. 
+  EOT
+  type        = string
+  default     = null
+}
+variable "private_dns_zones" {
+  description = <<EOT
+  Private DNS zones to use for Private Endpoint connections. If not provided, a new DNS Zone 
+  is created and linked to the respective subnet.
+  EOT
+  type = object({
+    file = optional(object({
+      name : string
+      id : string
+    }), null)
+    blob = optional(object({
+      name : string
+      id : string
+    }), null)
+    dfs = optional(object({
+      name : string
+      id : string
+    }), null)
+  })
+  default = {}
+}
+
+
 # ------ AKS ------ #
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
@@ -236,14 +276,6 @@ variable "aks_api_server_allowed_ip_addresses" {
   description = "Map containing the IP addresses that are allwed to access the AKS API Server. The keys of the map are used only for documentation purpose."
   type        = map(string)
   default     = {}
-}
-variable "aks_nodes_subnet_name" {
-  description = "Name of the subnet to be used for provisioning AKS nodes."
-  type        = string
-}
-variable "aks_nodes_virtual_network_name" {
-  description = "Name of the virtual network to be used for provisioning AKS nodes."
-  type        = string
 }
 variable "aks_net_profile_service_cidr" {
   type        = string

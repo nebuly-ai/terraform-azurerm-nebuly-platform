@@ -220,7 +220,7 @@ variable "aks_kubernetes_version" {
 }
 variable "aks_sku_tier" {
   description = "The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads."
-  default     = "Stanard"
+  default     = "Standard"
   type        = string
 }
 variable "aks_api_server_allowed_ip_addresses" {
@@ -276,6 +276,19 @@ variable "aks_sys_pool" {
     agents_min_count : optional(number, null)
     agents_max_count : optional(number, null)
   })
+  default = {
+    vm_size                      = "Standard_D4ds_v5"
+    name                         = "system"
+    disk_size_gb                 = 128
+    disk_type                    = "Ephemeral"
+    availability_zones           = ["1", "2", "3"]
+    nodes_max_pods               = 50
+    only_critical_addons_enabled = false
+    # Auto-scaling setttings
+    enable_auto_scaling = true
+    agents_min_count    = 1
+    agents_max_count    = 3
+  }
 }
 
 

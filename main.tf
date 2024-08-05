@@ -293,25 +293,22 @@ module "aks" {
   source  = "Azure/aks/azurerm"
   version = "9.1.0"
 
-
   prefix              = var.resource_prefix
   cluster_name        = local.aks_cluster_name
   location            = var.location
-  resource_group_name = data.azurerm_resource_group.main
+  resource_group_name = data.azurerm_resource_group.main.name
 
   kubernetes_version   = var.aks_kubernetes_version
   orchestrator_version = var.aks_kubernetes_version
   sku_tier             = var.aks_sku_tier
 
-  vnet_subnet_id = data.azurerm_subnet.aks_nodes.id
 
+  vnet_subnet_id             = data.azurerm_subnet.aks_nodes.id
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = [
     for _, ip in var.aks_api_server_allowed_ip_addresses : "${ip}/32"
   ]
-
-  azure_policy_enabled = true
 
   rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids
   rbac_aad_managed                  = true
@@ -352,10 +349,12 @@ module "aks" {
   # https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni
   create_role_assignment_network_contributor = true
 
-  key_vault_secrets_provider_enabled = true
-  public_ssh_key                     = tls_private_key.aks.public_key_openssh
+  public_ssh_key = tls_private_key.aks.public_key_openssh
 
+  # Plugins
   storage_profile_blob_driver_enabled = true
+  key_vault_secrets_provider_enabled  = true
+  azure_policy_enabled                = true
 
   tags = var.tags
 }

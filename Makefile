@@ -9,7 +9,7 @@ help: ## Display this help.
 ##@ Dev
 .PHONY: doc
 doc: ## Generate the doc
-	docker run --rm --volume "$$(pwd):/terraform-docs" -u $$(id -u) quay.io/terraform-docs/terraform-docs:latest markdown /terraform-docs > README.md
+	docker run --rm --volume "$$(pwd):/terraform-docs" -u $$(id -u) quay.io/terraform-docs/terraform-docs:0.18.0 markdown /terraform-docs > README.md
 
 
 .PHONY: lint 

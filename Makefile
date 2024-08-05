@@ -31,6 +31,9 @@ formatting:
 	@echo "\033[0;33m[Terraform fmt...]\033[0m"
 	@terraform fmt -check && echo "${OK}"
 
-.PHONY: check
-check: formatting validate test
 
+.PHONY: check-no-tests
+check-no-tests: formatting validate
+
+.PHONY: check
+check: check-no-tests test

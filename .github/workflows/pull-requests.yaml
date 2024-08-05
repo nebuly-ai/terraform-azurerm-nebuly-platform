@@ -1,0 +1,28 @@
+name: Pull Request Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "main"
+    paths-ignore:
+      - ".github/**"
+      - "*.md"
+      - "docs/**"
+
+jobs:
+  CI:
+    env:
+      ARM_TENANT_ID: ${{secrets.TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{secrets.SUBSCRIPTION_ID }}
+      ARM_CLIENT_ID: ${{secrets.CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{secrets.CLIENT_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.3"
+      - run: terraform init
+      - run: make check-no-tests

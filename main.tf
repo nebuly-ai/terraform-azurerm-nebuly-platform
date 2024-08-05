@@ -358,3 +358,35 @@ module "aks" {
 
   tags = var.tags
 }
+resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
+  for_each = { for k, v in var.aks_worker_pools : k => v if v.enabled }
+
+  name                  = each.key
+  kubernetes_cluster_id = module.aks.aks_id
+  vm_size               = each.value.vm_size
+  vnet_subnet_id        = data.azurerm_subnet.aks_nodes.id
+  priority              = each.value.priority
+
+  node_count          = each.value.nodes_count
+  max_pods            = each.value.max_pods
+  min_count           = each.value.enable_auto_scaling ? each.value.nodes_min_count : null
+  max_count           = each.value.enable_auto_scaling ? each.value.nodes_max_count : null
+  enable_auto_scaling = each.value.enable_auto_scaling
+
+  os_disk_size_gb = each.value.disk_size_gb
+  os_disk_type    = each.value.disk_type
+
+  zones       = each.value.availability_zones
+  node_taints = each.value.node_taints
+  node_labels = each.value.node_labels
+
+  tags = each.value.tags
+
+  lifecycle {
+    ignore_changes = [
+      node_labels,
+      node_taints,
+      eviction_policy,
+    ]
+  }
+}

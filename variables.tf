@@ -277,17 +277,143 @@ variable "aks_sys_pool" {
     agents_max_count : optional(number, null)
   })
   default = {
-    vm_size                      = "Standard_D4ds_v5"
+    vm_size                      = "Standard_E4ads_v5" # 4 CPU, 32 GB memory
     name                         = "system"
     disk_size_gb                 = 128
     disk_type                    = "Ephemeral"
     availability_zones           = ["1", "2", "3"]
-    nodes_max_pods               = 50
+    nodes_max_pods               = 60
     only_critical_addons_enabled = false
     # Auto-scaling setttings
     enable_auto_scaling = true
     agents_min_count    = 1
     agents_max_count    = 3
+  }
+}
+variable "aks_worker_pools" {
+  description = <<EOT
+  The worker pools of the AKS cluster, each with the respective configuration.
+  The default configuration uses a single worker node, with no HA.
+  EOT
+  type = map(object({
+    enabled : optional(bool, true)
+    vm_size : string
+    priority : optional(string, "Regular")
+    tags : map(string)
+    max_pods : number
+    disk_size_gb : optional(number, 128)
+    disk_type : string
+    availability_zones : list(string)
+    node_taints : optional(list(string), [])
+    node_labels : optional(map(string), {})
+    # Auto-scaling settings
+    nodes_count : optional(number, null)
+    enable_auto_scaling : optional(bool, false)
+    nodes_min_count : optional(number, null)
+    nodes_max_count : optional(number, null)
+  }))
+  default = {
+    "workers01" : {
+      vm_size     = "Standard_E4ads_v5" # 4 CPU, 32 GB memory
+      nodes_count = 1
+      max_pods : 30
+      priority = "Regular"
+      availability_zones = [
+        "1", "2", "3",
+      ]
+      disk_size_gb = 128
+      disk_type : "Ephemeral"
+      # Auto-scaling setttings
+      enable_auto_scaling = true
+      nodes_count         = 1
+      nodes_min_count     = 1
+      nodes_max_count     = 3
+      # Tags
+      tags : {}
+    }
+    "a100w01" : {
+      vm_size  = "Standard_NC24ads_A100_v4"
+      priority = "Regular"
+      max_pods : 30
+      disk_size_gb = 128
+      disk_type : "Ephemeral"
+      availability_zones = ["1"]
+      node_taints : [
+        "nvidia.com/gpu=:NoSchedule",
+      ]
+      node_labels : {
+        "nebuly.com/accelerator" : "nvidia-ampere-a100"
+      }
+      # Auto-scaling setttings
+      enable_auto_scaling = true
+      nodes_count : null
+      nodes_min_count = 1
+      nodes_max_count = 1
+      # Tags
+      tags : {}
+    }
+    "a100w02" : {
+      vm_size  = "Standard_NC24ads_A100_v4"
+      priority = "Regular"
+      max_pods : 30
+      disk_size_gb = 128
+      disk_type : "Ephemeral"
+      availability_zones = ["2"]
+      node_taints : [
+        "nvidia.com/gpu=:NoSchedule",
+      ]
+      node_labels : {
+        "nebuly.com/accelerator" : "nvidia-ampere-a100"
+      }
+      # Auto-scaling setttings
+      enable_auto_scaling = true
+      nodes_count : null
+      nodes_min_count = 0
+      nodes_max_count = 1
+      # Tags
+      tags : {}
+    }
+    "a100w03" : {
+      vm_size  = "Standard_NC24ads_A100_v4"
+      priority = "Regular"
+      max_pods : 30
+      disk_size_gb = 128
+      disk_type : "Ephemeral"
+      availability_zones = ["3"]
+      tags : {}
+      node_taints : [
+        "nvidia.com/gpu=:NoSchedule",
+      ]
+      node_labels : {
+        "nebuly.com/accelerator" : "nvidia-ampere-a100"
+      }
+      # Auto-scaling setttings
+      enable_auto_scaling = true
+      nodes_count : null
+      nodes_min_count = 0
+      nodes_max_count = 1
+    }
+    "t4workers" : {
+      vm_size  = "Standard_NC4as_T4_v3"
+      priority = "Regular"
+      max_pods : 30
+      disk_size_gb = 128
+      disk_type : "Ephemeral"
+      availability_zones = ["1", "2", "3"]
+      node_taints : [
+        "nvidia.com/gpu=:NoSchedule",
+      ]
+      node_labels : {
+        "nebuly.com/accelerator" : "nvidia-tesla-t4"
+      }
+      # Auto-scaling setttings
+      enable_auto_scaling = true
+      nodes_count : null
+      nodes_min_count = 0
+      nodes_max_count = 1
+      # Tags
+      tags : {}
+    }
   }
 }
 

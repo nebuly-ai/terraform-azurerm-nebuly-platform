@@ -21,6 +21,7 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 |------|---------|
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 3.114.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
 
 
 ## Outputs
@@ -32,6 +33,17 @@ No outputs.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_aks_api_server_allowed_ip_addresses"></a> [aks\_api\_server\_allowed\_ip\_addresses](#input\_aks\_api\_server\_allowed\_ip\_addresses) | Map containing the IP addresses that are allwed to access the AKS API Server. The keys of the map are used only for documentation purpose. | `map(string)` | `{}` | no |
+| <a name="input_aks_cluster_admin_object_ids"></a> [aks\_cluster\_admin\_object\_ids](#input\_aks\_cluster\_admin\_object\_ids) | Object IDs that will be granted the Cluster Admin role over the AKS cluster | `set(string)` | n/a | yes |
+| <a name="input_aks_kubernetes_version"></a> [aks\_kubernetes\_version](#input\_aks\_kubernetes\_version) | The Kubernetes version to use. | `string` | `"1.29.5"` | no |
+| <a name="input_aks_log_analytics_workspace"></a> [aks\_log\_analytics\_workspace](#input\_aks\_log\_analytics\_workspace) | Existing azurerm\_log\_analytics\_workspace to attach azurerm\_log\_analytics\_solution. Providing the config disables creation of azurerm\_log\_analytics\_workspace. | <pre>object({<br>    id                  = string<br>    name                = string<br>    location            = optional(string)<br>    resource_group_name = optional(string)<br>  })</pre> | `null` | no |
+| <a name="input_aks_net_profile_dns_service_ip"></a> [aks\_net\_profile\_dns\_service\_ip](#input\_aks\_net\_profile\_dns\_service\_ip) | IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns). Must be inluced in net\_profile\_cidr. Example: 10.32.0.10 | `string` | n/a | yes |
+| <a name="input_aks_net_profile_service_cidr"></a> [aks\_net\_profile\_service\_cidr](#input\_aks\_net\_profile\_service\_cidr) | The Network Range used by the Kubernetes service. Must not overlap with the AKS Nodes address space. Example: 10.32.0.0/24 | `string` | n/a | yes |
+| <a name="input_aks_nodes_subnet_name"></a> [aks\_nodes\_subnet\_name](#input\_aks\_nodes\_subnet\_name) | Name of the subnet to be used for provisioning AKS nodes. | `string` | n/a | yes |
+| <a name="input_aks_nodes_virtual_network_name"></a> [aks\_nodes\_virtual\_network\_name](#input\_aks\_nodes\_virtual\_network\_name) | Name of the virtual network to be used for provisioning AKS nodes. | `string` | n/a | yes |
+| <a name="input_aks_sku_tier"></a> [aks\_sku\_tier](#input\_aks\_sku\_tier) | The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads. | `string` | `"Standard"` | no |
+| <a name="input_aks_sys_pool"></a> [aks\_sys\_pool](#input\_aks\_sys\_pool) | The configuration of the AKS System Nodes Pool. | <pre>object({<br>    vm_size : string<br>    nodes_max_pods : number<br>    name : string<br>    availability_zones : list(string)<br>    disk_size_gb : number<br>    disk_type : string<br>    nodes_labels : optional(map(string), {})<br>    nodes_tags : optional(map(string), {})<br>    only_critical_addons_enabled : optional(bool, false)<br>    # Auto-scaling settings<br>    nodes_count : optional(number, null)<br>    enable_auto_scaling : optional(bool, false)<br>    agents_min_count : optional(number, null)<br>    agents_max_count : optional(number, null)<br>  })</pre> | <pre>{<br>  "agents_max_count": 3,<br>  "agents_min_count": 1,<br>  "availability_zones": [<br>    "1",<br>    "2",<br>    "3"<br>  ],<br>  "disk_size_gb": 128,<br>  "disk_type": "Ephemeral",<br>  "enable_auto_scaling": true,<br>  "name": "system",<br>  "nodes_max_pods": 60,<br>  "only_critical_addons_enabled": false,<br>  "vm_size": "Standard_E4ads_v5"<br>}</pre> | no |
+| <a name="input_aks_worker_pools"></a> [aks\_worker\_pools](#input\_aks\_worker\_pools) | The worker pools of the AKS cluster, each with the respective configuration.<br>  The default configuration uses a single worker node, with no HA. | <pre>map(object({<br>    enabled : optional(bool, true)<br>    vm_size : string<br>    priority : optional(string, "Regular")<br>    tags : map(string)<br>    max_pods : number<br>    disk_size_gb : optional(number, 128)<br>    disk_type : string<br>    availability_zones : list(string)<br>    node_taints : optional(list(string), [])<br>    node_labels : optional(map(string), {})<br>    # Auto-scaling settings<br>    nodes_count : optional(number, null)<br>    enable_auto_scaling : optional(bool, false)<br>    nodes_min_count : optional(number, null)<br>    nodes_max_count : optional(number, null)<br>  }))</pre> | <pre>{<br>  "a100w01": {<br>    "availability_zones": [<br>      "1"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 1,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w02": {<br>    "availability_zones": [<br>      "2"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w03": {<br>    "availability_zones": [<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "t4workers": {<br>    "availability_zones": [<br>      "1",<br>      "2",<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-tesla-t4"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC4as_T4_v3"<br>  },<br>  "workers01": {<br>    "availability_zones": [<br>      "1",<br>      "2",<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "nodes_count": 1,<br>    "nodes_max_count": 3,<br>    "nodes_min_count": 1,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_E4ads_v5"<br>  }<br>}</pre> | no |
 | <a name="input_key_vault_network_acls"></a> [key\_vault\_network\_acls](#input\_key\_vault\_network\_acls) | Optional configuration of network ACLs. | <pre>object({<br>    bypass : string<br>    default_action : string<br>    ip_rules : list(string)<br>    virtual_network_subnet_ids : list(string)<br>  })</pre> | `null` | no |
 | <a name="input_key_vault_private_dns_zone"></a> [key\_vault\_private\_dns\_zone](#input\_key\_vault\_private\_dns\_zone) | Optional Private DNS Zone to link with the Key Vault when private endpoint integration is enabled. | <pre>object({<br>    id : string<br>    name : string<br>  })</pre> | `null` | no |
 | <a name="input_key_vault_private_endpoints"></a> [key\_vault\_private\_endpoints](#input\_key\_vault\_private\_endpoints) | Optional Private Endpoints to link with the Key Vault. | <pre>map(object({<br>    subnet_id = string<br>    vnet_id   = string<br>  }))</pre> | `{}` | no |
@@ -59,15 +71,22 @@ No outputs.
 ## Resources
 
 
-- resource.azurerm_key_vault.main (/terraform-docs/main.tf#187)
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#126)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#134)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#52)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#103)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#96)
-- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#118)
-- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#110)
-- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#213)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#47)
-- data source.azurerm_client_config.current (/terraform-docs/main.tf#42)
-- data source.azurerm_resource_group.main (/terraform-docs/main.tf#39)
+- resource.azurerm_key_vault.main (/terraform-docs/main.tf#59)
+- resource.azurerm_key_vault_secret.postgres_passwords (/terraform-docs/main.tf#272)
+- resource.azurerm_key_vault_secret.postgres_users (/terraform-docs/main.tf#261)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#361)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#204)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#212)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#130)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#181)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#174)
+- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#196)
+- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#188)
+- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#85)
+- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#115)
+- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#110)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#125)
+- resource.tls_private_key.aks (/terraform-docs/main.tf#288)
+- data source.azurerm_client_config.current (/terraform-docs/main.tf#47)
+- data source.azurerm_resource_group.main (/terraform-docs/main.tf#44)
+- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#49)

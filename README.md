@@ -19,9 +19,9 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 3.114.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~>3.114 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~>3.6 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | ~>4.0 |
 
 
 ## Outputs

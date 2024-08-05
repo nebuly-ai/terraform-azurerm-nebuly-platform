@@ -401,3 +401,15 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
     ]
   }
 }
+
+
+# ------ Post provisioning ------ #
+locals {
+  helm_values = templatefile(
+    "templates/helm-values.tpl.yaml",
+    {
+      platform_domain = var.platform_domain
+    },
+  )
+}
+

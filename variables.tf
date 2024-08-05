@@ -16,6 +16,15 @@ variable "resource_group_name" {
   type        = string
   description = "The name of the resource group where to provision the resources."
 }
+variable "platform_domain" {
+  type        = string
+  description = "The domain on which the deployed Nebuly platform will be available."
+  validation {
+    condition     = can(regex("(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]", var.platform_domain))
+    error_message = "The domain name must be a valid domain (e.g., example.com)."
+  }
+}
+
 
 # ------ PostgreSQL Databases ------ #
 variable "postgres_server_sku" {

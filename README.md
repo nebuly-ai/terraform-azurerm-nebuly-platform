@@ -26,7 +26,9 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_helm_values"></a> [helm\_values](#output\_helm\_values) | The values.yaml file for installing Nebuly on the provisioned resources. |
 
 
 ## Inputs
@@ -53,6 +55,7 @@ No outputs.
 | <a name="input_key_vault_soft_delete_retention_days"></a> [key\_vault\_soft\_delete\_retention\_days](#input\_key\_vault\_soft\_delete\_retention\_days) | The number of days that items should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days. | `number` | `7` | no |
 | <a name="input_location"></a> [location](#input\_location) | The region where to provision the resources. | `string` | n/a | yes |
 | <a name="input_openai_api_key"></a> [openai\_api\_key](#input\_openai\_api\_key) | The API Key used for authenticating with OpenAI. | `string` | n/a | yes |
+| <a name="input_platform_domain"></a> [platform\_domain](#input\_platform\_domain) | The domain on which the deployed Nebuly platform will be available. | `string` | n/a | yes |
 | <a name="input_postgres_server_admin_username"></a> [postgres\_server\_admin\_username](#input\_postgres\_server\_admin\_username) | The username of the admin user of the PostgreSQL Server. | `string` | `"nebulyadmin"` | no |
 | <a name="input_postgres_server_alert_rules"></a> [postgres\_server\_alert\_rules](#input\_postgres\_server\_alert\_rules) | The Azure Monitor alert rules to set on the provisioned PostgreSQL server. | <pre>map(object({<br>    description     = string<br>    frequency       = string<br>    window_size     = string<br>    action_group_id = string<br>    severity        = number<br><br>    criteria = optional(<br>      object({<br>        aggregation = string<br>        metric_name = string<br>        operator    = string<br>        threshold   = number<br>      })<br>    , null)<br>    dynamic_criteria = optional(<br>      object({<br>        aggregation       = string<br>        metric_name       = string<br>        operator          = string<br>        alert_sensitivity = string<br>      })<br>    , null)<br>  }))</pre> | `{}` | no |
 | <a name="input_postgres_server_high_availability"></a> [postgres\_server\_high\_availability](#input\_postgres\_server\_high\_availability) | High-availability configuration of the DB server. Possible values for mode are: SameZone or ZoneRedundant. | <pre>object({<br>    enabled : bool<br>    mode : string<br>    standby_availability_zone : optional(string, null)<br>  })</pre> | <pre>{<br>  "enabled": true,<br>  "mode": "SameZone"<br>}</pre> | no |
@@ -71,22 +74,23 @@ No outputs.
 ## Resources
 
 
-- resource.azurerm_key_vault.main (/terraform-docs/main.tf#59)
-- resource.azurerm_key_vault_secret.postgres_passwords (/terraform-docs/main.tf#272)
-- resource.azurerm_key_vault_secret.postgres_users (/terraform-docs/main.tf#261)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#361)
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#204)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#212)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#130)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#181)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#174)
-- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#196)
-- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#188)
-- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#85)
-- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#115)
-- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#110)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#125)
-- resource.tls_private_key.aks (/terraform-docs/main.tf#288)
-- data source.azurerm_client_config.current (/terraform-docs/main.tf#47)
-- data source.azurerm_resource_group.main (/terraform-docs/main.tf#44)
-- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#49)
+- resource.azurerm_key_vault.main (/terraform-docs/main.tf#63)
+- resource.azurerm_key_vault_secret.openai_api_key (/terraform-docs/main.tf#127)
+- resource.azurerm_key_vault_secret.postgres_passwords (/terraform-docs/main.tf#283)
+- resource.azurerm_key_vault_secret.postgres_users (/terraform-docs/main.tf#272)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#372)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#215)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#223)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#141)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#192)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#185)
+- resource.azurerm_postgresql_flexible_server_database.main (/terraform-docs/main.tf#207)
+- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#199)
+- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#89)
+- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#119)
+- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#114)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#136)
+- resource.tls_private_key.aks (/terraform-docs/main.tf#299)
+- data source.azurerm_client_config.current (/terraform-docs/main.tf#51)
+- data source.azurerm_resource_group.main (/terraform-docs/main.tf#48)
+- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#53)

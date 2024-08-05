@@ -14,26 +14,31 @@ doc: ## Generate the doc
 
 .PHONY: lint 
 lint: ## Lint the codebase
-	docker run --rm -v $$(pwd):/data -t ghcr.io/terraform-linters/tflint
+	@echo "\033[0;33m[Linting...]\033[0m"
+	@(which tflint && tflint) || docker run --rm -v $$(pwd):/data -t ghcr.io/terraform-linters/tflint
+	@echo "${OK}"
 
 .PHONY: validate 
 validate: 
 	@echo "\033[0;33m[Terraform validate...]\033[0m"
-	@terraform validate && echo "${OK}"
+	@terraform validate 
+	@echo "${OK}"
 
 .PHONY: test 
 test: ## Run the tests
 	@echo "\033[0;33m[Running tests...]\033[0m"
 	@terraform test --verbose
+	@echo "${OK}"
 
 .PHONY: formatting
 formatting:
 	@echo "\033[0;33m[Terraform fmt...]\033[0m"
-	@terraform fmt -check && echo "${OK}"
+	@terraform fmt -check 
+	@echo "${OK}"
 
 
 .PHONY: check-no-tests
-check-no-tests: formatting validate
+check-no-tests: formatting validate lint
 
 .PHONY: check
 check: check-no-tests test

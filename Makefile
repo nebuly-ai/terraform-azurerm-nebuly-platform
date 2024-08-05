@@ -15,7 +15,11 @@ doc: ## Generate the doc
 .PHONY: lint 
 lint: ## Lint the codebase
 	@echo "\033[0;33m[Linting...]\033[0m"
-	@(which tflint && tflint) || docker run --rm -v $$(pwd):/data -t ghcr.io/terraform-linters/tflint
+	@if command -v tflint > /dev/null; then \
+		tflint; \
+	else \
+		docker run --rm -v $$(pwd):/data -t ghcr.io/terraform-linters/tflint; \
+	fi
 	@echo "${OK}"
 
 .PHONY: validate 

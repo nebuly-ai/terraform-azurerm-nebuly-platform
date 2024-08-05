@@ -201,6 +201,34 @@ resource "azurerm_key_vault_secret" "openai_api_key" {
 
 
 
+# ------ Identity ------ #
+resource "azuread_application" "main" {
+  display_name     = format("%s.nebuly.platform", var.resource_prefix)
+  owners           = [data.azurerm_client_config.current.object_id]
+  sign_in_audience = "AzureADMyOrg" # default
+  identifier_uris  = []
+}
+resource "azuread_service_principal" "main" {
+  client_id                    = azuread_application.main.client_id
+  owners                       = [data.azurerm_client_config.current.object_id]
+  app_role_assignment_required = true
+}
+resource "azuread_service_principal_password" "main" {
+  service_principal_id = azuread_service_principal.main.id
+  end_date_relative    = null
+}
+resource "azurerm_key_vault_secret" "azuread_application_client_id" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = format("%s-azure-client-id", var.resource_prefix)
+  value        = azuread_application.main.application_id
+}
+resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = format("%s-azure-client-secret", var.resource_prefix)
+  value        = azuread_application.main.application_id
+}
+
+
 # ------ Database Server ------ #
 resource "random_password" "postgres_server_admin_password" {
   length           = 16
@@ -377,6 +405,15 @@ resource "azurerm_storage_account" "main" {
   is_hns_enabled                = false
 
   tags = var.tags
+}
+resource "azurerm_storage_container" "models" {
+  storage_account_name = azurerm_storage_account.main.name
+  name                 = "ai-models"
+}
+resource "azurerm_role_assignment" "storage_container_models__data_contributor" {
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azuread_service_principal.main.object_id
+  scope                = azurerm_storage_container.models.id
 }
 resource "azurerm_private_endpoint" "blob" {
   name                = "${azurerm_storage_account.main.name}-blob"

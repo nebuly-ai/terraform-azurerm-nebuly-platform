@@ -30,6 +30,14 @@ jobs:
         with:
           terraform_version: "1.9.3"
 
+      - name: Check is doc is update to date
+        run: |
+          make doc
+          if ! git diff --exit-code; then
+              echo "Documentation not up to date. Please run \"make doc\" and commit changes!" >&2
+              exit 1
+          fi
+
       - uses: terraform-linters/setup-tflint@v4
         name: Setup TFLint
 

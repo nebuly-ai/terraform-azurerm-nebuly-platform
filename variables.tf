@@ -245,6 +245,11 @@ variable "subnet_name_aks_nodes" {
   EOT
   type        = string
   default     = null
+
+  validation {
+    condition     = var.virtual_network_name != null || var.subnet_name_aks_nodes == null
+    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+  }
 }
 variable "subnet_address_space_aks_nodes" {
   description = <<EOT
@@ -261,6 +266,11 @@ variable "subnet_name_private_endpoints" {
   EOT
   type        = string
   default     = null
+
+  validation {
+    condition     = var.virtual_network_name != null || var.subnet_name_private_endpoints == null
+    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+  }
 }
 variable "subnet_address_space_private_endpoints" {
   description = <<EOT

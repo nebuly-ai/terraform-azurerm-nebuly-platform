@@ -59,9 +59,10 @@ lionLinguist:
   image:
     repository: "ghcr.io/nebuly-ai/nebuly-lion-linguist"
 
+  # TODO: will be updated when we implement CPU + Batch Job mode
   modelsCache:
     enabled: true
-    storageClassName: gp2-csi
+    storageClassName: managed-csi-zrs
     accessModes:
       - ReadWriteOnce
 
@@ -121,7 +122,7 @@ kafka:
     offsets.topic.replication.factor: 1
     replica.selector.class: org.apache.kafka.common.replica.RackAwareReplicaSelector
   storage:
-    class: gp2-csi
+    class: managed-csi-zrs
     size: 32Gi
   resources:
     limits:
@@ -130,24 +131,24 @@ kafka:
       memory: 6Gi
 
 analyticDatabase:
-  server: "${postges_server_url}"
-  name: "analytics"
+  server: "${postgres_server_url}"
+  name: ${postgres_analytics_database_name}
   existingSecret:
-    name: nebuly-platform-credentials
-    userKey: analytics-db-username
-    passwordKey: analytics-db-password
+    name: ${secret_provider_class_secret_name}
+    userKey: ${secret_key_db_username}
+    passwordKey: ${secret_key_db_password}
 
 auth:
   image:
     repository: "ghcr.io/nebuly-ai/nebuly-tenant-registry"
 
   postgresServer: "${postgres_server_url}"
-  postgresDatabase: "auth"
+  postgresDatabase: ${postgres_auth_database_name}
   existingSecret:
-    name: nebuly-platform-credentials
-    postgresUserKey: auth-db-username
-    postgresPasswordKey: auth-db-password
-    jwtSigningKey: jwt-key
+    name: ${secret_provider_class_secret_name}
+    postgresUserKey: ${secret_key_db_username}
+    postgresPasswordKey: ${secret_key_db_password}
+    jwtSigningKey: ${secret_key_jwt_signing_key}
 
   loginModes: "password"
   microsoft:
@@ -155,7 +156,7 @@ auth:
     redirectUri: https://${platform_domain}/backend/auth/oauth/microsoft/callback
     tenantId: ""
     existingSecret:
-      name: microsoft-oauth-credentials
+      name: ${secret_provider_class_secret_name}
       clientIdKey: microsoft-oauth-client-id
       clientSecretKey: microsoft-oauth-client-secret
 
@@ -204,5 +205,5 @@ openAi:
   endpoint: "" # TODO
 
   existingSecret:
-    name: nebuly-platform-credentials
+    name: ${secret_provider_class_secret_name}
     apiKey: openai-api-key

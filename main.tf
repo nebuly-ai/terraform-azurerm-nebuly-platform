@@ -33,10 +33,6 @@ locals {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
   }
-  postgres_databases = toset([
-    "analytics",
-    "auth",
-  ])
 
   azure_openai_deployments = {
     "gpt-4-turbo" : {
@@ -58,8 +54,7 @@ locals {
   }
 
 
-  key_vault_name             = format("%snebulykv", var.resource_prefix)
-  secret_provider_class_name = "nebuly-platform"
+  key_vault_name = format("%snebulykv", var.resource_prefix)
 }
 
 
@@ -315,10 +310,14 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "main" {
   start_ip_address = each.value.start_ip_address
   end_ip_address   = each.value.end_ip_address
 }
-resource "azurerm_postgresql_flexible_server_database" "main" {
-  for_each = local.postgres_databases
-
-  name      = each.value
+resource "azurerm_postgresql_flexible_server_database" "auth" {
+  name      = "auth"
+  server_id = azurerm_postgresql_flexible_server.main.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+resource "azurerm_postgresql_flexible_server_database" "analytics" {
+  name      = "analytics"
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
   charset   = "utf8"
@@ -381,9 +380,7 @@ resource "azurerm_monitor_metric_alert" "postgres_server_alerts" {
   tags = var.tags
 }
 resource "azurerm_key_vault_secret" "postgres_users" {
-  for_each = local.postgres_databases
-
-  name         = "${var.resource_prefix}-${each.key}-postgres-user"
+  name         = "${var.resource_prefix}-postgres-username"
   value        = var.postgres_server_admin_username
   key_vault_id = azurerm_key_vault.main.id
 
@@ -392,9 +389,7 @@ resource "azurerm_key_vault_secret" "postgres_users" {
   ]
 }
 resource "azurerm_key_vault_secret" "postgres_passwords" {
-  for_each = local.postgres_databases
-
-  name         = "${var.resource_prefix}-${each.key}-postgres-password"
+  name         = "${var.resource_prefix}-postgres-password"
   value        = random_password.postgres_server_admin_password.result
   key_vault_id = azurerm_key_vault.main.id
 
@@ -656,11 +651,29 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
 
 # ------ Post provisioning ------ #
 locals {
+  secret_provider_class_name        = "nebuly-platform"
+  secret_provider_class_secret_name = "nebuly-platform-credentials"
+
+  k8s_secret_key_db_username     = "db-username"
+  k8s_secret_key_db_password     = "db-password"
+  k8s_secret_key_jwt_signing_key = "jwt-signing-key"
+
   helm_values = templatefile(
     "templates/helm-values.tpl.yaml",
     {
-      platform_domain            = var.platform_domain
-      secret_provider_class_name = local.secret_provider_class_name
+      platform_domain = var.platform_domain
+
+      secret_provider_class_name        = local.secret_provider_class_name
+      secret_provider_class_secret_name = local.secret_provider_class_secret_name
+
+      secret_key_db_username     = local.k8s_secret_key_db_username
+      secret_key_db_password     = local.k8s_secret_key_db_password
+      secret_key_jwt_signing_key = local.k8s_secret_key_jwt_signing_key
+
+
+      postgres_server_url              = azurerm_postgresql_flexible_server.main.fqdn
+      postgres_auth_database_name      = azurerm_postgresql_flexible_server_database.auth.name
+      postgres_analytics_database_name = azurerm_postgresql_flexible_server_database.analytics.name
     },
   )
   secret_provider_class = templatefile(

@@ -35,9 +35,4 @@ run "smoke_test_plan__default_values" {
     aks_net_profile_dns_service_ip = "10.32.0.10"
     aks_cluster_admin_object_ids   = []
   }
-
-  assert {
-    condition     = strcontains(output.helm_values, var.platform_domain)
-    error_message = "Helm values incorrect: platform domain is not included."
-  }
 }

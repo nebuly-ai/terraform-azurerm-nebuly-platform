@@ -31,7 +31,7 @@ validate:
 .PHONY: test 
 test: ## Run the tests
 	@echo "\033[0;33m[Running tests...]\033[0m"
-	@terraform test --verbose
+	@terraform test 
 	@echo "${OK}"
 
 .PHONY: formatting

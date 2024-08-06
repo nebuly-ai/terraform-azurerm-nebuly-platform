@@ -34,26 +34,6 @@ locals {
     "shared_preload_libraries" : "pgaudit",
   }
 
-  azure_openai_deployments = {
-    "gpt-4-turbo" : {
-      model_name      = "gpt-4"
-      model_format    = "OpenAI"
-      model_version   = "turbo-2024-04-09"
-      scale_type      = "Standard"
-      scale_capacity  = var.azure_openai_rate_limits.gpt_4
-      rai_policy_name = "Microsoft.Default"
-    }
-    "gpt-4o-mini" : {
-      model_name      = "gpt-4o-mini"
-      model_format    = "OpenAI"
-      model_version   = "2024-07-18"
-      scale_type      = "Standard"
-      scale_capacity  = var.azure_openai_rate_limits.gpt_4o_mini
-      rai_policy_name = "Microsoft.Default"
-    }
-  }
-
-
   key_vault_name = format("%snebulykv", var.resource_prefix)
 }
 
@@ -424,22 +404,34 @@ resource "azurerm_cognitive_account" "main" {
 
   tags = var.tags
 }
-resource "azurerm_cognitive_deployment" "main" {
-  for_each = local.azure_openai_deployments
-
+resource "azurerm_cognitive_deployment" "gpt_4_turbo" {
   cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = each.key
-  rai_policy_name      = each.value.rai_policy_name
-
+  name                 = "gpt-4-turbo"
+  rai_policy_name      = "Microsoft.Default"
 
   model {
-    format  = each.value.model_format
-    name    = each.value.model_name
-    version = each.value.model_version
+    format  = "OpenAI"
+    name    = "gpt-4"
+    version = "turbo-2024-04-09"
   }
   scale {
-    type     = each.value.scale_type
-    capacity = each.value.scale_capacity
+    type     = "Standard"
+    capacity = var.azure_openai_rate_limits.gpt_4
+  }
+}
+resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
+  cognitive_account_id = azurerm_cognitive_account.main.id
+  name                 = "gpt-4o-mini"
+  rai_policy_name      = "Microsoft.Default"
+
+  model {
+    format  = "OpenAI"
+    name    = "gpt-4o-mini"
+    version = "2024-07-18"
+  }
+  scale {
+    type     = "Standard"
+    capacity = var.azure_openai_rate_limits.gpt_4o_mini
   }
 }
 resource "azurerm_key_vault_secret" "api_key" {
@@ -663,6 +655,9 @@ locals {
     "templates/helm-values.tpl.yaml",
     {
       platform_domain = var.platform_domain
+
+      openai_endpoint               = azurerm_cognitive_account.main.endpoint
+      openai_frustration_deployment = azurerm_cognitive_deployment.gpt_4_turbo.name
 
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name

@@ -201,8 +201,8 @@ frontend:
 
 openAi:
   enabled: true
-  frustrationDetectionDeployment: "" # TODO
-  endpoint: "" # TODO
+  frustrationDetectionDeployment: ${openai_frustration_deployment}
+  endpoint: ${openai_endpoint}
 
   existingSecret:
     name: ${secret_provider_class_secret_name}

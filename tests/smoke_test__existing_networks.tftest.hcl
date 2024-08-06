@@ -21,8 +21,8 @@ run "smoke_test_plan__existing_networks" {
     platform_domain     = "intest.nebuly.ai"
 
     # ------ Networking ------#
-    virtual_network_name = run.setup.azurerm_virtual_network.name
-    subnet_name_aks_nodes          = run.setup.azurerm_subnet.name
+    virtual_network_name  = run.setup.azurerm_virtual_network.name
+    subnet_name_aks_nodes = run.setup.azurerm_subnet.name
 
     # ------ PostgreSQL Database  ------ #
     postgres_server_networking = {}

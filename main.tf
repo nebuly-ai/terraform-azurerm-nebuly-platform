@@ -22,6 +22,7 @@ terraform {
 }
 
 
+
 # ------ Locals ------ #
 locals {
   aks_cluster_name = format("%snebuly", var.resource_prefix)
@@ -36,6 +37,25 @@ locals {
     "analytics",
     "auth",
   ])
+
+  azure_openai_deployments = {
+    "gpt-4-turbo" : {
+      model_name      = "gpt-4"
+      model_format    = "OpenAI"
+      model_version   = "turbo-2024-04-09"
+      scale_type      = "Standard"
+      scale_capacity  = var.azure_openai_rate_limits.gpt_4
+      rai_policy_name = "Microsoft.Default"
+    }
+    "gpt-4o-mini" : {
+      model_name      = "gpt-4o-mini"
+      model_format    = "OpenAI"
+      model_version   = "2024-07-18"
+      scale_type      = "Standard"
+      scale_capacity  = var.azure_openai_rate_limits.gpt_4o_mini
+      rai_policy_name = "Microsoft.Default"
+    }
+  }
 
 
   key_vault_name = format("%snebulykv", var.resource_prefix)
@@ -192,14 +212,6 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
 
 
 
-# ------ External Secrets ------ #
-resource "azurerm_key_vault_secret" "openai_api_key" {
-  key_vault_id = azurerm_key_vault.main.id
-  name         = "${var.resource_prefix}-openai-api-key"
-  value        = var.openai_api_key
-}
-
-
 
 # ------ Identity ------ #
 resource "azuread_application" "main" {
@@ -227,6 +239,7 @@ resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   name         = format("%s-azure-client-secret", var.resource_prefix)
   value        = azuread_application.main.application_id
 }
+
 
 
 # ------ Database Server ------ #
@@ -388,6 +401,59 @@ resource "azurerm_key_vault_secret" "postgres_passwords" {
     azurerm_role_assignment.key_vault_secret_officer__current
   ]
 }
+
+
+
+
+# ------ Azure OpenAI ------ #
+locals {
+  azure_openai_account_name = format("%snebuly", var.resource_prefix)
+}
+resource "azurerm_cognitive_account" "main" {
+  name                = local.azure_openai_account_name
+  location            = var.azure_openai_location
+  resource_group_name = data.azurerm_resource_group.main.name
+  kind                = "OpenAI"
+
+  sku_name              = "S0"
+  custom_subdomain_name = local.azure_openai_account_name
+
+  network_acls {
+    default_action = "Deny"
+
+    virtual_network_rules {
+      subnet_id = data.azurerm_subnet.aks_nodes.id
+    }
+  }
+
+  tags = var.tags
+}
+resource "azurerm_cognitive_deployment" "main" {
+  for_each = local.azure_openai_deployments
+
+  cognitive_account_id = azurerm_cognitive_account.main.id
+  name                 = each.key
+  rai_policy_name      = each.value.rai_policy_name
+
+
+  model {
+    format  = each.value.model_format
+    name    = each.value.model_name
+    version = each.value.model_version
+  }
+  scale {
+    type     = each.value.scale_type
+    capacity = each.value.scale_capacity
+  }
+}
+resource "azurerm_key_vault_secret" "api_key" {
+  name         = "${var.resource_prefix}-openai-api-key"
+  value        = azurerm_cognitive_account.main.primary_access_key
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+
+
 
 
 
@@ -584,6 +650,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
     ]
   }
 }
+
 
 
 # ------ Post provisioning ------ #

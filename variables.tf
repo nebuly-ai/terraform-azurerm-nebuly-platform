@@ -261,6 +261,34 @@ variable "private_dns_zones" {
 }
 
 
+# ------ Azure OpenAI ------ #
+variable "azure_openai_rate_limits" {
+  description = "The rate limits (K-tokens/minute) of the deployed Azure OpenAI models."
+  type = object({
+    gpt_4 : number
+    gpt_4o_mini : number
+  })
+  default = {
+    gpt_4       = 100
+    gpt_4o_mini = 100
+  }
+}
+variable "azure_openai_location" {
+  description = <<EOT
+  The Azure region where to deploy the Azure OpenAI models. 
+  Note that the models required by Nebuly are supported only in few specific regions. For more information, you can refer to Azure documentation:
+  https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#standard-deployment-model-availability
+  EOT
+  type        = string
+  default     = "EastUS"
+
+  validation {
+    condition     = contains(["EastUS"], var.azure_openai_location)
+    error_message = "Region not supported."
+  }
+}
+
+
 # ------ AKS ------ #
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
@@ -456,13 +484,5 @@ variable "aks_worker_pools" {
       tags : {}
     }
   }
-}
-
-
-
-# ------ External credentials ------ #
-variable "openai_api_key" {
-  description = "The API Key used for authenticating with OpenAI."
-  type        = string
 }
 

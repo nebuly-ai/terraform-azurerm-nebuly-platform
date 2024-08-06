@@ -1,12 +1,12 @@
 # ------- General ------ #
 variable "resource_prefix" {
   type        = string
-  description = "The prefix that will be used for generating resource names."
+  description = "The prefix that is used for generating resource names."
 }
 variable "tags" {
   type        = map(string)
   default     = {}
-  description = "Common tags that will be applied to all resources."
+  description = "Common tags that are applied to all resources."
 }
 variable "location" {
   type        = string
@@ -18,7 +18,7 @@ variable "resource_group_name" {
 }
 variable "platform_domain" {
   type        = string
-  description = "The domain on which the deployed Nebuly platform will be available."
+  description = "The domain on which the deployed Nebuly platform is made accessible."
   validation {
     condition     = can(regex("(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]", var.platform_domain))
     error_message = "The domain name must be a valid domain (e.g., example.com)."
@@ -223,20 +223,52 @@ variable "key_vault_private_dns_zone" {
 
 # ------ Networking ------ #
 variable "virtual_network_name" {
-  description = "Name of the virtual network in which to create the resources."
+  description = <<EOT
+  Optional name of the virtual network in which to create the resources. 
+  If not provided, a new virtual network is created.
+  EOT
   type        = string
+  default     = null
+}
+variable "virtual_network_address_space" {
+  description = <<EOT
+  Address space of the new virtual network in which to create resources. 
+  If `virtual_network_name` is provided, the existing virtual network is used and this variable is ignored.
+  EOT
+  type        = list(string)
+  default     = ["10.0.0.0/16"]
 }
 variable "subnet_name_aks_nodes" {
-  description = "Name of the subnet to be used for provisioning AKS nodes."
+  description = <<EOT
+  Optional name of the subnet to be used for provisioning AKS nodes.
+  If not provided, a new subnet is created.
+  EOT
   type        = string
+  default     = null
+}
+variable "subnet_address_space_aks_nodes" {
+  description = <<EOT
+  Address space of the new subnet in which to create the nodes of the AKS cluster. 
+  If `subnet_name_aks_nodes` is provided, the existing subnet is used and this variable is ignored.
+  EOT
+  type        = list(string)
+  default     = ["10.0.0.0/22"]
 }
 variable "subnet_name_private_endpoints" {
   description = <<EOT
   Optional name of the subnet to which attach the Private Endpoints. 
-  If not provided, the same network used for AKS nodes will be used. 
+  If not provided, a new subnet is created.
   EOT
   type        = string
   default     = null
+}
+variable "subnet_address_space_private_endpoints" {
+  description = <<EOT
+  Address space of the new subnet in which to create private endpoints. 
+  If `subnet_name_private_endpoints` is provided, the existing subnet is used and this variable is ignored.
+  EOT
+  type        = list(string)
+  default     = ["10.0.0.192/26"]
 }
 variable "private_dns_zones" {
   description = <<EOT
@@ -311,7 +343,7 @@ variable "aks_net_profile_service_cidr" {
 }
 variable "aks_net_profile_dns_service_ip" {
   type        = string
-  description = " IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
+  description = " IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
 }
 variable "aks_log_analytics_workspace" {
   description = " Existing azurerm_log_analytics_workspace to attach azurerm_log_analytics_solution. Providing the config disables creation of azurerm_log_analytics_workspace."
@@ -324,7 +356,7 @@ variable "aks_log_analytics_workspace" {
   default = null
 }
 variable "aks_cluster_admin_object_ids" {
-  description = "Object IDs that will be granted the Cluster Admin role over the AKS cluster"
+  description = "Object IDs that are granted the Cluster Admin role over the AKS cluster"
   type        = set(string)
 }
 variable "aks_sys_pool" {

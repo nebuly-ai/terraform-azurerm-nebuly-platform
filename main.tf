@@ -35,6 +35,26 @@ locals {
   }
 
   key_vault_name = format("%snebulykv", var.resource_prefix)
+
+  use_existing_virtual_network          = var.virtual_network_name != null
+  use_existing_aks_nodes_subnet         = var.subnet_name_aks_nodes != null
+  use_existing_private_endpoints_subnet = var.subnet_name_private_endpoints != null
+
+  virtual_network = (
+    local.use_existing_virtual_network ?
+    data.azurerm_virtual_network.main[0] :
+    azurerm_virtual_network.main[0]
+  )
+  aks_nodes_subnet = (
+    local.use_existing_aks_nodes_subnet ?
+    data.azurerm_subnet.aks_nodes[0] :
+    azurerm_subnet.aks_nodes[0]
+  )
+  private_endpoints_subnet = (
+    local.use_existing_private_endpoints_subnet ?
+    data.azurerm_subnet.private_endpoints[0] :
+    azurerm_subnet.private_endpints[0]
+  )
 }
 
 
@@ -47,22 +67,59 @@ data "azurerm_resource_group" "main" {
 data "azurerm_client_config" "current" {
 }
 data "azurerm_virtual_network" "main" {
+  count = local.use_existing_virtual_network ? 1 : 0
+
   resource_group_name = var.resource_group_name
   name                = var.virtual_network_name
 }
 data "azurerm_subnet" "aks_nodes" {
+  count = local.use_existing_aks_nodes_subnet ? 1 : 0
+
   resource_group_name  = data.azurerm_resource_group.main.name
-  virtual_network_name = var.virtual_network_name
+  virtual_network_name = data.azurerm_virtual_network.main[0].name
   name                 = var.subnet_name_aks_nodes
+
+  lifecycle {
+    precondition {
+      condition     = length(data.azurerm_virtual_network.main) > 0
+      error_message = "`virtual_network_name` must be provided and must point to a valid virtual network."
+    }
+  }
 }
 data "azurerm_subnet" "private_endpoints" {
-  count = var.subnet_name_private_endpoints == null ? 0 : 1
+  count = local.use_existing_private_endpoints_subnet ? 1 : 0
 
   resource_group_name  = data.azurerm_resource_group.main.name
   virtual_network_name = var.virtual_network_name
   name                 = var.subnet_name_private_endpoints
 }
 
+
+# ------ Networking: Networks and Subnets ------ #
+resource "azurerm_virtual_network" "main" {
+  count = local.use_existing_virtual_network ? 0 : 1
+
+  name                = format("%s-nebuly-vnet", var.resource_prefix)
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+  address_space       = var.virtual_network_address_space
+}
+resource "azurerm_subnet" "aks_nodes" {
+  count = local.use_existing_aks_nodes_subnet ? 0 : 1
+
+  name                 = "aks-nodes"
+  virtual_network_name = local.virtual_network.name
+  resource_group_name  = data.azurerm_resource_group.main.name
+  address_prefixes     = var.subnet_address_space_aks_nodes
+}
+resource "azurerm_subnet" "private_endpints" {
+  count = local.use_existing_private_endpoints_subnet ? 0 : 1
+
+  name                 = "private-endpoints"
+  virtual_network_name = local.virtual_network.name
+  resource_group_name  = data.azurerm_resource_group.main.name
+  address_prefixes     = var.subnet_address_space_private_endpoints
+}
 
 
 
@@ -79,10 +136,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "file" {
   name = format(
     "%s-file-%s",
     var.resource_prefix,
-    data.azurerm_virtual_network.main.name
+    local.virtual_network.name,
   )
   resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
+  virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.file[0].name
 }
 resource "azurerm_private_dns_zone" "blob" {
@@ -97,10 +154,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
   name = format(
     "%s-blob-%s",
     var.resource_prefix,
-    data.azurerm_virtual_network.main.name
+    local.virtual_network.name
   )
   resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
+  virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.blob[0].name
 }
 resource "azurerm_private_dns_zone" "dfs" {
@@ -115,10 +172,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
   name = format(
     "%s-dfs-%s",
     var.resource_prefix,
-    data.azurerm_virtual_network.main.name
+    local.virtual_network.name,
   )
   resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
+  virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
 }
 
@@ -398,7 +455,7 @@ resource "azurerm_cognitive_account" "main" {
     default_action = "Deny"
 
     virtual_network_rules {
-      subnet_id = data.azurerm_subnet.aks_nodes.id
+      subnet_id = local.aks_nodes_subnet.id
     }
   }
 
@@ -473,7 +530,7 @@ resource "azurerm_private_endpoint" "blob" {
   name                = "${azurerm_storage_account.main.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+  subnet_id           = local.private_endpoints_subnet.id
 
   private_service_connection {
     name                           = "${azurerm_storage_account.main.name}-blob"
@@ -493,7 +550,7 @@ resource "azurerm_private_endpoint" "file" {
   name                = "${azurerm_storage_account.main.name}-file"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+  subnet_id           = local.private_endpoints_subnet.id
 
   private_service_connection {
     name                           = "${azurerm_storage_account.main.name}-file"
@@ -513,7 +570,7 @@ resource "azurerm_private_endpoint" "dfs" {
   name                = "${azurerm_storage_account.main.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = try(data.azurerm_subnet.private_endpoints[0].id, data.azurerm_subnet.aks_nodes.id)
+  subnet_id           = local.private_endpoints_subnet.id
 
   private_service_connection {
     name                           = "${azurerm_storage_account.main.name}-dfs"
@@ -551,7 +608,7 @@ module "aks" {
   sku_tier             = var.aks_sku_tier
 
 
-  vnet_subnet_id             = data.azurerm_subnet.aks_nodes.id
+  vnet_subnet_id             = local.aks_nodes_subnet.id
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = [
@@ -592,10 +649,8 @@ module "aks" {
   network_policy = "azure"
   network_plugin = "azure"
 
-  # Azure CNI requrires the cluster identity to have at least Network Contributor
-  # permissions on the subnet. See:
-  # https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni
-  create_role_assignment_network_contributor = true
+  # We set this to `false` and create the role assignment manually to avoid invalid for_each argument error.
+  create_role_assignment_network_contributor = false
 
   public_ssh_key = tls_private_key.aks.public_key_openssh
 
@@ -606,13 +661,24 @@ module "aks" {
 
   tags = var.tags
 }
+# The AKS cluster identity has the Contributor role on the AKS second resource group (MC_myResourceGroup_myAKSCluster_eastus)
+# However when using a custom VNET, the AKS cluster identity needs the Network Contributor role on the VNET subnets
+# used by the system node pool and by any additional node pools.
+# https://learn.microsoft.com/en-us/azure/aks/configure-kubenet#prerequisites
+# https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#prerequisites
+# https://github.com/Azure/terraform-azurerm-aks/issues/178
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  principal_id         = module.aks.cluster_identity.principal_id
+  scope                = local.aks_nodes_subnet.id
+  role_definition_name = "Network Contributor"
+}
 resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
   for_each = { for k, v in var.aks_worker_pools : k => v if v.enabled }
 
   name                  = each.key
   kubernetes_cluster_id = module.aks.aks_id
   vm_size               = each.value.vm_size
-  vnet_subnet_id        = data.azurerm_subnet.aks_nodes.id
+  vnet_subnet_id        = local.aks_nodes_subnet.id
   priority              = each.value.priority
 
   node_count          = each.value.nodes_count

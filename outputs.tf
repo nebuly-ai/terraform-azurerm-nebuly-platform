@@ -10,5 +10,5 @@ output "helm_values" {
 output "secret_provider_class" {
   value       = local.secret_provider_class
   sensitive   = true
-  description = "The `secret-provider-class.yaml` file for referencing from Kubernetes the secrets stored in the Key Vault."
+  description = "The `secret-provider-class.yaml` file to make Kubernetes reference the secrets stored in the Key Vault."
 }

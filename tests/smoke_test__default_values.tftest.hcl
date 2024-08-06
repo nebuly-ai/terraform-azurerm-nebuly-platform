@@ -2,16 +2,6 @@ provider "azurerm" {
   features {}
 }
 
-run "setup" {
-  module {
-    source = "./tests/setup"
-  }
-
-  variables {
-    location = "EastUS"
-  }
-}
-
 run "smoke_test_plan__default_values" {
   command = plan
 
@@ -19,10 +9,6 @@ run "smoke_test_plan__default_values" {
     resource_group_name = "rg-platform-inttest"
     location            = "EastUS"
     platform_domain     = "intest.nebuly.ai"
-
-    # ------ Networking ------#
-    virtual_network_name = run.setup.azurerm_virtual_network.name
-    subnet_name_aks_nodes          = run.setup.azurerm_subnet.name
 
     # ------ PostgreSQL Database  ------ #
     postgres_server_networking = {}

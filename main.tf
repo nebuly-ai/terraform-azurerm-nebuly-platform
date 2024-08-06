@@ -657,6 +657,7 @@ locals {
   k8s_secret_key_db_username     = "db-username"
   k8s_secret_key_db_password     = "db-password"
   k8s_secret_key_jwt_signing_key = "jwt-signing-key"
+  k8s_secret_key_openai_api_key  = "openai-api-key"
 
   helm_values = templatefile(
     "templates/helm-values.tpl.yaml",
@@ -666,10 +667,10 @@ locals {
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name
 
-      secret_key_db_username     = local.k8s_secret_key_db_username
-      secret_key_db_password     = local.k8s_secret_key_db_password
-      secret_key_jwt_signing_key = local.k8s_secret_key_jwt_signing_key
-
+      k8s_secret_key_db_username     = local.k8s_secret_key_db_username
+      k8s_secret_key_db_password     = local.k8s_secret_key_db_password
+      k8s_secret_key_jwt_signing_key = local.k8s_secret_key_jwt_signing_key
+      k8s_secret_key_openai_api_key  = local.k8s_secret_key_openai_api_key
 
       postgres_server_url              = azurerm_postgresql_flexible_server.main.fqdn
       postgres_auth_database_name      = azurerm_postgresql_flexible_server_database.auth.name

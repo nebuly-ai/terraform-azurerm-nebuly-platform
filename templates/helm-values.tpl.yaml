@@ -135,8 +135,8 @@ analyticDatabase:
   name: ${postgres_analytics_database_name}
   existingSecret:
     name: ${secret_provider_class_secret_name}
-    userKey: ${secret_key_db_username}
-    passwordKey: ${secret_key_db_password}
+    userKey: ${k8s_secret_key_db_username}
+    passwordKey: ${k8s_secret_key_db_password}
 
 auth:
   image:
@@ -146,9 +146,9 @@ auth:
   postgresDatabase: ${postgres_auth_database_name}
   existingSecret:
     name: ${secret_provider_class_secret_name}
-    postgresUserKey: ${secret_key_db_username}
-    postgresPasswordKey: ${secret_key_db_password}
-    jwtSigningKey: ${secret_key_jwt_signing_key}
+    postgresUserKey: ${k8s_secret_key_db_username}
+    postgresPasswordKey: ${k8s_secret_key_db_password}
+    jwtSigningKey: ${k8s_secret_key_jwt_signing_key}
 
   loginModes: "password"
   microsoft:
@@ -206,4 +206,4 @@ openAi:
 
   existingSecret:
     name: ${secret_provider_class_secret_name}
-    apiKey: openai-api-key
+    apiKey: ${k8s_secret_key_openai_api_key}

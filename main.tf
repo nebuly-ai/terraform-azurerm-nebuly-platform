@@ -359,7 +359,7 @@ resource "azurerm_monitor_metric_alert" "postgres_server_alerts" {
 
   tags = var.tags
 }
-resource "azurerm_key_vault_secret" "postgres_users" {
+resource "azurerm_key_vault_secret" "postgres_user" {
   name         = "${var.resource_prefix}-postgres-username"
   value        = var.postgres_server_admin_username
   key_vault_id = azurerm_key_vault.main.id
@@ -368,7 +368,7 @@ resource "azurerm_key_vault_secret" "postgres_users" {
     azurerm_role_assignment.key_vault_secret_officer__current
   ]
 }
-resource "azurerm_key_vault_secret" "postgres_passwords" {
+resource "azurerm_key_vault_secret" "postgres_password" {
   name         = "${var.resource_prefix}-postgres-password"
   value        = random_password.postgres_server_admin_password.result
   key_vault_id = azurerm_key_vault.main.id
@@ -434,7 +434,7 @@ resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
     capacity = var.azure_openai_rate_limits.gpt_4o_mini
   }
 }
-resource "azurerm_key_vault_secret" "api_key" {
+resource "azurerm_key_vault_secret" "azure_openai_api_key" {
   name         = "${var.resource_prefix}-openai-api-key"
   value        = azurerm_cognitive_account.main.primary_access_key
   key_vault_id = azurerm_key_vault.main.id
@@ -641,14 +641,14 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
 
 
 # ------ Auth ------ #
-resource "tls_private_key" "auth_jwt" {
+resource "tls_private_key" "jwt_signing_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
-resource "azurerm_key_vault_secret" "auth_jwt" {
+resource "azurerm_key_vault_secret" "jwt_signing_key" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-jwt-signing-key", var.resource_prefix)
-  value        = tls_private_key.auth_jwt.private_key_pem
+  value        = tls_private_key.jwt_signing_key.private_key_pem
 }
 
 
@@ -658,10 +658,13 @@ locals {
   secret_provider_class_name        = "nebuly-platform"
   secret_provider_class_secret_name = "nebuly-platform-credentials"
 
-  k8s_secret_key_db_username     = "db-username"
-  k8s_secret_key_db_password     = "db-password"
-  k8s_secret_key_jwt_signing_key = "jwt-signing-key"
-  k8s_secret_key_openai_api_key  = "openai-api-key"
+  # k8s secrets keys
+  k8s_secret_key_db_username         = "db-username"
+  k8s_secret_key_db_password         = "db-password"
+  k8s_secret_key_jwt_signing_key     = "jwt-signing-key"
+  k8s_secret_key_openai_api_key      = "openai-api-key"
+  k8s_secret_key_azure_client_id     = "azure-client-id"
+  k8s_secret_key_azure_client_secret = "azure-client-secret"
 
   helm_values = templatefile(
     "templates/helm-values.tpl.yaml",
@@ -687,7 +690,26 @@ locals {
   secret_provider_class = templatefile(
     "templates/secret-provider-class.tpl.yaml",
     {
-      secret_provider_class_name = local.secret_provider_class_name
+      secret_provider_class_name        = local.secret_provider_class_name
+      secret_provider_class_secret_name = local.secret_provider_class_secret_name
+
+      key_vault_name          = azurerm_key_vault.main.name
+      tenant_id               = data.azurerm_client_config.current.tenant_id
+      aks_managed_identity_id = module.aks.key_vault_secrets_provider.secret_identity[0]
+
+      secret_name_jwt_signing_key     = azurerm_key_vault_secret.jwt_signing_key.name
+      secret_name_db_username         = azurerm_key_vault_secret.postgres_user.name
+      secret_name_db_password         = azurerm_key_vault_secret.postgres_password.name
+      secret_name_openai_api_key      = azurerm_key_vault_secret.azure_openai_api_key.name
+      secret_name_azure_client_id     = azurerm_key_vault_secret.azuread_application_client_id.name
+      secret_name_azure_client_secret = azurerm_key_vault_secret.azuread_application_client_secret.name
+
+      k8s_secret_key_db_username         = local.k8s_secret_key_db_username
+      k8s_secret_key_db_password         = local.k8s_secret_key_db_password
+      k8s_secret_key_jwt_signing_key     = local.k8s_secret_key_jwt_signing_key
+      k8s_secret_key_openai_api_key      = local.k8s_secret_key_openai_api_key
+      k8s_secret_key_azure_client_id     = local.k8s_secret_key_azure_client_id
+      k8s_secret_key_azure_client_secret = local.k8s_secret_key_azure_client_secret
     },
   )
 }

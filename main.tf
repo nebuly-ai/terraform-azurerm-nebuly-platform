@@ -58,7 +58,8 @@ locals {
   }
 
 
-  key_vault_name = format("%snebulykv", var.resource_prefix)
+  key_vault_name             = format("%snebulykv", var.resource_prefix)
+  secret_provider_class_name = "nebuly-platform"
 }
 
 
@@ -658,7 +659,14 @@ locals {
   helm_values = templatefile(
     "templates/helm-values.tpl.yaml",
     {
-      platform_domain = var.platform_domain
+      platform_domain            = var.platform_domain
+      secret_provider_class_name = local.secret_provider_class_name
+    },
+  )
+  secret_provider_class = templatefile(
+    "templates/secret-provider-class.tpl.yaml",
+    {
+      secret_provider_class_name = local.secret_provider_class_name
     },
   )
 }

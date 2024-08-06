@@ -28,7 +28,7 @@ backend:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: nebuly-platform
+          secretProviderClass: ${secret_provider_class_name}
 
 eventIngestion:
   image:
@@ -92,7 +92,7 @@ lionLinguist:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: nebuly-platform
+          secretProviderClass: ${secret_provider_class_name}
 
 ingestionWorker:
   image:
@@ -108,7 +108,7 @@ ingestionWorker:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: nebuly-platform
+          secretProviderClass: ${secret_provider_class_name}
 
 kafka:
   external: false
@@ -130,7 +130,7 @@ kafka:
       memory: 6Gi
 
 analyticDatabase:
-  server: "nbllabplatformanalytics.c72cu4g06kwz.us-east-1.rds.amazonaws.com"
+  server: "${postges_server_url}"
   name: "analytics"
   existingSecret:
     name: nebuly-platform-credentials
@@ -141,7 +141,7 @@ auth:
   image:
     repository: "ghcr.io/nebuly-ai/nebuly-tenant-registry"
 
-  postgresServer: "nbllabplatformauth.c72cu4g06kwz.us-east-1.rds.amazonaws.com"
+  postgresServer: "${postgres_server_url}"
   postgresDatabase: "auth"
   existingSecret:
     name: nebuly-platform-credentials
@@ -169,7 +169,7 @@ auth:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: nebuly-platform
+          secretProviderClass: ${secret_provider_class_name}
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: "/auth/$2"
@@ -200,39 +200,9 @@ frontend:
 
 openAi:
   enabled: true
-  insightsGeneratorDeployment: gpt-4-1106-preview-nebuly
-  textEmbeddingsDeployment: ada
-  frustrationDetectionDeployment: gpt-4-1106-preview-nebuly
-  chatCompletionDeployment: gpt-4-1106-preview-nebuly
-  endpoint: https://openaixpanseaisandbox-useast2.openai.azure.com/
+  frustrationDetectionDeployment: "" # TODO
+  endpoint: "" # TODO
 
   existingSecret:
     name: nebuly-platform-credentials
     apiKey: openai-api-key
-
-bootstrap-aws:
-  enabled: true
-  ingress-nginx:
-    controller:
-      allowSnippetAnnotations: true
-      config:
-        http-snippet: |
-          server {
-            if ($http_x_forwarded_proto = 'http') {
-              return 301 https://$host$request_uri;
-            }
-          }
-      service:
-        targetPorts:
-          http: http
-          https: http
-        annotations:
-          service.beta.kubernetes.io/aws-load-balancer-security-groups: "sg-0a2684cf0282660e5"
-          service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
-          service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:533267425677:certificate/6775c5fc-4e7a-4d61-9a1f-35c8455655fa"
-          service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-  cluster-autoscaler:
-    rbac:
-      serviceAccount:
-        annotations:
-          eks.amazonaws.com/role-arn: "arn:aws:iam::533267425677:role/nbllabeks"

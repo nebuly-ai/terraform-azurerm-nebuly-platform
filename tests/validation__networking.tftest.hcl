@@ -40,10 +40,10 @@ run "values_validation__subnet_private_endpoints" {
   variables {
     # We're provising the existing subnet name without providing an existing vnet: validation should fail. 
     virtual_network_name  = null
-    subnet_private_endpoints = "my-cool-subnet"
+    subnet_name_private_endpoints = "my-cool-subnet"
   }
 
   expect_failures = [
-    var.subnet_private_endpoints
+    var.subnet_name_private_endpoints
   ]
 }

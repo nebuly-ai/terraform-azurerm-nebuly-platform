@@ -265,12 +265,12 @@ resource "azuread_service_principal_password" "main" {
 resource "azurerm_key_vault_secret" "azuread_application_client_id" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-id", var.resource_prefix)
-  value        = azuread_application.main.application_id
+  value        = azuread_application.main.client_id
 }
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-secret", var.resource_prefix)
-  value        = azuread_application.main.application_id
+  value        = azuread_application.main.client_id
 }
 
 

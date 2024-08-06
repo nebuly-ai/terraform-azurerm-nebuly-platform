@@ -4,5 +4,6 @@ resource_prefix = "nbllab"
 tags = {
   "env" : "integration-test"
   "project" : "self-hosted"
+  "managed-by" : "terraform-test"
 }
 

@@ -18,6 +18,12 @@ terraform {
 variable "location" {
   type = string
 }
+variable "tags" {
+  type = map(any)
+}
+variable "resource_prefix" {
+  type = string
+}
 
 
 # ----------- Data Sources ----------- #
@@ -27,11 +33,13 @@ data "azurerm_resource_group" "main" {
 
 # ----------- Resources ----------- #
 resource "azurerm_virtual_network" "main" {
-  name = "integration-test"
+  name = format("%s-integration-test", var.resource_prefix)
 
   resource_group_name = data.azurerm_resource_group.main.name
   address_space       = ["10.0.0.0/16"]
   location            = var.location
+
+  tags = var.tags
 }
 resource "azurerm_subnet" "main" {
   name = "aks-nodes"

@@ -151,14 +151,11 @@ auth:
     jwtSigningKey: ${k8s_secret_key_jwt_signing_key}
 
   loginModes: "password"
+
+  # TODO: optional Microsoft SSO
   microsoft:
     enabled: false
-    redirectUri: https://${platform_domain}/backend/auth/oauth/microsoft/callback
-    tenantId: ""
-    existingSecret:
-      name: ${secret_provider_class_secret_name}
-      clientIdKey: microsoft-oauth-client-id
-      clientSecretKey: microsoft-oauth-client-secret
+  # TODO: optional Okta SSO
 
   volumeMounts:
     - name: secrets-store

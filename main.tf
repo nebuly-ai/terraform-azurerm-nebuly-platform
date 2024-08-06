@@ -640,6 +640,18 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
 }
 
 
+# ------ Auth ------ #
+resource "tls_private_key" "auth_jwt" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+resource "azurerm_key_vault_secret" "auth_jwt" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = format("%s-jwt-signing-key", var.resource_prefix)
+  value        = tls_private_key.auth_jwt.private_key_pem
+}
+
+
 
 # ------ Post provisioning ------ #
 locals {

@@ -7,10 +7,6 @@ variables {
   location            = "EastUS"
   platform_domain     = "intest.nebuly.ai"
 
-
-  # ------ PostgreSQL Database  ------ #
-  postgres_server_networking = {}
-
   # ------ Key Vault ------ #
   key_vault_public_network_access_enabled = false
 

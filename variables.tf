@@ -74,29 +74,6 @@ variable "postgres_server_maintenance_window" {
   }
   description = "The window for performing automatic maintenance of the PostgreSQL Server. Default is Sunday at 00:00 of the timezone of the server location."
 }
-variable "postgres_server_networking" {
-  description = <<EOF
-  Server networking configuration. 
-
-  If allowed_ip_ranges is not empty, then the server is accessible from 
-  the Internet through the configured firewall rules.
-
-  If delegated_subnet_id or private_dns_zone_id are provided, then the Server 
-  is accessible only from the specified virutal network.
-  
-  EOF
-  type = object({
-    allowed_ip_ranges : optional(list(object({
-      name : string
-      start_ip_address : string
-      end_ip_address : string
-    })), [])
-    delegated_subnet_id : optional(string, null)
-    private_dns_zone_id : optional(string, null)
-    public_network_access_enabled : optional(bool, false)
-  })
-  default = {}
-}
 variable "postgres_server_point_in_time_backup" {
   type = object({
     geo_redundant : optional(bool, true)
@@ -286,6 +263,27 @@ variable "subnet_address_space_private_endpoints" {
   type        = list(string)
   default     = ["10.0.8.0/26"]
 }
+variable "subnet_name_flexible_postgres" {
+  description = <<EOT
+  Optional name of the subnet delegated to Flexible PostgreSQL Server service. 
+  If not provided, a new subnet is created.
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.virtual_network_name != null || var.subnet_name_flexible_postgres == null
+    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+  }
+}
+variable "subnet_address_space_flexible_postgres" {
+  description = <<EOT
+  Address space of the new subnet delgated to Flexible PostgreSQL Server service. 
+  If `subnet_name_flexible_postgres` is provided, the existing subnet is used and this variable is ignored.
+  EOT
+  type        = list(string)
+  default     = ["10.0.12.0/26"]
+}
 variable "private_dns_zones" {
   description = <<EOT
   Private DNS zones to use for Private Endpoint connections. If not provided, a new DNS Zone 
@@ -301,6 +299,10 @@ variable "private_dns_zones" {
       id : string
     }), null)
     dfs = optional(object({
+      name : string
+      id : string
+    }), null)
+    flexible_postgres = optional(object({
       name : string
       id : string
     }), null)

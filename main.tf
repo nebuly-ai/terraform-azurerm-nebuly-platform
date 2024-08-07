@@ -43,6 +43,7 @@ locals {
   use_existing_virtual_network          = var.virtual_network_name != null
   use_existing_aks_nodes_subnet         = var.subnet_name_aks_nodes != null
   use_existing_private_endpoints_subnet = var.subnet_name_private_endpoints != null
+  use_existing_flexible_postgres_subnet = var.subnet_name_flexible_postgres != null
 
   virtual_network = (
     local.use_existing_virtual_network ?
@@ -58,6 +59,11 @@ locals {
     local.use_existing_private_endpoints_subnet ?
     data.azurerm_subnet.private_endpoints[0] :
     azurerm_subnet.private_endpints[0]
+  )
+  flexible_postgres_subnet = (
+    local.use_existing_flexible_postgres_subnet ?
+    data.azurerm_subnet.flexible_postgres[0] :
+    azurerm_subnet.flexible_postgres[0]
   )
 }
 
@@ -97,6 +103,20 @@ data "azurerm_subnet" "private_endpoints" {
   virtual_network_name = var.virtual_network_name
   name                 = var.subnet_name_private_endpoints
 }
+data "azurerm_subnet" "flexible_postgres" {
+  count = local.use_existing_flexible_postgres_subnet ? 1 : 0
+
+  resource_group_name  = data.azurerm_resource_group.main.name
+  virtual_network_name = data.azurerm_virtual_network.main[0].name
+  name                 = var.subnet_name_flexible_postgres
+
+  lifecycle {
+    precondition {
+      condition     = length(data.azurerm_virtual_network.main) > 0
+      error_message = "`virtual_network_name` must be provided and must point to a valid virtual network."
+    }
+  }
+}
 
 
 # ------ Networking: Networks and Subnets ------ #
@@ -123,6 +143,28 @@ resource "azurerm_subnet" "private_endpints" {
   virtual_network_name = local.virtual_network.name
   resource_group_name  = data.azurerm_resource_group.main.name
   address_prefixes     = var.subnet_address_space_private_endpoints
+}
+resource "azurerm_subnet" "flexible_postgres" {
+  count = local.use_existing_flexible_postgres_subnet ? 0 : 1
+
+  name                 = "flexible-postgres"
+  virtual_network_name = local.virtual_network.name
+  resource_group_name  = data.azurerm_resource_group.main.name
+  address_prefixes     = var.subnet_address_space_flexible_postgres
+
+  service_endpoints = [
+    "Microsoft.Storage",
+  ]
+
+  delegation {
+    name = "delegation"
+    service_delegation {
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+      ]
+      name = "Microsoft.DBforPostgreSQL/flexibleServers"
+    }
+  }
 }
 
 
@@ -182,6 +224,24 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
 }
+resource "azurerm_private_dns_zone" "flexible_postgres" {
+  count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
+
+  name                = "${var.resource_prefix}.nebuly.postgres.database.azure.com"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
+  count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
+
+  name = format(
+    "%s-flexible-postgres-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = azurerm_private_dns_zone.flexible_postgres[0].name
+}
 
 
 # ------ Key Vault ------ #
@@ -229,6 +289,7 @@ resource "azurerm_private_endpoint" "key_vault" {
 
   private_dns_zone_group {
     name = "privatelink-vaultcore-azure-net"
+
     private_dns_zone_ids = [
       var.key_vault_private_dns_zone.id
     ]
@@ -309,10 +370,10 @@ resource "azurerm_postgresql_flexible_server" "main" {
 
   backup_retention_days         = var.postgres_server_point_in_time_backup.retention_days
   geo_redundant_backup_enabled  = var.postgres_server_point_in_time_backup.geo_redundant
-  public_network_access_enabled = var.postgres_server_networking.public_network_access_enabled
+  public_network_access_enabled = false
 
-  delegated_subnet_id = var.postgres_server_networking.delegated_subnet_id
-  private_dns_zone_id = var.postgres_server_networking.private_dns_zone_id
+  delegated_subnet_id = local.flexible_postgres_subnet.id
+  private_dns_zone_id = length(azurerm_private_dns_zone.flexible_postgres) > 0 ? azurerm_private_dns_zone.flexible_postgres[0].id : var.private_dns_zones.flexible_postgres.id
 
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}
@@ -350,14 +411,6 @@ resource "azurerm_postgresql_flexible_server_configuration" "mandatory_configura
   name      = each.key
   server_id = azurerm_postgresql_flexible_server.main.id
   value     = each.value
-}
-resource "azurerm_postgresql_flexible_server_firewall_rule" "main" {
-  for_each = { for o in var.postgres_server_networking.allowed_ip_ranges : o.name => o }
-
-  name             = each.key
-  server_id        = azurerm_postgresql_flexible_server.main.id
-  start_ip_address = each.value.start_ip_address
-  end_ip_address   = each.value.end_ip_address
 }
 resource "azurerm_postgresql_flexible_server_database" "auth" {
   name      = "auth"

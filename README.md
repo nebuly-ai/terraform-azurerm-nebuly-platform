@@ -64,17 +64,18 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 | <a name="input_postgres_server_lock"></a> [postgres\_server\_lock](#input\_postgres\_server\_lock) | Optionally lock the PostgreSQL server to prevent deletion. | <pre>object({<br>    enabled = optional(bool, false)<br>    notes   = optional(string, "Cannot be deleted.")<br>    name    = optional(string, "terraform-lock")<br>  })</pre> | <pre>{<br>  "enabled": true<br>}</pre> | no |
 | <a name="input_postgres_server_maintenance_window"></a> [postgres\_server\_maintenance\_window](#input\_postgres\_server\_maintenance\_window) | The window for performing automatic maintenance of the PostgreSQL Server. Default is Sunday at 00:00 of the timezone of the server location. | <pre>object({<br>    day_of_week : number<br>    start_hour : number<br>    start_minute : number<br>  })</pre> | <pre>{<br>  "day_of_week": 0,<br>  "start_hour": 0,<br>  "start_minute": 0<br>}</pre> | no |
 | <a name="input_postgres_server_max_storage_mb"></a> [postgres\_server\_max\_storage\_mb](#input\_postgres\_server\_max\_storage\_mb) | The max storage allowed for the PostgreSQL Flexible Server. Possible values are 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4193280, 4194304, 8388608, 16777216 and 33553408. | `number` | `262144` | no |
-| <a name="input_postgres_server_networking"></a> [postgres\_server\_networking](#input\_postgres\_server\_networking) | Server networking configuration. <br><br>  If allowed\_ip\_ranges is not empty, then the server is accessible from <br>  the Internet through the configured firewall rules.<br><br>  If delegated\_subnet\_id or private\_dns\_zone\_id are provided, then the Server <br>  is accessible only from the specified virutal network. | <pre>object({<br>    allowed_ip_ranges : optional(list(object({<br>      name : string<br>      start_ip_address : string<br>      end_ip_address : string<br>    })), [])<br>    delegated_subnet_id : optional(string, null)<br>    private_dns_zone_id : optional(string, null)<br>    public_network_access_enabled : optional(bool, false)<br>  })</pre> | `{}` | no |
 | <a name="input_postgres_server_optional_configurations"></a> [postgres\_server\_optional\_configurations](#input\_postgres\_server\_optional\_configurations) | Optional Flexible PostgreSQL configurations. Defaults to recommended configurations. | `map(string)` | <pre>{<br>  "intelligent_tuning": "on",<br>  "intelligent_tuning.metric_targets": "ALL",<br>  "metrics.autovacuum_diagnostics": "on",<br>  "metrics.collector_database_activity": "on",<br>  "pg_qs.query_capture_mode": "ALL",<br>  "pg_qs.retention_period_in_days": "7",<br>  "pg_qs.store_query_plans": "on",<br>  "pgaudit.log": "WRITE",<br>  "pgms_wait_sampling.query_capture_mode": "ALL",<br>  "track_io_timing": "on"<br>}</pre> | no |
 | <a name="input_postgres_server_point_in_time_backup"></a> [postgres\_server\_point\_in\_time\_backup](#input\_postgres\_server\_point\_in\_time\_backup) | The backup settings of the PostgreSQL Server. | <pre>object({<br>    geo_redundant : optional(bool, true)<br>    retention_days : optional(number, 30)<br>  })</pre> | <pre>{<br>  "geo_redundant": true,<br>  "retention_days": 30<br>}</pre> | no |
 | <a name="input_postgres_server_sku"></a> [postgres\_server\_sku](#input\_postgres\_server\_sku) | The SKU of the PostgreSQL Server, including the Tier and the Name. Examples: B\_Standard\_B1ms, GP\_Standard\_D2s\_v3, MO\_Standard\_E4s\_v3 | <pre>object({<br>    tier : string<br>    name : string<br>  })</pre> | <pre>{<br>  "name": "Standard_D4ds_v5",<br>  "tier": "GP"<br>}</pre> | no |
 | <a name="input_postgres_version"></a> [postgres\_version](#input\_postgres\_version) | The PostgreSQL version to use. | `string` | `"16"` | no |
-| <a name="input_private_dns_zones"></a> [private\_dns\_zones](#input\_private\_dns\_zones) | Private DNS zones to use for Private Endpoint connections. If not provided, a new DNS Zone <br>  is created and linked to the respective subnet. | <pre>object({<br>    file = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>    blob = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>    dfs = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>  })</pre> | `{}` | no |
+| <a name="input_private_dns_zones"></a> [private\_dns\_zones](#input\_private\_dns\_zones) | Private DNS zones to use for Private Endpoint connections. If not provided, a new DNS Zone <br>  is created and linked to the respective subnet. | <pre>object({<br>    file = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>    blob = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>    dfs = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>    flexible_postgres = optional(object({<br>      name : string<br>      id : string<br>    }), null)<br>  })</pre> | `{}` | no |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | The name of the resource group where to provision the resources. | `string` | n/a | yes |
 | <a name="input_resource_prefix"></a> [resource\_prefix](#input\_resource\_prefix) | The prefix that is used for generating resource names. | `string` | n/a | yes |
 | <a name="input_subnet_address_space_aks_nodes"></a> [subnet\_address\_space\_aks\_nodes](#input\_subnet\_address\_space\_aks\_nodes) | Address space of the new subnet in which to create the nodes of the AKS cluster. <br>  If `subnet_name_aks_nodes` is provided, the existing subnet is used and this variable is ignored. | `list(string)` | <pre>[<br>  "10.0.0.0/22"<br>]</pre> | no |
+| <a name="input_subnet_address_space_flexible_postgres"></a> [subnet\_address\_space\_flexible\_postgres](#input\_subnet\_address\_space\_flexible\_postgres) | Address space of the new subnet delgated to Flexible PostgreSQL Server service. <br>  If `subnet_name_flexible_postgres` is provided, the existing subnet is used and this variable is ignored. | `list(string)` | <pre>[<br>  "10.0.12.0/26"<br>]</pre> | no |
 | <a name="input_subnet_address_space_private_endpoints"></a> [subnet\_address\_space\_private\_endpoints](#input\_subnet\_address\_space\_private\_endpoints) | Address space of the new subnet in which to create private endpoints. <br>  If `subnet_name_private_endpoints` is provided, the existing subnet is used and this variable is ignored. | `list(string)` | <pre>[<br>  "10.0.8.0/26"<br>]</pre> | no |
 | <a name="input_subnet_name_aks_nodes"></a> [subnet\_name\_aks\_nodes](#input\_subnet\_name\_aks\_nodes) | Optional name of the subnet to be used for provisioning AKS nodes.<br>  If not provided, a new subnet is created. | `string` | `null` | no |
+| <a name="input_subnet_name_flexible_postgres"></a> [subnet\_name\_flexible\_postgres](#input\_subnet\_name\_flexible\_postgres) | Optional name of the subnet delegated to Flexible PostgreSQL Server service. <br>  If not provided, a new subnet is created. | `string` | `null` | no |
 | <a name="input_subnet_name_private_endpoints"></a> [subnet\_name\_private\_endpoints](#input\_subnet\_name\_private\_endpoints) | Optional name of the subnet to which attach the Private Endpoints. <br>  If not provided, a new subnet is created. | `string` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Common tags that are applied to all resources. | `map(string)` | `{}` | no |
 | <a name="input_virtual_network_address_space"></a> [virtual\_network\_address\_space](#input\_virtual\_network\_address\_space) | Address space of the new virtual network in which to create resources. <br>  If `virtual_network_name` is provided, the existing virtual network is used and this variable is ignored. | `list(string)` | <pre>[<br>  "10.0.0.0/16"<br>]</pre> | no |
@@ -83,53 +84,56 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 ## Resources
 
 
-- resource.azuread_application.main (/terraform-docs/main.tf#254)
-- resource.azuread_service_principal.main (/terraform-docs/main.tf#260)
-- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#265)
-- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#457)
-- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#476)
-- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#491)
-- resource.azurerm_key_vault.main (/terraform-docs/main.tf#188)
-- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#506)
-- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#269)
-- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#278)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#741)
-- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#440)
-- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#431)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#698)
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#374)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#382)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#296)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#347)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#340)
-- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#368)
-- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#362)
-- resource.azurerm_postgresql_flexible_server_firewall_rule.main (/terraform-docs/main.tf#354)
-- resource.azurerm_private_dns_zone.blob (/terraform-docs/main.tf#149)
-- resource.azurerm_private_dns_zone.dfs (/terraform-docs/main.tf#167)
-- resource.azurerm_private_dns_zone.file (/terraform-docs/main.tf#131)
-- resource.azurerm_private_dns_zone_virtual_network_link.blob (/terraform-docs/main.tf#155)
-- resource.azurerm_private_dns_zone_virtual_network_link.dfs (/terraform-docs/main.tf#173)
-- resource.azurerm_private_dns_zone_virtual_network_link.file (/terraform-docs/main.tf#137)
-- resource.azurerm_private_endpoint.blob (/terraform-docs/main.tf#545)
-- resource.azurerm_private_endpoint.dfs (/terraform-docs/main.tf#585)
-- resource.azurerm_private_endpoint.file (/terraform-docs/main.tf#565)
-- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#214)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#693)
-- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#244)
-- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#239)
-- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#540)
-- resource.azurerm_storage_account.main (/terraform-docs/main.tf#522)
-- resource.azurerm_storage_container.models (/terraform-docs/main.tf#536)
-- resource.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#111)
-- resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#119)
-- resource.azurerm_virtual_network.main (/terraform-docs/main.tf#103)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#291)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#680)
-- resource.tls_private_key.aks (/terraform-docs/main.tf#609)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#737)
-- data source.azurerm_client_config.current (/terraform-docs/main.tf#71)
-- data source.azurerm_resource_group.main (/terraform-docs/main.tf#68)
-- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#79)
-- data source.azurerm_subnet.private_endpoints (/terraform-docs/main.tf#93)
-- data source.azurerm_virtual_network.main (/terraform-docs/main.tf#73)
+- resource.azuread_application.main (/terraform-docs/main.tf#315)
+- resource.azuread_service_principal.main (/terraform-docs/main.tf#321)
+- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#326)
+- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#510)
+- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#529)
+- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#544)
+- resource.azurerm_key_vault.main (/terraform-docs/main.tf#248)
+- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#559)
+- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#330)
+- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#339)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#794)
+- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#493)
+- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#484)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#751)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#427)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#435)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#357)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#408)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#401)
+- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#421)
+- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#415)
+- resource.azurerm_private_dns_zone.blob (/terraform-docs/main.tf#191)
+- resource.azurerm_private_dns_zone.dfs (/terraform-docs/main.tf#209)
+- resource.azurerm_private_dns_zone.file (/terraform-docs/main.tf#173)
+- resource.azurerm_private_dns_zone.flexible_postgres (/terraform-docs/main.tf#227)
+- resource.azurerm_private_dns_zone_virtual_network_link.blob (/terraform-docs/main.tf#197)
+- resource.azurerm_private_dns_zone_virtual_network_link.dfs (/terraform-docs/main.tf#215)
+- resource.azurerm_private_dns_zone_virtual_network_link.file (/terraform-docs/main.tf#179)
+- resource.azurerm_private_dns_zone_virtual_network_link.flexible_postgres (/terraform-docs/main.tf#233)
+- resource.azurerm_private_endpoint.blob (/terraform-docs/main.tf#598)
+- resource.azurerm_private_endpoint.dfs (/terraform-docs/main.tf#638)
+- resource.azurerm_private_endpoint.file (/terraform-docs/main.tf#618)
+- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#274)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#746)
+- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#305)
+- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#300)
+- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#593)
+- resource.azurerm_storage_account.main (/terraform-docs/main.tf#575)
+- resource.azurerm_storage_container.models (/terraform-docs/main.tf#589)
+- resource.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#131)
+- resource.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#147)
+- resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#139)
+- resource.azurerm_virtual_network.main (/terraform-docs/main.tf#123)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#352)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#733)
+- resource.tls_private_key.aks (/terraform-docs/main.tf#662)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#790)
+- data source.azurerm_client_config.current (/terraform-docs/main.tf#77)
+- data source.azurerm_resource_group.main (/terraform-docs/main.tf#74)
+- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#85)
+- data source.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#106)
+- data source.azurerm_subnet.private_endpoints (/terraform-docs/main.tf#99)
+- data source.azurerm_virtual_network.main (/terraform-docs/main.tf#79)

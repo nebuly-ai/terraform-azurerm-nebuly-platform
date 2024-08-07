@@ -53,7 +53,7 @@ variable "postgres_server_high_availability" {
   description = "High-availability configuration of the DB server. Possible values for mode are: SameZone or ZoneRedundant."
   type = object({
     enabled : bool
-    mode : string
+    mode : optional(string, "SameZone")
     standby_availability_zone : optional(string, null)
   })
   default = {

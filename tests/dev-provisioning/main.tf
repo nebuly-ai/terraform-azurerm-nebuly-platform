@@ -56,12 +56,6 @@ variable "location" {
 data "azuread_group" "engineering" {
   display_name = "nebuly-engineering"
 }
-data "http" "my_ip" {
-  url = "https://ipv4.icanhazip.com"
-}
-locals {
-  my_ip = chomp(data.http.my_ip.response_body)
-}
 
 module "platform" {
   source = "../../"
@@ -71,16 +65,20 @@ module "platform" {
   platform_domain     = "platform.azure.testing"
 
   postgres_server_sku = {
-    tier = "GP"
-    name = "Standard_D2ads_v5"
+    tier = "B"
+    name = "Standard_B2ms"
+  }
+  postgres_server_high_availability = {
+    enabled = false
   }
 
-  azure_openai_location                   = "EastUS"
-  key_vault_public_network_access_enabled = true
-  key_vault_network_acls = {
-    ip_rules                   = [local.my_ip]
-    virtual_network_subnet_ids = []
+  azure_openai_location = "EastUS"
+  azure_openai_rate_limits = {
+    gpt_4       = 1
+    gpt_4o_mini = 1
   }
+
+  key_vault_public_network_access_enabled = true
 
   aks_cluster_admin_object_ids = [data.azuread_group.engineering.id]
   resource_prefix              = var.resource_prefix

@@ -37,7 +37,7 @@ locals {
 
   current_ip = chomp(data.http.current_ip.response_body)
 
-  postgres_server_name = format("%snebuly", var.resource_prefix)
+  postgres_server_name = format("%snebulydb", var.resource_prefix)
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
@@ -501,7 +501,7 @@ resource "azurerm_storage_account" "main" {
 
   network_rules {
     default_action             = "Deny"
-    ip_rules                   = []
+    ip_rules                   = var.whitelist_current_ip ? [local.current_ip] : []
     virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
   }
 

@@ -12,7 +12,7 @@ variables {
   postgres_server_networking = {}
 
   # ------ Key Vault ------ #
-  key_vault_public_network_access_enabled = true
+  key_vault_public_network_access_enabled = false
 
   # ------ AKS ------ #
   aks_net_profile_service_cidr   = "10.32.0.0/24"
@@ -45,5 +45,18 @@ run "values_validation__subnet_private_endpoints" {
 
   expect_failures = [
     var.subnet_name_private_endpoints
+  ]
+}
+
+run "values_validation__key_vault_acls" {
+  command = plan
+
+  variables {
+    # KeyVault ACLs must be provided when public access is enabled.
+    key_vault_public_network_access_enabled = true
+  }
+
+  expect_failures = [
+    var.key_vault_public_network_access_enabled
   ]
 }

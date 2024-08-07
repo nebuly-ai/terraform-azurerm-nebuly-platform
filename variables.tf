@@ -95,6 +95,7 @@ variable "postgres_server_networking" {
     private_dns_zone_id : optional(string, null)
     public_network_access_enabled : optional(bool, false)
   })
+  default = {}
 }
 variable "postgres_server_point_in_time_backup" {
   type = object({
@@ -182,6 +183,11 @@ variable "key_vault_sku_name" {
 variable "key_vault_public_network_access_enabled" {
   type        = bool
   description = "Can the Key Vault be accessed from the Internet?"
+
+  validation {
+    condition     = !var.key_vault_public_network_access_enabled || var.key_vault_network_acls != null
+    error_message = "You must provide network ACLs when Key Vault public network access is enabled."
+  }
 }
 variable "key_vault_soft_delete_retention_days" {
   type        = number
@@ -195,8 +201,8 @@ variable "key_vault_purge_protection_enabled" {
 }
 variable "key_vault_network_acls" {
   type = object({
-    bypass : string
-    default_action : string
+    bypass : optional(string, "AzureServices")
+    default_action : optional(string, "Deny")
     ip_rules : list(string)
     virtual_network_subnet_ids : list(string)
   })
@@ -278,7 +284,7 @@ variable "subnet_address_space_private_endpoints" {
   If `subnet_name_private_endpoints` is provided, the existing subnet is used and this variable is ignored.
   EOT
   type        = list(string)
-  default     = ["10.0.0.192/26"]
+  default     = ["10.0.8.0/26"]
 }
 variable "private_dns_zones" {
   description = <<EOT
@@ -350,10 +356,12 @@ variable "aks_api_server_allowed_ip_addresses" {
 variable "aks_net_profile_service_cidr" {
   type        = string
   description = "The Network Range used by the Kubernetes service. Must not overlap with the AKS Nodes address space. Example: 10.32.0.0/24"
+  default     = "10.32.0.0/24"
 }
 variable "aks_net_profile_dns_service_ip" {
   type        = string
   description = " IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
+  default     = "10.32.0.10"
 }
 variable "aks_log_analytics_workspace" {
   description = " Existing azurerm_log_analytics_workspace to attach azurerm_log_analytics_solution. Providing the config disables creation of azurerm_log_analytics_workspace."
@@ -458,7 +466,7 @@ variable "aks_worker_pools" {
       # Auto-scaling setttings
       enable_auto_scaling = true
       nodes_count : null
-      nodes_min_count = 1
+      nodes_min_count = 0
       nodes_max_count = 1
       # Tags
       tags : {}

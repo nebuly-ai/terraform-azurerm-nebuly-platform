@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~>3.114"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~>0.12"
+    }
     azuread = {
       source  = "hashicorp/azuread"
       version = "~>2.53"
@@ -198,10 +202,10 @@ resource "azurerm_key_vault" "main" {
   dynamic "network_acls" {
     for_each = var.key_vault_network_acls == null ? {} : { "" : "" }
     content {
-      bypass                     = var.network_acls.bypass
-      default_action             = var.network_acls.default_action
-      ip_rules                   = var.network_acls.ip_rules
-      virtual_network_subnet_ids = var.network_acls.virtual_network_subnet_ids
+      bypass                     = var.key_vault_network_acls.bypass
+      default_action             = var.key_vault_network_acls.default_action
+      ip_rules                   = var.key_vault_network_acls.ip_rules
+      virtual_network_subnet_ids = var.key_vault_network_acls.virtual_network_subnet_ids
     }
   }
 
@@ -234,7 +238,7 @@ resource "azurerm_private_endpoint" "key_vault" {
 }
 resource "azurerm_role_assignment" "key_vault_secret_user__aks" {
   scope                = azurerm_key_vault.main.id
-  principal_id         = "" # TODO
+  principal_id         = module.aks.cluster_identity.principal_id
   role_definition_name = "Key Vault Secrets User"
 }
 resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
@@ -266,11 +270,19 @@ resource "azurerm_key_vault_secret" "azuread_application_client_id" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-id", var.resource_prefix)
   value        = azuread_application.main.client_id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
 }
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-secret", var.resource_prefix)
   value        = azuread_application.main.client_id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
 }
 
 
@@ -495,6 +507,10 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
   name         = "${var.resource_prefix}-openai-api-key"
   value        = azurerm_cognitive_account.main.primary_access_key
   key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
 }
 
 
@@ -512,7 +528,7 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
   access_tier              = "Hot"
 
-  public_network_access_enabled = false
+  public_network_access_enabled = true # TODO
   is_hns_enabled                = false
 
   tags = var.tags
@@ -524,7 +540,7 @@ resource "azurerm_storage_container" "models" {
 resource "azurerm_role_assignment" "storage_container_models__data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azuread_service_principal.main.object_id
-  scope                = azurerm_storage_container.models.id
+  scope                = azurerm_storage_container.models.resource_manager_id
 }
 resource "azurerm_private_endpoint" "blob" {
   name                = "${azurerm_storage_account.main.name}-blob"
@@ -661,6 +677,13 @@ module "aks" {
 
   tags = var.tags
 }
+resource "time_sleep" "wait_aks_creation" {
+  create_duration = "30s"
+
+  depends_on = [
+    module.aks
+  ]
+}
 # The AKS cluster identity has the Contributor role on the AKS second resource group (MC_myResourceGroup_myAKSCluster_eastus)
 # However when using a custom VNET, the AKS cluster identity needs the Network Contributor role on the VNET subnets
 # used by the system node pool and by any additional node pools.
@@ -703,6 +726,10 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
       eviction_policy,
     ]
   }
+
+  depends_on = [
+    time_sleep.wait_aks_creation,
+  ]
 }
 
 
@@ -715,6 +742,10 @@ resource "azurerm_key_vault_secret" "jwt_signing_key" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-jwt-signing-key", var.resource_prefix)
   value        = tls_private_key.jwt_signing_key.private_key_pem
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
 }
 
 
@@ -733,7 +764,7 @@ locals {
   k8s_secret_key_azure_client_secret = "azure-client-secret"
 
   helm_values = templatefile(
-    "templates/helm-values.tpl.yaml",
+    "${path.module}/templates/helm-values.tpl.yaml",
     {
       platform_domain = var.platform_domain
 
@@ -754,14 +785,14 @@ locals {
     },
   )
   secret_provider_class = templatefile(
-    "templates/secret-provider-class.tpl.yaml",
+    "${path.module}/templates/secret-provider-class.tpl.yaml",
     {
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name
 
       key_vault_name          = azurerm_key_vault.main.name
       tenant_id               = data.azurerm_client_config.current.tenant_id
-      aks_managed_identity_id = module.aks.key_vault_secrets_provider.secret_identity[0]
+      aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].object_id, "TODO")
 
       secret_name_jwt_signing_key     = azurerm_key_vault_secret.jwt_signing_key.name
       secret_name_db_username         = azurerm_key_vault_secret.postgres_user.name

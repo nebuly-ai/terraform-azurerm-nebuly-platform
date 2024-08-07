@@ -24,15 +24,10 @@ run "smoke_test_plan__existing_networks" {
     virtual_network_name  = run.setup.azurerm_virtual_network.name
     subnet_name_aks_nodes = run.setup.azurerm_subnet.name
 
-    # ------ PostgreSQL Database  ------ #
-    postgres_server_networking = {}
-
     # ------ Key Vault ------ #
-    key_vault_public_network_access_enabled = true
+    key_vault_public_network_access_enabled = false
 
     # ------ AKS ------ #
-    aks_net_profile_service_cidr   = "10.32.0.0/24"
-    aks_net_profile_dns_service_ip = "10.32.0.10"
     aks_cluster_admin_object_ids   = []
   }
 }

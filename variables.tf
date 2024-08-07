@@ -290,18 +290,6 @@ variable "private_dns_zones" {
   is created and linked to the respective subnet.
   EOT
   type = object({
-    file = optional(object({
-      name : string
-      id : string
-    }), null)
-    blob = optional(object({
-      name : string
-      id : string
-    }), null)
-    dfs = optional(object({
-      name : string
-      id : string
-    }), null)
     flexible_postgres = optional(object({
       name : string
       id : string

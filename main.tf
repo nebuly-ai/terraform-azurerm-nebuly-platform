@@ -55,11 +55,6 @@ locals {
     data.azurerm_subnet.aks_nodes[0] :
     azurerm_subnet.aks_nodes[0]
   )
-  private_endpoints_subnet = (
-    local.use_existing_private_endpoints_subnet ?
-    data.azurerm_subnet.private_endpoints[0] :
-    azurerm_subnet.private_endpints[0]
-  )
   flexible_postgres_subnet = (
     local.use_existing_flexible_postgres_subnet ?
     data.azurerm_subnet.flexible_postgres[0] :
@@ -95,13 +90,6 @@ data "azurerm_subnet" "aks_nodes" {
       error_message = "`virtual_network_name` must be provided and must point to a valid virtual network."
     }
   }
-}
-data "azurerm_subnet" "private_endpoints" {
-  count = local.use_existing_private_endpoints_subnet ? 1 : 0
-
-  resource_group_name  = data.azurerm_resource_group.main.name
-  virtual_network_name = var.virtual_network_name
-  name                 = var.subnet_name_private_endpoints
 }
 data "azurerm_subnet" "flexible_postgres" {
   count = local.use_existing_flexible_postgres_subnet ? 1 : 0
@@ -172,60 +160,6 @@ resource "azurerm_subnet" "flexible_postgres" {
 
 
 # ------ Networking: Private DNS Zones ------ #
-resource "azurerm_private_dns_zone" "file" {
-  count = var.private_dns_zones.file == null ? 1 : 0
-
-  name                = "privatelink.file.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone_virtual_network_link" "file" {
-  count = var.private_dns_zones.file == null ? 1 : 0
-
-  name = format(
-    "%s-file-%s",
-    var.resource_prefix,
-    local.virtual_network.name,
-  )
-  resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.file[0].name
-}
-resource "azurerm_private_dns_zone" "blob" {
-  count = var.private_dns_zones.blob == null ? 1 : 0
-
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
-  count = var.private_dns_zones.blob == null ? 1 : 0
-
-  name = format(
-    "%s-blob-%s",
-    var.resource_prefix,
-    local.virtual_network.name
-  )
-  resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.blob[0].name
-}
-resource "azurerm_private_dns_zone" "dfs" {
-  count = var.private_dns_zones.dfs == null ? 1 : 0
-
-  name                = "privatelink.dfs.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
-  count = var.private_dns_zones.dfs == null ? 1 : 0
-
-  name = format(
-    "%s-dfs-%s",
-    var.resource_prefix,
-    local.virtual_network.name,
-  )
-  resource_group_name   = data.azurerm_resource_group.main.name
-  virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
-}
 resource "azurerm_private_dns_zone" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
 
@@ -586,6 +520,12 @@ resource "azurerm_storage_account" "main" {
   public_network_access_enabled = true # TODO
   is_hns_enabled                = false
 
+  network_rules {
+    default_action             = "Deny"
+    ip_rules                   = []
+    virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
+  }
+
   tags = var.tags
 }
 resource "azurerm_storage_container" "models" {
@@ -597,67 +537,6 @@ resource "azurerm_role_assignment" "storage_container_models__data_contributor" 
   principal_id         = azuread_service_principal.main.object_id
   scope                = azurerm_storage_container.models.resource_manager_id
 }
-resource "azurerm_private_endpoint" "blob" {
-  name                = "${azurerm_storage_account.main.name}-blob"
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.private_endpoints_subnet.id
-
-  private_service_connection {
-    name                           = "${azurerm_storage_account.main.name}-blob"
-    private_connection_resource_id = azurerm_storage_account.main.id
-    is_manual_connection           = false
-    subresource_names              = ["blob"]
-  }
-
-  private_dns_zone_group {
-    name = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = [
-      length(azurerm_private_dns_zone.blob) > 0 ? azurerm_private_dns_zone.blob[0].id : var.private_dns_zones.blob.id
-    ]
-  }
-}
-resource "azurerm_private_endpoint" "file" {
-  name                = "${azurerm_storage_account.main.name}-file"
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.private_endpoints_subnet.id
-
-  private_service_connection {
-    name                           = "${azurerm_storage_account.main.name}-file"
-    private_connection_resource_id = azurerm_storage_account.main.id
-    is_manual_connection           = false
-    subresource_names              = ["file"]
-  }
-
-  private_dns_zone_group {
-    name = "privatelink-file-core-windows-net"
-    private_dns_zone_ids = [
-      length(azurerm_private_dns_zone.file) > 0 ? azurerm_private_dns_zone.file[0].id : var.private_dns_zones.file.id
-    ]
-  }
-}
-resource "azurerm_private_endpoint" "dfs" {
-  name                = "${azurerm_storage_account.main.name}-dfs"
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.private_endpoints_subnet.id
-
-  private_service_connection {
-    name                           = "${azurerm_storage_account.main.name}-dfs"
-    private_connection_resource_id = azurerm_storage_account.main.id
-    is_manual_connection           = false
-    subresource_names              = ["dfs"]
-  }
-
-  private_dns_zone_group {
-    name = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = [
-      length(azurerm_private_dns_zone.dfs) > 0 ? azurerm_private_dns_zone.dfs[0].id : var.private_dns_zones.dfs.id
-    ]
-  }
-}
-
 
 
 # ------ AKS ------ #

@@ -159,12 +159,12 @@ variable "key_vault_sku_name" {
 }
 variable "key_vault_public_network_access_enabled" {
   type        = bool
-  description = "Can the Key Vault be accessed from the Internet?"
-
-  validation {
-    condition     = !var.key_vault_public_network_access_enabled || var.key_vault_network_acls != null
-    error_message = "You must provide network ACLs when Key Vault public network access is enabled."
-  }
+  default     = true
+  description = <<EOT
+  Can the Key Vault be accessed from the Internet, according to the firewall rules?
+  Default to true to to allow the Terraform module to be executed even outside the private virtual network. 
+  When set to true, firewall rules are applied, and all connections are denied by default.
+  EOT
 }
 variable "key_vault_soft_delete_retention_days" {
   type        = number
@@ -176,35 +176,19 @@ variable "key_vault_purge_protection_enabled" {
   default     = false
   description = "Is purge protection enabled for the Key Vault?"
 }
-variable "key_vault_network_acls" {
-  type = object({
-    bypass : optional(string, "AzureServices")
-    default_action : optional(string, "Deny")
-    ip_rules : list(string)
-    virtual_network_subnet_ids : list(string)
-  })
-  default     = null
-  description = "Optional configuration of network ACLs."
-}
-variable "key_vault_private_endpoints" {
-  type = map(object({
-    subnet_id = string
-    vnet_id   = string
-  }))
-  default     = {}
-  description = "Optional Private Endpoints to link with the Key Vault."
-}
-variable "key_vault_private_dns_zone" {
-  type = object({
-    id : string
-    name : string
-  })
-  default     = null
-  description = "Optional Private DNS Zone to link with the Key Vault when private endpoint integration is enabled."
-}
 
 
 # ------ Networking ------ #
+variable "whitelist_current_ip" {
+  description = <<EOT
+  If true, add the current IP executing the Terraform module to the whitelist rules of the provisioned services. 
+  This allows Terraform to access and configure the resources even when running outside the virtual network.
+
+  The whitelisting excludes the Database Server, which remains unexposed to the Internet and is accessible only from the virtual network.
+  EOT
+  type        = bool
+  default     = true
+}
 variable "virtual_network_name" {
   description = <<EOT
   Optional name of the virtual network in which to create the resources. 

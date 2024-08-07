@@ -22,6 +22,10 @@ terraform {
       source  = "hashicorp/tls"
       version = "~>4.0"
     }
+    http = {
+      source  = "hashicorp/http"
+      version = "~>3.4"
+    }
   }
 }
 
@@ -31,6 +35,7 @@ terraform {
 locals {
   aks_cluster_name = format("%snebuly", var.resource_prefix)
 
+  current_ip = chomp(data.http.current_ip.response_body)
 
   postgres_server_name = format("%snebuly", var.resource_prefix)
   postgres_server_configurations = {
@@ -70,6 +75,9 @@ data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 data "azurerm_client_config" "current" {
+}
+data "http" "current_ip" {
+  url = "https://ipv4.icanhazip.com"
 }
 data "azurerm_virtual_network" "main" {
   count = local.use_existing_virtual_network ? 1 : 0
@@ -195,40 +203,11 @@ resource "azurerm_key_vault" "main" {
 
   sku_name = lower(var.key_vault_sku_name)
 
-  dynamic "network_acls" {
-    for_each = var.key_vault_network_acls == null ? {} : { "" : "" }
-    content {
-      bypass                     = var.key_vault_network_acls.bypass
-      default_action             = var.key_vault_network_acls.default_action
-      ip_rules                   = var.key_vault_network_acls.ip_rules
-      virtual_network_subnet_ids = var.key_vault_network_acls.virtual_network_subnet_ids
-    }
-  }
-
-  tags = var.tags
-}
-resource "azurerm_private_endpoint" "key_vault" {
-  for_each = var.key_vault_private_endpoints
-
-  name                = "${azurerm_key_vault.main.name}-${each.key}"
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = each.value.subnet_id
-
-
-  private_service_connection {
-    name                           = "${azurerm_key_vault.main.name}-${each.key}-pe"
-    private_connection_resource_id = azurerm_key_vault.main.id
-    is_manual_connection           = false
-    subresource_names              = ["vault"]
-  }
-
-  private_dns_zone_group {
-    name = "privatelink-vaultcore-azure-net"
-
-    private_dns_zone_ids = [
-      var.key_vault_private_dns_zone.id
-    ]
+  network_acls {
+    bypass                     = "AzureServices"
+    default_action             = "Deny"
+    virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
+    ip_rules                   = var.whitelist_current_ip ? [local.current_ip] : []
   }
 
   tags = var.tags
@@ -544,6 +523,13 @@ resource "tls_private_key" "aks" {
   algorithm = "RSA" # Azure VMs currently do not support ECDSA
   rsa_bits  = "4096"
 }
+locals {
+  aks_api_server_allowed_ip_addresses = (
+    var.whitelist_current_ip ?
+    merge({ "current-ip" : local.current_ip }, var.aks_api_server_allowed_ip_addresses) :
+    var.aks_api_server_allowed_ip_addresses
+  )
+}
 module "aks" {
   source  = "Azure/aks/azurerm"
   version = "9.1.0"
@@ -562,7 +548,7 @@ module "aks" {
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = [
-    for _, ip in var.aks_api_server_allowed_ip_addresses : "${ip}/32"
+    for _, ip in local.aks_api_server_allowed_ip_addresses : "${ip}/32"
   ]
 
   rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids

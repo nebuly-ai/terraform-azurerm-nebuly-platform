@@ -21,6 +21,7 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 |------|---------|
 | <a name="provider_azuread"></a> [azuread](#provider\_azuread) | ~>2.53 |
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~>3.114 |
+| <a name="provider_http"></a> [http](#provider\_http) | ~>3.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~>3.6 |
 | <a name="provider_time"></a> [time](#provider\_time) | ~>0.12 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | ~>4.0 |
@@ -49,10 +50,7 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 | <a name="input_aks_worker_pools"></a> [aks\_worker\_pools](#input\_aks\_worker\_pools) | The worker pools of the AKS cluster, each with the respective configuration.<br>  The default configuration uses a single worker node, with no HA. | <pre>map(object({<br>    enabled : optional(bool, true)<br>    vm_size : string<br>    priority : optional(string, "Regular")<br>    tags : map(string)<br>    max_pods : number<br>    disk_size_gb : optional(number, 128)<br>    disk_type : string<br>    availability_zones : list(string)<br>    node_taints : optional(list(string), [])<br>    node_labels : optional(map(string), {})<br>    # Auto-scaling settings<br>    nodes_count : optional(number, null)<br>    enable_auto_scaling : optional(bool, false)<br>    nodes_min_count : optional(number, null)<br>    nodes_max_count : optional(number, null)<br>  }))</pre> | <pre>{<br>  "a100w01": {<br>    "availability_zones": [<br>      "1"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w02": {<br>    "availability_zones": [<br>      "2"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w03": {<br>    "availability_zones": [<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "t4workers": {<br>    "availability_zones": [<br>      "1",<br>      "2",<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-tesla-t4"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC4as_T4_v3"<br>  }<br>}</pre> | no |
 | <a name="input_azure_openai_location"></a> [azure\_openai\_location](#input\_azure\_openai\_location) | The Azure region where to deploy the Azure OpenAI models. <br>  Note that the models required by Nebuly are supported only in few specific regions. For more information, you can refer to Azure documentation:<br>  https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#standard-deployment-model-availability | `string` | `"EastUS"` | no |
 | <a name="input_azure_openai_rate_limits"></a> [azure\_openai\_rate\_limits](#input\_azure\_openai\_rate\_limits) | The rate limits (K-tokens/minute) of the deployed Azure OpenAI models. | <pre>object({<br>    gpt_4 : number<br>    gpt_4o_mini : number<br>  })</pre> | <pre>{<br>  "gpt_4": 100,<br>  "gpt_4o_mini": 100<br>}</pre> | no |
-| <a name="input_key_vault_network_acls"></a> [key\_vault\_network\_acls](#input\_key\_vault\_network\_acls) | Optional configuration of network ACLs. | <pre>object({<br>    bypass : optional(string, "AzureServices")<br>    default_action : optional(string, "Deny")<br>    ip_rules : list(string)<br>    virtual_network_subnet_ids : list(string)<br>  })</pre> | `null` | no |
-| <a name="input_key_vault_private_dns_zone"></a> [key\_vault\_private\_dns\_zone](#input\_key\_vault\_private\_dns\_zone) | Optional Private DNS Zone to link with the Key Vault when private endpoint integration is enabled. | <pre>object({<br>    id : string<br>    name : string<br>  })</pre> | `null` | no |
-| <a name="input_key_vault_private_endpoints"></a> [key\_vault\_private\_endpoints](#input\_key\_vault\_private\_endpoints) | Optional Private Endpoints to link with the Key Vault. | <pre>map(object({<br>    subnet_id = string<br>    vnet_id   = string<br>  }))</pre> | `{}` | no |
-| <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet? | `bool` | n/a | yes |
+| <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet, according to the firewall rules?<br>  Default to true to to allow the Terraform module to be executed even outside the private virtual network. <br>  When set to true, firewall rules are applied, and all connections are denied by default. | `bool` | `true` | no |
 | <a name="input_key_vault_purge_protection_enabled"></a> [key\_vault\_purge\_protection\_enabled](#input\_key\_vault\_purge\_protection\_enabled) | Is purge protection enabled for the Key Vault? | `bool` | `false` | no |
 | <a name="input_key_vault_sku_name"></a> [key\_vault\_sku\_name](#input\_key\_vault\_sku\_name) | The SKU of the Key Vault. | `string` | `"Standard"` | no |
 | <a name="input_key_vault_soft_delete_retention_days"></a> [key\_vault\_soft\_delete\_retention\_days](#input\_key\_vault\_soft\_delete\_retention\_days) | The number of days that items should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days. | `number` | `7` | no |
@@ -80,50 +78,51 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 | <a name="input_tags"></a> [tags](#input\_tags) | Common tags that are applied to all resources. | `map(string)` | `{}` | no |
 | <a name="input_virtual_network_address_space"></a> [virtual\_network\_address\_space](#input\_virtual\_network\_address\_space) | Address space of the new virtual network in which to create resources. <br>  If `virtual_network_name` is provided, the existing virtual network is used and this variable is ignored. | `list(string)` | <pre>[<br>  "10.0.0.0/16"<br>]</pre> | no |
 | <a name="input_virtual_network_name"></a> [virtual\_network\_name](#input\_virtual\_network\_name) | Optional name of the virtual network in which to create the resources. <br>  If not provided, a new virtual network is created. | `string` | `null` | no |
+| <a name="input_whitelist_current_ip"></a> [whitelist\_current\_ip](#input\_whitelist\_current\_ip) | If true, add the current IP executing the Terraform module to the whitelist rules of the provisioned services. <br>  This allows Terraform to access and configure the resources even when running outside the virtual network.<br><br>  The whitelisting excludes the Database Server, which remains unexposed to the Internet and is accessible only from the virtual network. | `bool` | `true` | no |
 
 ## Resources
 
 
-- resource.azuread_application.main (/terraform-docs/main.tf#251)
-- resource.azuread_service_principal.main (/terraform-docs/main.tf#257)
-- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#262)
-- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#446)
-- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#465)
-- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#480)
-- resource.azurerm_key_vault.main (/terraform-docs/main.tf#184)
-- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#495)
-- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#266)
-- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#275)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#675)
-- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#429)
-- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#420)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#632)
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#363)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#371)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#293)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#344)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#337)
-- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#357)
-- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#351)
-- resource.azurerm_private_dns_zone.flexible_postgres (/terraform-docs/main.tf#163)
-- resource.azurerm_private_dns_zone_virtual_network_link.flexible_postgres (/terraform-docs/main.tf#169)
-- resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#210)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#627)
-- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#241)
-- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#236)
-- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#535)
-- resource.azurerm_storage_account.main (/terraform-docs/main.tf#511)
-- resource.azurerm_storage_container.models (/terraform-docs/main.tf#531)
-- resource.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#119)
-- resource.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#141)
-- resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#133)
-- resource.azurerm_virtual_network.main (/terraform-docs/main.tf#111)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#288)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#614)
-- resource.tls_private_key.aks (/terraform-docs/main.tf#543)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#671)
-- data source.azurerm_client_config.current (/terraform-docs/main.tf#72)
-- data source.azurerm_resource_group.main (/terraform-docs/main.tf#69)
-- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#80)
-- data source.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#94)
-- data source.azurerm_virtual_network.main (/terraform-docs/main.tf#74)
+- resource.azuread_application.main (/terraform-docs/main.tf#230)
+- resource.azuread_service_principal.main (/terraform-docs/main.tf#236)
+- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#241)
+- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#425)
+- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#444)
+- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#459)
+- resource.azurerm_key_vault.main (/terraform-docs/main.tf#192)
+- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#474)
+- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#245)
+- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#254)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#654)
+- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#408)
+- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#399)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#611)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#342)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#350)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#272)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#323)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#316)
+- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#336)
+- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#330)
+- resource.azurerm_private_dns_zone.flexible_postgres (/terraform-docs/main.tf#171)
+- resource.azurerm_private_dns_zone_virtual_network_link.flexible_postgres (/terraform-docs/main.tf#177)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#606)
+- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#220)
+- resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#215)
+- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#514)
+- resource.azurerm_storage_account.main (/terraform-docs/main.tf#490)
+- resource.azurerm_storage_container.models (/terraform-docs/main.tf#510)
+- resource.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#127)
+- resource.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#149)
+- resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#141)
+- resource.azurerm_virtual_network.main (/terraform-docs/main.tf#119)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#267)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#593)
+- resource.tls_private_key.aks (/terraform-docs/main.tf#522)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#650)
+- data source.azurerm_client_config.current (/terraform-docs/main.tf#77)
+- data source.azurerm_resource_group.main (/terraform-docs/main.tf#74)
+- data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#88)
+- data source.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#102)
+- data source.azurerm_virtual_network.main (/terraform-docs/main.tf#82)
+- data source.http_http.current_ip (/terraform-docs/main.tf#79)

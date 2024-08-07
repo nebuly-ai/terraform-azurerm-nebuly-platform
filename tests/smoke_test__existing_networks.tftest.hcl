@@ -24,9 +24,6 @@ run "smoke_test_plan__existing_networks" {
     virtual_network_name  = run.setup.azurerm_virtual_network.name
     subnet_name_aks_nodes = run.setup.azurerm_subnet.name
 
-    # ------ Key Vault ------ #
-    key_vault_public_network_access_enabled = false
-
     # ------ AKS ------ #
     aks_cluster_admin_object_ids   = []
   }

@@ -484,8 +484,6 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
 
 
 
-
-
 # ------ Model Registry ------ #
 resource "azurerm_storage_account" "main" {
   name                = format("%s%s", var.resource_prefix, "models")
@@ -513,9 +511,11 @@ resource "azurerm_storage_container" "models" {
 }
 resource "azurerm_role_assignment" "storage_container_models__data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azuread_service_principal.main.object_id
+  principal_id         = module.aks.kubelet_identity[0].object_id
   scope                = azurerm_storage_container.models.resource_manager_id
 }
+
+
 
 
 # ------ AKS ------ #

@@ -434,24 +434,6 @@ variable "aks_worker_pools" {
     nodes_max_count : optional(number, null)
   }))
   default = {
-    "workers01" : {
-      vm_size     = "Standard_E4ads_v5" # 4 CPU, 32 GB memory
-      nodes_count = 1
-      max_pods : 30
-      priority = "Regular"
-      availability_zones = [
-        "1", "2", "3",
-      ]
-      disk_size_gb = 128
-      disk_type : "Ephemeral"
-      # Auto-scaling setttings
-      enable_auto_scaling = true
-      nodes_count         = 1
-      nodes_min_count     = 1
-      nodes_max_count     = 3
-      # Tags
-      tags : {}
-    }
     "a100w01" : {
       vm_size  = "Standard_NC24ads_A100_v4"
       priority = "Regular"

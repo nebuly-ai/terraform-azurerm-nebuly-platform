@@ -1,5 +1,5 @@
 ### General ###
-location            = "EastUS"
+location            = "WestEurope"
 resource_prefix     = "nbltst"
 resource_group_name = "rg-platform-inttest"
 tags = {

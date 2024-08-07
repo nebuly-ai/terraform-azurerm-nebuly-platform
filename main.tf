@@ -135,6 +135,12 @@ resource "azurerm_subnet" "aks_nodes" {
   virtual_network_name = local.virtual_network.name
   resource_group_name  = data.azurerm_resource_group.main.name
   address_prefixes     = var.subnet_address_space_aks_nodes
+
+  service_endpoints = [
+    "Microsoft.Storage",
+    "Microsoft.CognitiveServices",
+    "Microsoft.KeyVault",
+  ]
 }
 resource "azurerm_subnet" "private_endpints" {
   count = local.use_existing_private_endpoints_subnet ? 0 : 1
@@ -151,10 +157,6 @@ resource "azurerm_subnet" "flexible_postgres" {
   virtual_network_name = local.virtual_network.name
   resource_group_name  = data.azurerm_resource_group.main.name
   address_prefixes     = var.subnet_address_space_flexible_postgres
-
-  service_endpoints = [
-    "Microsoft.Storage",
-  ]
 
   delegation {
     name = "delegation"

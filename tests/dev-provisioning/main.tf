@@ -75,6 +75,7 @@ module "platform" {
     name = "Standard_D2ads_v5"
   }
 
+  azure_openai_location                   = "EastUS"
   key_vault_public_network_access_enabled = true
   key_vault_network_acls = {
     ip_rules                   = [local.my_ip]

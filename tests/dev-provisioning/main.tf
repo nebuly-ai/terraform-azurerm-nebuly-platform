@@ -87,3 +87,12 @@ module "platform" {
   tags = var.tags
 }
 
+
+output "secret_provider_class" {
+  value     = module.platform.secret_provider_class
+  sensitive = true
+}
+output "helm_values" {
+  value     = module.platform.helm_values
+  sensitive = true
+}

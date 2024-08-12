@@ -213,8 +213,10 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 resource "azurerm_role_assignment" "key_vault_secret_user__aks" {
+  count = length(module.aks.key_vault_secrets_provider.secret_identity[0]) > 0 ? 1 : 0
+
   scope                = azurerm_key_vault.main.id
-  principal_id         = module.aks.cluster_identity.principal_id
+  principal_id         = module.aks.key_vault_secrets_provider.secret_identity[0].object_id
   role_definition_name = "Key Vault Secrets User"
 }
 resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
@@ -507,7 +509,7 @@ resource "azurerm_storage_account" "main" {
 }
 resource "azurerm_storage_container" "models" {
   storage_account_name = azurerm_storage_account.main.name
-  name                 = "ai-models"
+  name                 = "models"
 }
 resource "azurerm_role_assignment" "storage_container_models__data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
@@ -712,7 +714,7 @@ locals {
 
       key_vault_name          = azurerm_key_vault.main.name
       tenant_id               = data.azurerm_client_config.current.tenant_id
-      aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].object_id, "TODO")
+      aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].client_id, "TODO")
 
       secret_name_jwt_signing_key     = azurerm_key_vault_secret.jwt_signing_key.name
       secret_name_db_username         = azurerm_key_vault_secret.postgres_user.name

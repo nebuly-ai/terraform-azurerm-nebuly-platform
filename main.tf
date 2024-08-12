@@ -213,10 +213,11 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 resource "azurerm_role_assignment" "key_vault_secret_user__aks" {
-  count = length(module.aks.key_vault_secrets_provider.secret_identity) > 0 ? 1 : 0
-
-  scope                = azurerm_key_vault.main.id
-  principal_id         = module.aks.key_vault_secrets_provider.secret_identity[0].object_id
+  scope = azurerm_key_vault.main.id
+  principal_id = try(
+    module.aks.key_vault_secrets_provider.secret_identity[0].object_id,
+    module.aks.cluster_identity.object_id,
+  )
   role_definition_name = "Key Vault Secrets User"
 }
 resource "azurerm_role_assignment" "key_vault_secret_officer__current" {

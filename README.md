@@ -4,6 +4,89 @@ Terraform module for provisioning Nebuly Platform resources on Microsoft Azure.
 
 Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-ai/nebuly-platform/azurerm/latest).
 
+## Quickstart
+
+To get started with Nebuly installation on Microsoft Azure, you can follow the steps below. 
+
+These instructions will guide you through the installation using Nebuly's default standard configuration with the Nebuly Helm Chart.
+
+For specific configurations or assistance, reach out to the Nebuly Slack channel or email [support@nebuly.ai](mailto:support@nebuly.ai).
+
+### 1. Terraform setup
+
+Import Nebuly into your Terraform root module, provide the necessary variables, and apply the changes.
+
+For configuration examples, you can refer to the [Examples](#examples). 
+
+### 2. Connect to the Azure Kubernetes Service cluster
+
+Prerequisites: install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+
+* Fetch the command for retrieving the credentials from the module outputs:
+
+```shell
+terraform output aks_get_credentials
+```
+
+* Run the command you got from the previous step
+
+### 3. Create image pull secret
+
+The auto-generated Helm values use the name defined in the k8s_image_pull_secret_name input variable for the Image Pull Secret. If you prefer a custom name, update either the Terraform variable or your Helm values accordingly.
+Create a Kubernetes [Image Pull Secret](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) for 
+authenticating with your Docker registry and pulling the Nebuly Docker images.
+
+
+### 4. Create Secret Provider Class
+Create a Secret Provider Class to allow AKS to fetch credentials from the provisioned Key Vault.
+
+* Get the Secret Provider Class YAML definition from the Terraform module outputs:
+  ```shell
+  terraform output secret_provider_class
+  ```
+
+* Copy the output of the command into a file named secret-provider-class.yaml.
+
+* Run the following commands to install Nebuly in the Kubernetes namespace nebuly:
+
+  ```shell
+  kubectl create ns nebuly
+  kubectl apply --server-side -f secret-provider-class.yaml
+  ```
+
+### 5. Install bootstrap-azure chart
+
+Install the bootstrap Helm chart to set up all the dependencies required for installing the Nebuly Platform Helm chart.
+
+Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/bootstrap-azure) for all the configuration details.
+
+```shell
+helm install oci://ghcr.io/nebuly-ai/helm-charts/bootstrap-azure \
+  --namespace nebuly \
+  --generate-name 
+```
+
+### 6. Install nebuly-platform chart
+
+Retrieve the auto-generated values from the Terraform outputs and save them to a file named `values.yaml`:
+
+```shell
+terraform output helm_values
+```
+
+Install the Nebuly Next, install the Nebuly Platform Helm chart. 
+Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/nebuly-platform) for detailed configuration options.
+
+```shell
+helm install oci://ghcr.io/nebuly-ai/helm-charts/nebuly-platform \
+  --namespace nebuly \
+  -f values.yaml \
+  <your-release-name> 
+```
+
+
+
+
 ## Examples
 
 ### Basic usage
@@ -31,6 +114,7 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 
 | Name | Description |
 |------|-------------|
+| <a name="output_aks_get_credentials"></a> [aks\_get\_credentials](#output\_aks\_get\_credentials) | Command for getting the credentials for connecting to the provisioned AKS cluster. |
 | <a name="output_helm_values"></a> [helm\_values](#output\_helm\_values) | The `values.yaml` file for installing Nebuly with Helm.<br><br>  The default standard configuration is used, which uses Nginx as ingress controller and exposes the application to the Internet. This configuration can be customized according to specific needs. |
 | <a name="output_secret_provider_class"></a> [secret\_provider\_class](#output\_secret\_provider\_class) | The `secret-provider-class.yaml` file to make Kubernetes reference the secrets stored in the Key Vault. |
 
@@ -50,6 +134,7 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 | <a name="input_aks_worker_pools"></a> [aks\_worker\_pools](#input\_aks\_worker\_pools) | The worker pools of the AKS cluster, each with the respective configuration.<br>  The default configuration uses a single worker node, with no HA. | <pre>map(object({<br>    enabled : optional(bool, true)<br>    vm_size : string<br>    priority : optional(string, "Regular")<br>    tags : map(string)<br>    max_pods : number<br>    disk_size_gb : optional(number, 128)<br>    disk_type : string<br>    availability_zones : list(string)<br>    node_taints : optional(list(string), [])<br>    node_labels : optional(map(string), {})<br>    # Auto-scaling settings<br>    nodes_count : optional(number, null)<br>    enable_auto_scaling : optional(bool, false)<br>    nodes_min_count : optional(number, null)<br>    nodes_max_count : optional(number, null)<br>  }))</pre> | <pre>{<br>  "a100w01": {<br>    "availability_zones": [<br>      "1"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w02": {<br>    "availability_zones": [<br>      "2"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "a100w03": {<br>    "availability_zones": [<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC24ads_A100_v4"<br>  },<br>  "t4workers": {<br>    "availability_zones": [<br>      "1",<br>      "2",<br>      "3"<br>    ],<br>    "disk_size_gb": 128,<br>    "disk_type": "Ephemeral",<br>    "enable_auto_scaling": true,<br>    "max_pods": 30,<br>    "node_labels": {<br>      "nebuly.com/accelerator": "nvidia-tesla-t4"<br>    },<br>    "node_taints": [<br>      "nvidia.com/gpu=:NoSchedule"<br>    ],<br>    "nodes_count": null,<br>    "nodes_max_count": 1,<br>    "nodes_min_count": 0,<br>    "priority": "Regular",<br>    "tags": {},<br>    "vm_size": "Standard_NC4as_T4_v3"<br>  }<br>}</pre> | no |
 | <a name="input_azure_openai_location"></a> [azure\_openai\_location](#input\_azure\_openai\_location) | The Azure region where to deploy the Azure OpenAI models. <br>  Note that the models required by Nebuly are supported only in few specific regions. For more information, you can refer to Azure documentation:<br>  https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models#standard-deployment-model-availability | `string` | `"EastUS"` | no |
 | <a name="input_azure_openai_rate_limits"></a> [azure\_openai\_rate\_limits](#input\_azure\_openai\_rate\_limits) | The rate limits (K-tokens/minute) of the deployed Azure OpenAI models. | <pre>object({<br>    gpt_4 : number<br>    gpt_4o_mini : number<br>  })</pre> | <pre>{<br>  "gpt_4": 100,<br>  "gpt_4o_mini": 100<br>}</pre> | no |
+| <a name="input_k8s_image_pull_secret_name"></a> [k8s\_image\_pull\_secret\_name](#input\_k8s\_image\_pull\_secret\_name) | The name of the Kubernetes Image Pull Secret to use. <br>  This value will be used to auto-generate the values.yaml file for installing the Nebuly Platform Helm chart. | `string` | `"nebuly-docker-pull"` | no |
 | <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet, according to the firewall rules?<br>  Default to true to to allow the Terraform module to be executed even outside the private virtual network. <br>  When set to true, firewall rules are applied, and all connections are denied by default. | `bool` | `true` | no |
 | <a name="input_key_vault_purge_protection_enabled"></a> [key\_vault\_purge\_protection\_enabled](#input\_key\_vault\_purge\_protection\_enabled) | Is purge protection enabled for the Key Vault? | `bool` | `false` | no |
 | <a name="input_key_vault_sku_name"></a> [key\_vault\_sku\_name](#input\_key\_vault\_sku\_name) | The SKU of the Key Vault. | `string` | `"Standard"` | no |
@@ -83,43 +168,43 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 ## Resources
 
 
-- resource.azuread_application.main (/terraform-docs/main.tf#230)
-- resource.azuread_service_principal.main (/terraform-docs/main.tf#236)
-- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#241)
-- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#425)
-- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#444)
-- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#459)
+- resource.azuread_application.main (/terraform-docs/main.tf#232)
+- resource.azuread_service_principal.main (/terraform-docs/main.tf#238)
+- resource.azuread_service_principal_password.main (/terraform-docs/main.tf#243)
+- resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#427)
+- resource.azurerm_cognitive_deployment.gpt_4_turbo (/terraform-docs/main.tf#446)
+- resource.azurerm_cognitive_deployment.gpt_4o_mini (/terraform-docs/main.tf#461)
 - resource.azurerm_key_vault.main (/terraform-docs/main.tf#192)
-- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#474)
-- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#245)
-- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#254)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#661)
-- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#408)
-- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#399)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#618)
-- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#342)
-- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#350)
-- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#272)
-- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#323)
-- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#316)
-- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#336)
-- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#330)
+- resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#476)
+- resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#247)
+- resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#256)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#663)
+- resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#410)
+- resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#401)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#620)
+- resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#344)
+- resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#352)
+- resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#274)
+- resource.azurerm_postgresql_flexible_server_configuration.mandatory_configurations (/terraform-docs/main.tf#325)
+- resource.azurerm_postgresql_flexible_server_configuration.optional_configurations (/terraform-docs/main.tf#318)
+- resource.azurerm_postgresql_flexible_server_database.analytics (/terraform-docs/main.tf#338)
+- resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#332)
 - resource.azurerm_private_dns_zone.flexible_postgres (/terraform-docs/main.tf#171)
 - resource.azurerm_private_dns_zone_virtual_network_link.flexible_postgres (/terraform-docs/main.tf#177)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#613)
-- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#220)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#615)
+- resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#222)
 - resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#215)
-- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#512)
-- resource.azurerm_storage_account.main (/terraform-docs/main.tf#488)
-- resource.azurerm_storage_container.models (/terraform-docs/main.tf#508)
+- resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#514)
+- resource.azurerm_storage_account.main (/terraform-docs/main.tf#490)
+- resource.azurerm_storage_container.models (/terraform-docs/main.tf#510)
 - resource.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#127)
 - resource.azurerm_subnet.flexible_postgres (/terraform-docs/main.tf#149)
 - resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#141)
 - resource.azurerm_virtual_network.main (/terraform-docs/main.tf#119)
-- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#267)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#600)
-- resource.tls_private_key.aks (/terraform-docs/main.tf#522)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#657)
+- resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#269)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#602)
+- resource.tls_private_key.aks (/terraform-docs/main.tf#524)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#659)
 - data source.azurerm_client_config.current (/terraform-docs/main.tf#77)
 - data source.azurerm_resource_group.main (/terraform-docs/main.tf#74)
 - data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#88)

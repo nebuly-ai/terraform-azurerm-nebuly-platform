@@ -26,6 +26,18 @@ variable "platform_domain" {
 }
 
 
+
+# ------ Kubernetes ------ #
+variable "k8s_image_pull_secret_name" {
+  default     = "nebuly-docker-pull"
+  description = <<EOT
+  The name of the Kubernetes Image Pull Secret to use. 
+  This value will be used to auto-generate the values.yaml file for installing the Nebuly Platform Helm chart.
+  EOT
+  type        = string
+}
+
+
 # ------ PostgreSQL Databases ------ #
 variable "postgres_server_sku" {
   type = object({

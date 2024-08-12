@@ -20,6 +20,89 @@ content: |-
 
   Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-ai/nebuly-platform/azurerm/latest).
 
+  ## Quickstart
+
+  To get started with Nebuly installation on Microsoft Azure, you can follow the steps below. 
+
+  These instructions will guide you through the installation using Nebuly's default standard configuration with the Nebuly Helm Chart.
+
+  For specific configurations or assistance, reach out to the Nebuly Slack channel or email [support@nebuly.ai](mailto:support@nebuly.ai).
+
+  ### 1. Terraform setup
+
+  Import Nebuly into your Terraform root module, provide the necessary variables, and apply the changes.
+
+  For configuration examples, you can refer to the [Examples](#examples). 
+
+  ### 2. Connect to the Azure Kubernetes Service cluster
+
+  Prerequisites: install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+
+  * Fetch the command for retrieving the credentials from the module outputs:
+
+  ```shell
+  terraform output aks_get_credentials
+  ```
+
+  * Run the command you got from the previous step
+
+  ### 3. Create image pull secret
+
+  The auto-generated Helm values use the name defined in the k8s_image_pull_secret_name input variable for the Image Pull Secret. If you prefer a custom name, update either the Terraform variable or your Helm values accordingly.
+  Create a Kubernetes [Image Pull Secret](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) for 
+  authenticating with your Docker registry and pulling the Nebuly Docker images.
+
+
+  ### 4. Create Secret Provider Class
+  Create a Secret Provider Class to allow AKS to fetch credentials from the provisioned Key Vault.
+
+  * Get the Secret Provider Class YAML definition from the Terraform module outputs:
+    ```shell
+    terraform output secret_provider_class
+    ```
+
+  * Copy the output of the command into a file named secret-provider-class.yaml.
+
+  * Run the following commands to install Nebuly in the Kubernetes namespace nebuly:
+
+    ```shell
+    kubectl create ns nebuly
+    kubectl apply --server-side -f secret-provider-class.yaml
+    ```
+
+  ### 5. Install bootstrap-azure chart
+
+  Install the bootstrap Helm chart to set up all the dependencies required for installing the Nebuly Platform Helm chart.
+
+  Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/bootstrap-azure) for all the configuration details.
+
+  ```shell
+  helm install oci://ghcr.io/nebuly-ai/helm-charts/bootstrap-azure \
+    --namespace nebuly \
+    --generate-name 
+  ```
+
+  ### 6. Install nebuly-platform chart
+
+  Retrieve the auto-generated values from the Terraform outputs and save them to a file named `values.yaml`:
+
+  ```shell
+  terraform output helm_values
+  ```
+
+  Install the Nebuly Next, install the Nebuly Platform Helm chart. 
+  Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/nebuly-platform) for detailed configuration options.
+
+  ```shell
+  helm install oci://ghcr.io/nebuly-ai/helm-charts/nebuly-platform \
+    --namespace nebuly \
+    -f values.yaml \
+    <your-release-name> 
+  ```
+
+
+
+
   ## Examples
 
   ### Basic usage

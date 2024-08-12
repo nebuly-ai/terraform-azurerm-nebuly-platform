@@ -2,7 +2,7 @@ strimzi:
   enabled: true
 
 imagePullSecrets:
-  - name: nebuly-docker-pull
+  - name: ${image_pull_secret_name}
 
 backend:
   image:

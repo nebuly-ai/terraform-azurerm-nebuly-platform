@@ -688,7 +688,8 @@ locals {
   helm_values = templatefile(
     "${path.module}/templates/helm-values.tpl.yaml",
     {
-      platform_domain = var.platform_domain
+      platform_domain        = var.platform_domain
+      image_pull_secret_name = var.k8s_image_pull_secret_name
 
       openai_endpoint               = azurerm_cognitive_account.main.endpoint
       openai_frustration_deployment = azurerm_cognitive_deployment.gpt_4_turbo.name

@@ -12,3 +12,8 @@ output "secret_provider_class" {
   sensitive   = true
   description = "The `secret-provider-class.yaml` file to make Kubernetes reference the secrets stored in the Key Vault."
 }
+
+output "aks_get_credentials" {
+  description = "Command for getting the credentials for connecting to the provisioned AKS cluster."
+  value       = "az aks get-credentials --resource-group ${var.resource_group_name} --name ${module.aks.aks_name}"
+}

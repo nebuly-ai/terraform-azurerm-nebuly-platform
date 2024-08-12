@@ -116,7 +116,7 @@ kafka:
   zookeeper:
     replicas: 1
     storage:
-      class: gp2-csi
+      class: managed-csi-zrs
   replicas: 1
   config:
     offsets.topic.replication.factor: 1

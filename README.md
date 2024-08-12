@@ -18,6 +18,8 @@ Import Nebuly into your Terraform root module, provide the necessary variables, 
 
 For configuration examples, you can refer to the [Examples](#examples). 
 
+Once the Terraform changes are applied, proceed with the next steps to deploy Nebuly on the provisioned Azure Kubernetes Service (AKS) cluster.
+
 ### 2. Connect to the Azure Kubernetes Service cluster
 
 Prerequisites: install the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
@@ -54,9 +56,9 @@ Create a Secret Provider Class to allow AKS to fetch credentials from the provis
   kubectl apply --server-side -f secret-provider-class.yaml
   ```
 
-### 5. Install bootstrap-azure chart
+### 5. Bootstrap AKS cluster
 
-Install the bootstrap Helm chart to set up all the dependencies required for installing the Nebuly Platform Helm chart.
+Install the bootstrap Helm chart to set up all the dependencies required for installing the Nebuly Platform Helm chart on AKS.
 
 Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/bootstrap-azure) for all the configuration details.
 

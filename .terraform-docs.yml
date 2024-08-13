@@ -103,14 +103,9 @@ content: |-
   ```
 
 
-
-
   ## Examples
 
-  ### Basic usage
-  ```hcl
-  {{ include "examples/basic/main.tf" }}
-  ```
+  You can find examples of code that uses this Terraform module in the [examples](./examples) directory.
 
 
   {{ .Header }}

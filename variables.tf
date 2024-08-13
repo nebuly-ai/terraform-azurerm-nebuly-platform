@@ -201,6 +201,14 @@ variable "whitelist_current_ip" {
   type        = bool
   default     = true
 }
+variable "whitelisted_ips" {
+  description = <<EOT
+  Optional list of IPs that will be able to access the following resources from the internet: Azure Kubernetes Service (AKS) API Server, 
+  Azure Key Vault, Azure Storage Account.
+  EOT
+  type        = list(string)
+  default     = []
+}
 variable "virtual_network_name" {
   description = <<EOT
   Optional name of the virtual network in which to create the resources. 
@@ -333,11 +341,6 @@ variable "aks_sku_tier" {
   description = "The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads."
   default     = "Standard"
   type        = string
-}
-variable "aks_api_server_allowed_ip_addresses" {
-  description = "Map containing the IP addresses that are allwed to access the AKS API Server. The keys of the map are used only for documentation purpose."
-  type        = map(string)
-  default     = {}
 }
 variable "aks_net_profile_service_cidr" {
   type        = string

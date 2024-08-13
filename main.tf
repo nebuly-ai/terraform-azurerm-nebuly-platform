@@ -35,7 +35,8 @@ terraform {
 locals {
   aks_cluster_name = format("%snebuly", var.resource_prefix)
 
-  current_ip = chomp(data.http.current_ip.response_body)
+  current_ip      = chomp(data.http.current_ip.response_body)
+  whitelisted_ips = var.whitelist_current_ip ? concat([local.current_ip], var.whitelisted_ips) : var.whitelisted_ips
 
   postgres_server_name = format("%snebulydb", var.resource_prefix)
   postgres_server_configurations = {
@@ -207,7 +208,7 @@ resource "azurerm_key_vault" "main" {
     bypass                     = "AzureServices"
     default_action             = "Deny"
     virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
-    ip_rules                   = var.whitelist_current_ip ? [local.current_ip] : []
+    ip_rules                   = local.whitelisted_ips
   }
 
   tags = var.tags
@@ -502,7 +503,7 @@ resource "azurerm_storage_account" "main" {
 
   network_rules {
     default_action             = "Deny"
-    ip_rules                   = var.whitelist_current_ip ? [local.current_ip] : []
+    ip_rules                   = local.whitelisted_ips
     virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
   }
 
@@ -526,13 +527,6 @@ resource "tls_private_key" "aks" {
   algorithm = "RSA" # Azure VMs currently do not support ECDSA
   rsa_bits  = "4096"
 }
-locals {
-  aks_api_server_allowed_ip_addresses = (
-    var.whitelist_current_ip ?
-    merge({ "current-ip" : local.current_ip }, var.aks_api_server_allowed_ip_addresses) :
-    var.aks_api_server_allowed_ip_addresses
-  )
-}
 module "aks" {
   source  = "Azure/aks/azurerm"
   version = "9.1.0"
@@ -551,7 +545,7 @@ module "aks" {
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = [
-    for _, ip in local.aks_api_server_allowed_ip_addresses : "${ip}/32"
+    for ip in local.whitelisted_ips : "${ip}/32"
   ]
 
   rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids

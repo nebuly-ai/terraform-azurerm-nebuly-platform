@@ -744,14 +744,14 @@ locals {
       tenant_id               = data.azurerm_client_config.current.tenant_id
       aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].client_id, "TODO")
 
-      secret_name_jwt_signing_key            = azurerm_key_vault_secret.jwt_signing_key.name
-      secret_name_db_username                = azurerm_key_vault_secret.postgres_user.name
-      secret_name_db_password                = azurerm_key_vault_secret.postgres_password.name
-      secret_name_openai_api_key             = azurerm_key_vault_secret.azure_openai_api_key.name
-      secret_name_azure_client_id            = azurerm_key_vault_secret.azuread_application_client_id.name
-      secret_name_azure_client_secret        = azurerm_key_vault_secret.azuread_application_client_secret.name
-      secret_name_nebuly_azure_client_id     = azurerm_key_vault_secret.nebuly_azure_client_id
-      secret_name_nebuly_azure_client_secret = azurerm_key_vault_secret.nebuly_azure_client_secret
+      secret_name_jwt_signing_key      = azurerm_key_vault_secret.jwt_signing_key.name
+      secret_name_db_username          = azurerm_key_vault_secret.postgres_user.name
+      secret_name_db_password          = azurerm_key_vault_secret.postgres_password.name
+      secret_name_openai_api_key       = azurerm_key_vault_secret.azure_openai_api_key.name
+      secret_name_azure_client_id      = azurerm_key_vault_secret.azuread_application_client_id.name
+      secret_name_azure_client_secret  = azurerm_key_vault_secret.azuread_application_client_secret.name
+      secret_name_nebuly_client_id     = azurerm_key_vault_secret.nebuly_azure_client_id.name
+      secret_name_nebuly_client_secret = azurerm_key_vault_secret.nebuly_azure_client_secret.name
 
       k8s_secret_key_db_username          = local.k8s_secret_key_db_username
       k8s_secret_key_db_password          = local.k8s_secret_key_db_password

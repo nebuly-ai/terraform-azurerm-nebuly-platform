@@ -31,7 +31,7 @@ variable "nebuly_credentials" {
     client_secret : string
   })
   description = <<EOT
-  The credentials provided by Nebuly are required for pulling the LLMs necessary for the platform. 
+  The credentials provided by Nebuly are required for activating your platform installation. 
   If you haven't received your credentials or have lost them, please contact support@nebuly.ai.
   EOT
 }

@@ -52,6 +52,12 @@ module "platform" {
   platform_domain     = "platform.azure.testing"
   resource_prefix     = "myprefix"
 
+  # Credentials provided by Nebuly for activating your Platform installation.
+  nebuly_credentials = {
+    client_id     = "<your-client-id>"
+    client_secret = "<your-client-secret>"
+  }
+
   key_vault_public_network_access_enabled = true
   aks_cluster_admin_object_ids = [
     # Add here your AAD Groups, users, service principals, etc.

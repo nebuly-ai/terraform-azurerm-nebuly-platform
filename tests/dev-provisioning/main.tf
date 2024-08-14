@@ -52,6 +52,12 @@ variable "tags" {
 variable "location" {
   type = string
 }
+variable "nebuly_credentials" {
+  type = object({
+    client_id     = string
+    client_secret = string
+  })
+}
 
 # ------ Data Sources ------ #
 data "azuread_group" "engineering" {
@@ -64,10 +70,7 @@ module "platform" {
   location            = var.location
   resource_group_name = var.resource_group_name
   platform_domain     = "platform.azure.testing"
-  nebuly_credentials = {
-    client_id     = ""
-    client_secret = ""
-  }
+  nebuly_credentials  = var.nebuly_credentials
 
   postgres_server_sku = {
     tier = "B"

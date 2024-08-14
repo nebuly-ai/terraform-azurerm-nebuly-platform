@@ -19,6 +19,10 @@ run "smoke_test_plan__existing_networks" {
     resource_group_name = "rg-platform-inttest"
     location            = "EastUS"
     platform_domain     = "intest.nebuly.ai"
+    nebuly_credentials = {
+      client_id = ""
+      client_secret= ""
+    }
 
     # ------ Networking ------#
     virtual_network_name  = run.setup.azurerm_virtual_network.name

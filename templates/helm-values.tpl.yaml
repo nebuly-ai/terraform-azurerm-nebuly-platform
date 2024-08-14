@@ -51,9 +51,20 @@ azureml:
   enabled: false
 
 aiModels:
-  registry: aws_s3
-  aws:
-    bucketName: "" # TODO
+  registry: azure_storage
+  azure:
+    storageAccountName: ${storage_account_name}
+    storageContainerName: ${storage_container_name}
+    tenantId: ${tenant_id}
+    managedIdentityClientId: ${kubelet_identity_client_id}
+
+  sync:
+    enabled: true
+    source:
+      existingSecret:
+        name: ${secret_provider_class_secret_name}
+        clientIdKey: ${k8s_secret_key_nebuly_client_id}
+        clientSecretKey: ${k8s_secret_key_nebuly_client_secret}
 
 lionLinguist:
   image:

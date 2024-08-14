@@ -267,6 +267,29 @@ resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
 
 
 
+# ------ Nebuly Identity for pulling LLMs ------ # 
+resource "azurerm_key_vault_secret" "nebuly_azure_client_id" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = format("%s-nebuly-azure-client-id", var.resource_prefix)
+  value        = var.nebuly_credentials.client_id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
+resource "azurerm_key_vault_secret" "nebuly_azure_client_secret" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = format("%s-nebuly-azure-client-secret", var.resource_prefix)
+  value        = var.nebuly_credentials.client_secret
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
+
+
+
+
 # ------ Database Server ------ #
 resource "random_password" "postgres_server_admin_password" {
   length           = 16
@@ -673,12 +696,14 @@ locals {
   secret_provider_class_secret_name = "nebuly-platform-credentials"
 
   # k8s secrets keys
-  k8s_secret_key_db_username         = "db-username"
-  k8s_secret_key_db_password         = "db-password"
-  k8s_secret_key_jwt_signing_key     = "jwt-signing-key"
-  k8s_secret_key_openai_api_key      = "openai-api-key"
-  k8s_secret_key_azure_client_id     = "azure-client-id"
-  k8s_secret_key_azure_client_secret = "azure-client-secret"
+  k8s_secret_key_db_username          = "db-username"
+  k8s_secret_key_db_password          = "db-password"
+  k8s_secret_key_jwt_signing_key      = "jwt-signing-key"
+  k8s_secret_key_openai_api_key       = "openai-api-key"
+  k8s_secret_key_azure_client_id      = "azure-client-id"
+  k8s_secret_key_azure_client_secret  = "azure-client-secret"
+  k8s_secret_key_nebuly_client_id     = "nebuly-azure-client-id"
+  k8s_secret_key_nebuly_client_secret = "nebuly-azure-client-secret"
 
   helm_values = templatefile(
     "${path.module}/templates/helm-values.tpl.yaml",
@@ -692,14 +717,21 @@ locals {
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name
 
-      k8s_secret_key_db_username     = local.k8s_secret_key_db_username
-      k8s_secret_key_db_password     = local.k8s_secret_key_db_password
-      k8s_secret_key_jwt_signing_key = local.k8s_secret_key_jwt_signing_key
-      k8s_secret_key_openai_api_key  = local.k8s_secret_key_openai_api_key
+      k8s_secret_key_db_username          = local.k8s_secret_key_db_username
+      k8s_secret_key_db_password          = local.k8s_secret_key_db_password
+      k8s_secret_key_jwt_signing_key      = local.k8s_secret_key_jwt_signing_key
+      k8s_secret_key_openai_api_key       = local.k8s_secret_key_openai_api_key
+      k8s_secret_key_nebuly_client_secret = local.k8s_secret_key_nebuly_client_secret
+      k8s_secret_key_nebuly_client_id     = local.k8s_secret_key_nebuly_client_id
 
       postgres_server_url              = azurerm_postgresql_flexible_server.main.fqdn
       postgres_auth_database_name      = azurerm_postgresql_flexible_server_database.auth.name
       postgres_analytics_database_name = azurerm_postgresql_flexible_server_database.analytics.name
+
+      kubelet_identity_client_id = module.aks.kubelet_identity[0].client_id
+      storage_account_name       = azurerm_storage_account.main.name
+      storage_container_name     = azurerm_storage_container.models.name
+      tenant_id                  = data.azurerm_client_config.current.tenant_id
     },
   )
   secret_provider_class = templatefile(
@@ -712,19 +744,23 @@ locals {
       tenant_id               = data.azurerm_client_config.current.tenant_id
       aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].client_id, "TODO")
 
-      secret_name_jwt_signing_key     = azurerm_key_vault_secret.jwt_signing_key.name
-      secret_name_db_username         = azurerm_key_vault_secret.postgres_user.name
-      secret_name_db_password         = azurerm_key_vault_secret.postgres_password.name
-      secret_name_openai_api_key      = azurerm_key_vault_secret.azure_openai_api_key.name
-      secret_name_azure_client_id     = azurerm_key_vault_secret.azuread_application_client_id.name
-      secret_name_azure_client_secret = azurerm_key_vault_secret.azuread_application_client_secret.name
+      secret_name_jwt_signing_key            = azurerm_key_vault_secret.jwt_signing_key.name
+      secret_name_db_username                = azurerm_key_vault_secret.postgres_user.name
+      secret_name_db_password                = azurerm_key_vault_secret.postgres_password.name
+      secret_name_openai_api_key             = azurerm_key_vault_secret.azure_openai_api_key.name
+      secret_name_azure_client_id            = azurerm_key_vault_secret.azuread_application_client_id.name
+      secret_name_azure_client_secret        = azurerm_key_vault_secret.azuread_application_client_secret.name
+      secret_name_nebuly_azure_client_id     = azurerm_key_vault_secret.nebuly_azure_client_id
+      secret_name_nebuly_azure_client_secret = azurerm_key_vault_secret.nebuly_azure_client_secret
 
-      k8s_secret_key_db_username         = local.k8s_secret_key_db_username
-      k8s_secret_key_db_password         = local.k8s_secret_key_db_password
-      k8s_secret_key_jwt_signing_key     = local.k8s_secret_key_jwt_signing_key
-      k8s_secret_key_openai_api_key      = local.k8s_secret_key_openai_api_key
-      k8s_secret_key_azure_client_id     = local.k8s_secret_key_azure_client_id
-      k8s_secret_key_azure_client_secret = local.k8s_secret_key_azure_client_secret
+      k8s_secret_key_db_username          = local.k8s_secret_key_db_username
+      k8s_secret_key_db_password          = local.k8s_secret_key_db_password
+      k8s_secret_key_jwt_signing_key      = local.k8s_secret_key_jwt_signing_key
+      k8s_secret_key_openai_api_key       = local.k8s_secret_key_openai_api_key
+      k8s_secret_key_azure_client_id      = local.k8s_secret_key_azure_client_id
+      k8s_secret_key_azure_client_secret  = local.k8s_secret_key_azure_client_secret
+      k8s_secret_key_nebuly_client_secret = local.k8s_secret_key_nebuly_client_secret
+      k8s_secret_key_nebuly_client_id     = local.k8s_secret_key_nebuly_client_id
     },
   )
 }

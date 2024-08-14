@@ -25,6 +25,16 @@ variable "platform_domain" {
   }
 }
 
+variable "nebuly_credentials" {
+  type = object({
+    client_id : string
+    client_secret : string
+  })
+  description = <<EOT
+  The credentials provided by Nebuly are required for pulling the LLMs necessary for the platform. 
+  If you haven't received your credentials or have lost them, please contact support@nebuly.ai.
+  EOT
+}
 
 
 # ------ Kubernetes ------ #

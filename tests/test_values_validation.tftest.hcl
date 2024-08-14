@@ -6,6 +6,10 @@ variables {
   resource_group_name = "rg-platform-inttest"
   location            = "EastUS"
   platform_domain     = "intest.nebuly.ai"
+    nebuly_credentials = {
+      client_id = ""
+      client_secret= ""
+    }
 
   # ------ AKS ------ #
   aks_net_profile_service_cidr   = "10.32.0.0/24"

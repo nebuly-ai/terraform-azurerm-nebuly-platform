@@ -64,6 +64,10 @@ module "platform" {
   location            = var.location
   resource_group_name = var.resource_group_name
   platform_domain     = "platform.azure.testing"
+  nebuly_credentials = {
+    client_id     = ""
+    client_secret = ""
+  }
 
   postgres_server_sku = {
     tier = "B"

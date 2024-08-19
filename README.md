@@ -6,6 +6,10 @@ Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-a
 
 ## Quickstart
 
+> ⚠️  **Prerequisite**:
+> before using this Terraform module, ensure that you have your Nebuly credentials ready. 
+> These credentials are necessary to activate your installation and should be provided as input via the `nebuly_credentials` input.
+
 To get started with Nebuly installation on Microsoft Azure, you can follow the steps below. 
 
 These instructions will guide you through the installation using Nebuly's default standard configuration with the Nebuly Helm Chart.
@@ -77,15 +81,19 @@ Retrieve the auto-generated values from the Terraform outputs and save them to a
 terraform output helm_values
 ```
 
-Install the Nebuly Next, install the Nebuly Platform Helm chart. 
+Install the Nebuly Platform Helm chart. 
 Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree/main/nebuly-platform) for detailed configuration options.
 
 ```shell
 helm install oci://ghcr.io/nebuly-ai/helm-charts/nebuly-platform \
   --namespace nebuly \
   -f values.yaml \
+  --timeout 10m \
   <your-release-name> 
 ```
+
+> ℹ️  During the initial installation of the chart, all required Nebuly LLMs are uploaded to your model registry. 
+> This process can take approximately 5 minutes. If the helm install command appears to be stuck, don't worry: it's simply waiting for the upload to finish.
 
 
 ## Examples

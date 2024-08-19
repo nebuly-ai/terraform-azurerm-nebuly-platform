@@ -69,7 +69,7 @@ module "platform" {
 
   location            = var.location
   resource_group_name = var.resource_group_name
-  platform_domain     = "platform.azure.testing"
+  platform_domain     = "platform.azure.testing.nebuly.com"
   nebuly_credentials  = var.nebuly_credentials
 
   postgres_server_sku = {

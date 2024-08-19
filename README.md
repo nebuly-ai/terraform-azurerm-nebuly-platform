@@ -64,8 +64,9 @@ Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree
 
 ```shell
 helm install oci://ghcr.io/nebuly-ai/helm-charts/bootstrap-azure \
-  --namespace nebuly \
-  --generate-name 
+  --namespace nebuly-bootstrap \
+  --generate-name \
+  --create-namespace
 ```
 
 ### 6. Install nebuly-platform chart

@@ -80,8 +80,9 @@ content: |-
 
   ```shell
   helm install oci://ghcr.io/nebuly-ai/helm-charts/bootstrap-azure \
-    --namespace nebuly \
-    --generate-name 
+    --namespace nebuly-bootstrap \
+    --generate-name \
+    --create-namespace
   ```
 
   ### 6. Install nebuly-platform chart

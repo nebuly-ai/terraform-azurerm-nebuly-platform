@@ -10,6 +10,11 @@ backend:
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
     enabled: true
     className: "nginx"
     hosts:
@@ -17,6 +22,10 @@ backend:
         paths:
           - path: /backend(/|$)(.*)
             pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
 
   volumeMounts:
     - name: secrets-store
@@ -39,6 +48,11 @@ eventIngestion:
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
     enabled: true
     className: "nginx"
     hosts:
@@ -46,6 +60,10 @@ eventIngestion:
         paths:
           - path: /event-ingestion(/|$)(.*)
             pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
 
 azureml:
   enabled: false
@@ -183,6 +201,11 @@ auth:
     annotations:
       nginx.ingress.kubernetes.io/rewrite-target: "/auth/$2"
       nginx.ingress.kubernetes.io/use-regex: "true"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
     enabled: true
     className: "nginx"
     hosts:
@@ -190,6 +213,10 @@ auth:
         paths:
           - path: "/backend/auth(/|$)(.*)"
             pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
 
 frontend:
   image:
@@ -200,12 +227,22 @@ frontend:
   authApiUrl: https://${platform_domain}/backend/auth
   ingress:
     enabled: true
+    annotations:
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
     className: "nginx"
     hosts:
       - host: ${platform_domain}
         paths:
           - path: /
             pathType: Prefix
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}
 
 openAi:
   enabled: true

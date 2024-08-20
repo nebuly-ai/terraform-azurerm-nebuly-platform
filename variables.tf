@@ -344,8 +344,14 @@ variable "azure_openai_location" {
 # ------ AKS ------ #
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
-  default     = "1.29.5"
-  type        = string
+  default = {
+    workers       = "1.30.3"
+    control_plane = "1.30.3"
+  }
+  type = object({
+    workers       = string
+    control_plane = string
+  })
 }
 variable "aks_sku_tier" {
   description = "The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads."

@@ -559,8 +559,8 @@ module "aks" {
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
 
-  kubernetes_version   = var.aks_kubernetes_version
-  orchestrator_version = var.aks_kubernetes_version
+  kubernetes_version   = var.aks_kubernetes_version.control_plane
+  orchestrator_version = var.aks_kubernetes_version.workers
   sku_tier             = var.aks_sku_tier
 
 

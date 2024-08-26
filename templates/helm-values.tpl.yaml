@@ -102,16 +102,6 @@ lionLinguist:
       memory: 8Gi
       nvidia.com/gpu: 1
 
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: nebuly.com/accelerator
-                operator: In
-                values:
-                  - nvidia-tesla-t4
-
   volumeMounts:
     - name: secrets-store
       mountPath: /mnt/secrets-store
@@ -139,6 +129,22 @@ ingestionWorker:
         readOnly: true
         volumeAttributes:
           secretProviderClass: ${secret_provider_class_name}
+
+actionsProcessing:
+  schedule: "0 23 * * *" # Every day at 11:00 PM, cluster's timezone
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nebuly.com/accelerator
+                operator: In
+                values:
+                  - nvidia-ampere-a100
+  tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
 
 kafka:
   external: false

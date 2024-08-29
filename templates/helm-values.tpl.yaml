@@ -96,11 +96,8 @@ lionLinguist:
       - ReadWriteOnce
 
   resources:
-    requests:
-      cpu: "1"
     limits:
-      memory: 8Gi
-      nvidia.com/gpu: 1
+      memory: 4Gi
 
   volumeMounts:
     - name: secrets-store

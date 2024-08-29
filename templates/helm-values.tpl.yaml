@@ -127,6 +127,28 @@ ingestionWorker:
         volumeAttributes:
           secretProviderClass: ${secret_provider_class_name}
 
+  topicsClustering:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: nebuly.com/accelerator
+                  operator: In
+                  values:
+                    - nvidia-tesla-t4
+
+  suggestionsGeneration:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: nebuly.com/accelerator
+                  operator: In
+                  values:
+                    - nvidia-tesla-t4
+
 actionsProcessing:
   schedule: "0 23 * * *" # Every day at 11:00 PM, cluster's timezone
   affinity:

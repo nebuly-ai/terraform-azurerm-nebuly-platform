@@ -201,23 +201,15 @@ variable "key_vault_purge_protection_enabled" {
 
 
 # ------ Networking ------ #
-variable "whitelist_current_ip" {
+variable "whitelisted_ips" {
   description = <<EOT
-  If true, add the current IP executing the Terraform module to the whitelist rules of the provisioned services. 
-  This allows Terraform to access and configure the resources even when running outside the virtual network.
+  Optional list of IPs or IP Ranges that will be able to access the following resources from the internet: Azure Kubernetes Service (AKS) API Server, 
+  Azure Key Vault, Azure Storage Account. If 0.0.0.0/0 (default value), no whitelisting is enforced and the resources are accessible from all IPs.
 
   The whitelisting excludes the Database Server, which remains unexposed to the Internet and is accessible only from the virtual network.
   EOT
-  type        = bool
-  default     = true
-}
-variable "whitelisted_ips" {
-  description = <<EOT
-  Optional list of IPs that will be able to access the following resources from the internet: Azure Kubernetes Service (AKS) API Server, 
-  Azure Key Vault, Azure Storage Account.
-  EOT
   type        = list(string)
-  default     = []
+  default     = ["0.0.0.0/0"]
 }
 variable "virtual_network_name" {
   description = <<EOT

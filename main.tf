@@ -22,10 +22,6 @@ terraform {
       source  = "hashicorp/tls"
       version = "~>4.0"
     }
-    http = {
-      source  = "hashicorp/http"
-      version = "~>3.4"
-    }
   }
 }
 
@@ -35,8 +31,7 @@ terraform {
 locals {
   aks_cluster_name = format("%snebuly", var.resource_prefix)
 
-  current_ip      = chomp(data.http.current_ip.response_body)
-  whitelisted_ips = var.whitelist_current_ip ? concat([local.current_ip], var.whitelisted_ips) : var.whitelisted_ips
+  whitelisted_ips = var.whitelisted_ips
 
   postgres_server_name = format("%snebulydb", var.resource_prefix)
   postgres_server_configurations = {
@@ -76,9 +71,6 @@ data "azurerm_resource_group" "main" {
   name = var.resource_group_name
 }
 data "azurerm_client_config" "current" {
-}
-data "http" "current_ip" {
-  url = "https://ipv4.icanhazip.com"
 }
 data "azurerm_virtual_network" "main" {
   count = local.use_existing_virtual_network ? 1 : 0
@@ -564,12 +556,10 @@ module "aks" {
   sku_tier             = var.aks_sku_tier
 
 
-  vnet_subnet_id             = local.aks_nodes_subnet.id
-  net_profile_service_cidr   = var.aks_net_profile_service_cidr
-  net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
-  api_server_authorized_ip_ranges = [
-    for ip in local.whitelisted_ips : "${ip}/32"
-  ]
+  vnet_subnet_id                  = local.aks_nodes_subnet.id
+  net_profile_service_cidr        = var.aks_net_profile_service_cidr
+  net_profile_dns_service_ip      = var.aks_net_profile_dns_service_ip
+  api_server_authorized_ip_ranges = local.whitelisted_ips
 
   rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids
   rbac_aad_managed                  = true

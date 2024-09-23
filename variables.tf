@@ -441,55 +441,13 @@ variable "aks_worker_pools" {
     nodes_max_count : optional(number, null)
   }))
   default = {
-    "a100w01" : {
+    "a100wr" : {
       vm_size  = "Standard_NC24ads_A100_v4"
       priority = "Regular"
       max_pods : 30
       disk_size_gb = 128
       disk_type : "Ephemeral"
-      availability_zones = ["1"]
-      node_taints : [
-        "nvidia.com/gpu=:NoSchedule",
-      ]
-      node_labels : {
-        "nebuly.com/accelerator" : "nvidia-ampere-a100"
-      }
-      # Auto-scaling setttings
-      enable_auto_scaling = true
-      nodes_count : null
-      nodes_min_count = 0
-      nodes_max_count = 1
-      # Tags
-      tags : {}
-    }
-    "a100w02" : {
-      vm_size  = "Standard_NC24ads_A100_v4"
-      priority = "Regular"
-      max_pods : 30
-      disk_size_gb = 128
-      disk_type : "Ephemeral"
-      availability_zones = ["2"]
-      node_taints : [
-        "nvidia.com/gpu=:NoSchedule",
-      ]
-      node_labels : {
-        "nebuly.com/accelerator" : "nvidia-ampere-a100"
-      }
-      # Auto-scaling setttings
-      enable_auto_scaling = true
-      nodes_count : null
-      nodes_min_count = 0
-      nodes_max_count = 1
-      # Tags
-      tags : {}
-    }
-    "a100w03" : {
-      vm_size  = "Standard_NC24ads_A100_v4"
-      priority = "Regular"
-      max_pods : 30
-      disk_size_gb = 128
-      disk_type : "Ephemeral"
-      availability_zones = ["3"]
+      availability_zones = ["1", "2", "3"]
       tags : {}
       node_taints : [
         "nvidia.com/gpu=:NoSchedule",

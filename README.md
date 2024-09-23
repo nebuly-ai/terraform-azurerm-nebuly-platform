@@ -155,6 +155,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 | <a name="input_key_vault_soft_delete_retention_days"></a> [key\_vault\_soft\_delete\_retention\_days](#input\_key\_vault\_soft\_delete\_retention\_days) | The number of days that items should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days. | `number` | `7` | no |
 | <a name="input_location"></a> [location](#input\_location) | The region where to provision the resources. | `string` | n/a | yes |
 | <a name="input_nebuly_credentials"></a> [nebuly\_credentials](#input\_nebuly\_credentials) | The credentials provided by Nebuly are required for activating your platform installation. <br>  If you haven't received your credentials or have lost them, please contact support@nebuly.ai. | <pre>object({<br>    client_id : string<br>    client_secret : string<br>  })</pre> | n/a | yes |
+| <a name="input_okta_sso"></a> [okta\_sso](#input\_okta\_sso) | Settings for configuring the Okta SSO integration. | <pre>object({<br>    issuer : string<br>    client_id : string<br>    client_secret : string<br>  })</pre> | `null` | no |
 | <a name="input_platform_domain"></a> [platform\_domain](#input\_platform\_domain) | The domain on which the deployed Nebuly platform is made accessible. | `string` | n/a | yes |
 | <a name="input_postgres_server_admin_username"></a> [postgres\_server\_admin\_username](#input\_postgres\_server\_admin\_username) | The username of the admin user of the PostgreSQL Server. | `string` | `"nebulyadmin"` | no |
 | <a name="input_postgres_server_alert_rules"></a> [postgres\_server\_alert\_rules](#input\_postgres\_server\_alert\_rules) | The Azure Monitor alert rules to set on the provisioned PostgreSQL server. | <pre>map(object({<br>    description     = string<br>    frequency       = string<br>    window_size     = string<br>    action_group_id = string<br>    severity        = number<br><br>    criteria = optional(<br>      object({<br>        aggregation = string<br>        metric_name = string<br>        operator    = string<br>        threshold   = number<br>      })<br>    , null)<br>    dynamic_criteria = optional(<br>      object({<br>        aggregation       = string<br>        metric_name       = string<br>        operator          = string<br>        alert_sensitivity = string<br>      })<br>    , null)<br>  }))</pre> | `{}` | no |
@@ -196,6 +197,8 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#671)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#263)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#272)
+- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#683)
+- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#694)
 - resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#427)
 - resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#418)
 - resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#628)

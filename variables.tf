@@ -305,6 +305,18 @@ variable "private_dns_zones" {
 }
 
 
+# ------ External Credentials ------ #
+variable "okta_sso" {
+  description = "Settings for configuring the Okta SSO integration."
+  type = object({
+    issuer : string
+    client_id : string
+    client_secret : string
+  })
+  default = null
+}
+
+
 # ------ Azure OpenAI ------ #
 variable "azure_openai_rate_limits" {
   description = "The rate limits (K-tokens/minute) of the deployed Azure OpenAI models."

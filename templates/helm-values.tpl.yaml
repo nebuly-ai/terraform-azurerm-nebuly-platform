@@ -204,12 +204,27 @@ auth:
     postgresPasswordKey: ${k8s_secret_key_db_password}
     jwtSigningKey: ${k8s_secret_key_jwt_signing_key}
 
-  loginModes: "password"
-
-  # TODO: optional Microsoft SSO
   microsoft:
     enabled: false
-  # TODO: optional Okta SSO
+
+  %{ if okta_sso_enabled }
+  loginModes: "okta"
+  %{ else }
+  loginModes: "password"
+  %{ endif }
+
+  # Optional Okta SSO
+  %{ if okta_sso_enabled }
+  okta:
+    enabled: ${okta_sso_enabled}
+    issuer: ${okta_sso_issuer}
+    redirectUri: https://${platform_domain}/backend/auth/oauth/okta/callback
+    existingSecret:
+      name: ${secret_provider_class_secret_name}
+      clientIdKey: ${k8s_secret_key_okta_sso_client_id}
+      clientSecretKey: ${k8s_secret_key_okta_sso_client_secret}
+  %{ endif }
+
 
   volumeMounts:
     - name: secrets-store

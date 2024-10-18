@@ -88,16 +88,11 @@ lionLinguist:
   image:
     repository: "ghcr.io/nebuly-ai/nebuly-lion-linguist"
 
-  # TODO: will be updated when we implement CPU + Batch Job mode
   modelsCache:
     enabled: true
     storageClassName: managed-csi-zrs
     accessModes:
       - ReadWriteOnce
-
-  resources:
-    limits:
-      memory: 4Gi
 
   volumeMounts:
     - name: secrets-store

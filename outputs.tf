@@ -7,6 +7,13 @@ output "helm_values" {
   The default standard configuration is used, which uses Nginx as ingress controller and exposes the application to the Internet. This configuration can be customized according to specific needs.
   EOT
 }
+output "helm_values_bootstrap" {
+  value       = local.helm_values_bootstrap
+  sensitive   = true
+  description = <<EOT
+  The `bootrap.values.yaml` file for installing the Nebuly Azure Boostrap chart with Helm.
+  EOT
+}
 output "secret_provider_class" {
   value       = local.secret_provider_class
   sensitive   = true

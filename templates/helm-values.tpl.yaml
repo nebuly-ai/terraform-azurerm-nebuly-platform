@@ -144,7 +144,7 @@ ingestionWorker:
                   values:
                     - nvidia-tesla-t4
 
-actionsProcessing:
+primaryProcessing:
   schedule: "0 23 * * *" # Every day at 11:00 PM, cluster's timezone
   affinity:
     nodeAffinity:
@@ -155,6 +155,22 @@ actionsProcessing:
                 operator: In
                 values:
                   - nvidia-ampere-a100
+  tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+
+secondaryProcessing:
+  schedule: "0 2 * * *" # Every day at 2:00 AM, cluster's timezone
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nebuly.com/accelerator
+                operator: In
+                values:
+                  - nvidia-tesla-t4
   tolerations:
     - effect: NoSchedule
       key: nvidia.com/gpu
@@ -281,7 +297,8 @@ frontend:
 
 openAi:
   enabled: true
-  frustrationDetectionDeployment: ${openai_frustration_deployment}
+  gpt4oDeployment: ${openai_gpt4o_deployment}
+  translationDeployment: ${openai_translation_deployment}
   endpoint: ${openai_endpoint}
 
   existingSecret:

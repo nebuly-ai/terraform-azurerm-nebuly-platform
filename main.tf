@@ -33,7 +33,7 @@ locals {
 
   whitelisted_ips = var.whitelisted_ips
 
-  postgres_server_name = format("%snebulydb", var.resource_prefix)
+  postgres_server_name = var.postgres_override_name == null ? format("%snebulydb", var.resource_prefix) : var.postgres_override_name
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
@@ -460,34 +460,24 @@ resource "azurerm_cognitive_account" "main" {
 
   tags = var.tags
 }
-resource "azurerm_cognitive_deployment" "gpt_4_turbo" {
+
+resource "azurerm_cognitive_deployment" "main" {
+  for_each = {
+    for k, v in var.azure_openai_deployments : k => v if v.enabled
+  }
+
   cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = "gpt-4-turbo"
+  name                 = each.key
   rai_policy_name      = "Microsoft.Default"
 
   model {
     format  = "OpenAI"
-    name    = "gpt-4"
-    version = "turbo-2024-04-09"
+    name    = each.value.name
+    version = each.value.version
   }
   scale {
     type     = "Standard"
-    capacity = var.azure_openai_rate_limits.gpt_4
-  }
-}
-resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
-  cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = "gpt-4o-mini"
-  rai_policy_name      = "Microsoft.Default"
-
-  model {
-    format  = "OpenAI"
-    name    = "gpt-4o-mini"
-    version = "2024-07-18"
-  }
-  scale {
-    type     = "Standard"
-    capacity = var.azure_openai_rate_limits.gpt_4o_mini
+    capacity = each.value.rate_limit
   }
 }
 resource "azurerm_key_vault_secret" "azure_openai_api_key" {
@@ -728,7 +718,8 @@ locals {
       image_pull_secret_name = var.k8s_image_pull_secret_name
 
       openai_endpoint               = azurerm_cognitive_account.main.endpoint
-      openai_frustration_deployment = azurerm_cognitive_deployment.gpt_4_turbo.name
+      openai_gpt4o_deployment       = try([for k, v in azurerm_cognitive_deployment.main : k if v.name == "gpt-4o"][0], "")
+      openai_translation_deployment = try([for k, v in azurerm_cognitive_deployment.main : k if v.name == "gpt-4o-mini" && v.enabled][0], "")
 
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name
@@ -754,6 +745,12 @@ locals {
       storage_container_name     = azurerm_storage_container.models.name
       tenant_id                  = data.azurerm_client_config.current.tenant_id
     },
+  )
+  helm_values_bootstrap = templatefile(
+    "${path.module}/templates/helm-values-bootstrap.tpl.yaml",
+    {
+      aks_cluster_name = local.aks_cluster_name
+    }
   )
   secret_provider_class = templatefile(
     "${path.module}/templates/secret-provider-class.tpl.yaml",

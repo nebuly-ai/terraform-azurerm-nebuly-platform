@@ -79,12 +79,25 @@ module "platform" {
   postgres_server_high_availability = {
     enabled = false
   }
+  postgres_override_name = "nbltstnebulydb2"
 
   azure_openai_location = "EastUS"
-  azure_openai_rate_limits = {
-    gpt_4       = 1
-    gpt_4o_mini = 1
+  azure_openai_deployments = {
+    gpt-4o = {
+      name       = "gpt-4o"
+      version    = "2024-08-06"
+      rate_limit = 1
+      enabled    = true
+    }
+    gpt-4o-mini = {
+      name       = "gpt-4o-mini"
+      version    = "2024-07-18"
+      rate_limit = 1
+      enabled    = false
+    }
   }
+
+  aks_sku_tier = "Standard"
 
   key_vault_public_network_access_enabled = true
 
@@ -102,4 +115,11 @@ output "secret_provider_class" {
 output "helm_values" {
   value     = module.platform.helm_values
   sensitive = true
+}
+output "helm_values_bootstrap" {
+  value     = module.platform.helm_values_bootstrap
+  sensitive = true
+}
+output "aks_get_credentials" {
+  value = module.platform.aks_get_credentials
 }

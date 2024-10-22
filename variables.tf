@@ -61,6 +61,11 @@ variable "postgres_server_sku" {
   }
   description = "The SKU of the PostgreSQL Server, including the Tier and the Name. Examples: B_Standard_B1ms, GP_Standard_D2s_v3, MO_Standard_E4s_v3"
 }
+variable "postgres_override_name" {
+  type        = string
+  default = null
+  description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
+}
 variable "postgres_server_admin_username" {
   type        = string
   default     = "nebulyadmin"
@@ -318,15 +323,27 @@ variable "okta_sso" {
 
 
 # ------ Azure OpenAI ------ #
-variable "azure_openai_rate_limits" {
-  description = "The rate limits (K-tokens/minute) of the deployed Azure OpenAI models."
-  type = object({
-    gpt_4 : number
-    gpt_4o_mini : number
-  })
+variable "azure_openai_deployments" {
+  description = "The Azure OpenAI models to deploy."
+  type = map(object({
+    name : string
+    version : string
+    rate_limit : number
+    enabled : bool
+  }))
   default = {
-    gpt_4       = 100
-    gpt_4o_mini = 100
+    gpt-4o = {
+      name       = "gpt-4o"
+      version    = "2024-08-06"
+      rate_limit = 80
+      enabled    = true
+    }
+    gpt-4o-mini = {
+      name       = "gpt-4o-mini"
+      version    = "2024-07-18"
+      rate_limit = 80
+      enabled    = false
+    }
   }
 }
 variable "azure_openai_location" {
@@ -415,7 +432,7 @@ variable "aks_sys_pool" {
     # Auto-scaling setttings
     enable_auto_scaling = true
     agents_min_count    = 1
-    agents_max_count    = 3
+    agents_max_count    = 1
   }
 }
 variable "aks_worker_pools" {

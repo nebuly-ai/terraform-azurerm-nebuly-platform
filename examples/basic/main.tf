@@ -80,3 +80,7 @@ output "helm_values" {
   value     = module.platform.helm_values
   sensitive = true
 }
+output "helm_values_bootstrap" {
+  value     = module.platform.helm_values_bootstrap
+  sensitive = true
+}

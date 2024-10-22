@@ -63,7 +63,7 @@ variable "postgres_server_sku" {
 }
 variable "postgres_override_name" {
   type        = string
-  default = null
+  default     = null
   description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
 }
 variable "postgres_server_admin_username" {

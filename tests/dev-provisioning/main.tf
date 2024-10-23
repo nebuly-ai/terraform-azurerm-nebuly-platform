@@ -82,19 +82,12 @@ module "platform" {
   postgres_override_name = "nbltstnebulydb3"
 
   azure_openai_location = "EastUS"
-  azure_openai_deployments = {
-    gpt-4o = {
-      name       = "gpt-4o"
-      version    = "2024-08-06"
-      rate_limit = 1
-      enabled    = true
-    }
-    gpt-4o-mini = {
-      name       = "gpt-4o-mini"
-      version    = "2024-07-18"
-      rate_limit = 1
-      enabled    = false
-    }
+  azure_openai_deployment_gpt4o = {
+    rate_limit = 1
+  }
+  azure_openai_deployment_gpt4o_mini = {
+    rate_limit = 1
+    enabled = false
   }
 
   aks_sku_tier = "Standard"

@@ -323,28 +323,25 @@ variable "okta_sso" {
 
 
 # ------ Azure OpenAI ------ #
-variable "azure_openai_deployments" {
-  description = "The Azure OpenAI models to deploy."
-  type = map(object({
-    name : string
-    version : string
-    rate_limit : number
-    enabled : bool
-  }))
-  default = {
-    gpt-4o = {
-      name       = "gpt-4o"
-      version    = "2024-08-06"
-      rate_limit = 80
-      enabled    = true
-    }
-    gpt-4o-mini = {
-      name       = "gpt-4o-mini"
-      version    = "2024-07-18"
-      rate_limit = 80
-      enabled    = false
-    }
-  }
+variable "azure_openai_deployment_gpt4o" {
+  description = ""
+  type = object({
+    name : optional(string, "gpt-4o")
+    version : optional(string, "2024-08-06")
+    rate_limit : optional(number, 80)
+    enabled : optional(bool, true)
+  })
+  default = {}
+}
+variable "azure_openai_deployment_gpt4o_mini" {
+  description = ""
+  type = object({
+    name : optional(string, "gpt-4o-mini")
+    version : optional(string, "2024-07-18")
+    rate_limit : optional(number, 80)
+    enabled : optional(bool, true)
+  })
+  default = {}
 }
 variable "azure_openai_location" {
   description = <<EOT

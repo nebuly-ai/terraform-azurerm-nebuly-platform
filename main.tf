@@ -461,23 +461,38 @@ resource "azurerm_cognitive_account" "main" {
   tags = var.tags
 }
 
-resource "azurerm_cognitive_deployment" "main" {
-  for_each = {
-    for k, v in var.azure_openai_deployments : k => v if v.enabled
-  }
+resource "azurerm_cognitive_deployment" "gpt_4o" {
+  count = var.azure_openai_deployment_gpt4o.enabled ? 1 : 0
 
   cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = each.key
+  name                 = "${var.resource_prefix}-gpt-4o"
   rai_policy_name      = "Microsoft.Default"
 
   model {
     format  = "OpenAI"
-    name    = each.value.name
-    version = each.value.version
+    name    = var.azure_openai_deployment_gpt4o.name
+    version = var.azure_openai_deployment_gpt4o.version
   }
   scale {
     type     = "Standard"
-    capacity = each.value.rate_limit
+    capacity = var.azure_openai_deployment_gpt4o.rate_limit
+  }
+}
+resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
+  count = var.azure_openai_deployment_gpt4o_mini.enabled ? 1 : 0
+
+  cognitive_account_id = azurerm_cognitive_account.main.id
+  name                 = "${var.resource_prefix}-gpt-4o-mini"
+  rai_policy_name      = "Microsoft.Default"
+
+  model {
+    format  = "OpenAI"
+    name    = var.azure_openai_deployment_gpt4o_mini.name
+    version = var.azure_openai_deployment_gpt4o_mini.version
+  }
+  scale {
+    type     = "Standard"
+    capacity = var.azure_openai_deployment_gpt4o_mini.rate_limit
   }
 }
 resource "azurerm_key_vault_secret" "azure_openai_api_key" {
@@ -718,8 +733,8 @@ locals {
       image_pull_secret_name = var.k8s_image_pull_secret_name
 
       openai_endpoint               = azurerm_cognitive_account.main.endpoint
-      openai_gpt4o_deployment       = try([for k, v in azurerm_cognitive_deployment.main : k if v.name == "gpt-4o"][0], "")
-      openai_translation_deployment = try([for k, v in azurerm_cognitive_deployment.main : k if v.name == "gpt-4o-mini" && v.enabled][0], "")
+      openai_gpt4o_deployment       = try(azurerm_cognitive_deployment.gpt_4o[0].name, "\"\"")
+      openai_translation_deployment = try(azurerm_cognitive_deployment.gpt_4o_mini[0].name, "\"\"")
 
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name

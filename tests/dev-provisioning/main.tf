@@ -79,7 +79,7 @@ module "platform" {
   postgres_server_high_availability = {
     enabled = false
   }
-  postgres_override_name = "nbltstnebulydb2"
+  postgres_override_name = "nbltstnebulydb3"
 
   azure_openai_location = "EastUS"
   azure_openai_deployments = {

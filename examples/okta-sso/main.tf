@@ -44,7 +44,7 @@ variable "client_secret" {
 
 
 module "platform" {
-  source  = "nebuly-ai/nebuly-platform/azure"
+  source  = "nebuly-ai/nebuly-platform/azurerm"
   version = ">=0.2.10"
 
   location            = "EastUS"

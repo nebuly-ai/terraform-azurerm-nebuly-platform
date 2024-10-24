@@ -353,7 +353,7 @@ variable "azure_openai_location" {
   default     = "EastUS"
 
   validation {
-    condition     = contains(["EastUS"], var.azure_openai_location)
+    condition     = contains(["EastUS", "FranceCentral", "SweedenCentral"], var.azure_openai_location)
     error_message = "Region not supported."
   }
 }

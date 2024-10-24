@@ -205,6 +205,14 @@ variable "key_vault_purge_protection_enabled" {
 }
 
 
+# ------ Storage Account ------ #
+variable "storage_account_override_name" {
+  type        = string
+  default     = null
+  description = "Override the name of the Storage Account. If not provided, the name is generated based on the resource_prefix."
+}
+
+
 # ------ Networking ------ #
 variable "whitelisted_ips" {
   description = <<EOT

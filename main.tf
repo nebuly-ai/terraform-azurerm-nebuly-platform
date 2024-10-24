@@ -510,7 +510,7 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
 
 # ------ Model Registry ------ #
 resource "azurerm_storage_account" "main" {
-  name                = format("%s%s", var.resource_prefix, "models")
+  name                = var.storage_account_override_name == null ? format("%smodels", var.resource_prefix) : var.storage_account_override_name
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
 

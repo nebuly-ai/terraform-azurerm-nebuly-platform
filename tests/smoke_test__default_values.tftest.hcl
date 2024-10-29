@@ -15,6 +15,6 @@ run "smoke_test_plan__default_values" {
     }
 
     # ------ AKS ------ #
-    aks_cluster_admin_object_ids   = []
+    aks_cluster_admin_group_object_ids   = []
   }
 }

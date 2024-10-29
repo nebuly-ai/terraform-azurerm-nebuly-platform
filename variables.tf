@@ -404,8 +404,12 @@ variable "aks_log_analytics_workspace" {
   })
   default = null
 }
-variable "aks_cluster_admin_object_ids" {
-  description = "Object IDs that are granted the Cluster Admin role over the AKS cluster"
+variable "aks_cluster_admin_users" {
+  description = "User Principal Names (UPNs) of the users that are granted the Cluster Admin role over the AKS cluster."
+  type        = set(string)
+}
+variable "aks_cluster_admin_group_object_ids" {
+  description = "Object IDs that are granted the Cluster Admin role over the AKS cluster."
   type        = set(string)
 }
 variable "aks_sys_pool" {

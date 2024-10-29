@@ -36,6 +36,6 @@ run "smoke_test_plan__existing_networks" {
     subnet_name_aks_nodes = run.setup.azurerm_subnet.name
 
     # ------ AKS ------ #
-    aks_cluster_admin_object_ids   = []
+    aks_cluster_admin_group_object_ids   = []
   }
 }

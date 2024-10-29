@@ -59,8 +59,12 @@ module "platform" {
   }
 
   key_vault_public_network_access_enabled = true
-  aks_cluster_admin_object_ids = [
-    # Add here your AAD Groups, users, service principals, etc.
+  aks_cluster_admin_group_object_ids = [
+    # Add here your AAD Groups Object IDs.
+    # These identities will be able to access the created AKS cluster as "Cluster Admin".
+  ]
+  aks_cluster_admin_users = [
+    # Add here your User Principal Names (e.g. email addresses).
     # These identities will be able to access the created AKS cluster as "Cluster Admin".
   ]
 

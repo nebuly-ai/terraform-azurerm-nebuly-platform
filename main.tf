@@ -78,6 +78,11 @@ data "azurerm_virtual_network" "main" {
   resource_group_name = var.resource_group_name
   name                = var.virtual_network_name
 }
+data "azuread_user" "aks_admins" {
+  for_each = var.aks_cluster_admin_users
+
+  user_principal_name = each.value
+}
 data "azurerm_subnet" "aks_nodes" {
   count = local.use_existing_aks_nodes_subnet ? 1 : 0
 
@@ -547,6 +552,16 @@ resource "tls_private_key" "aks" {
   algorithm = "RSA" # Azure VMs currently do not support ECDSA
   rsa_bits  = "4096"
 }
+resource "azuread_group" "aks_admins" {
+  display_name     = "${var.resource_prefix}-aks-admins"
+  security_enabled = true
+}
+resource "azuread_group_member" "aks_admin_users" {
+  for_each = data.azuread_user.aks_admins
+
+  group_object_id  = azuread_group.aks_admins.id
+  member_object_id = each.value.object_id
+}
 module "aks" {
   source  = "Azure/aks/azurerm"
   version = "9.1.0"
@@ -560,13 +575,15 @@ module "aks" {
   orchestrator_version = var.aks_kubernetes_version.workers
   sku_tier             = var.aks_sku_tier
 
-
   vnet_subnet_id                  = local.aks_nodes_subnet.id
   net_profile_service_cidr        = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip      = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = local.whitelisted_ips
 
-  rbac_aad_admin_group_object_ids   = var.aks_cluster_admin_object_ids
+  rbac_aad_admin_group_object_ids = setunion(
+    var.aks_cluster_admin_group_object_ids,
+    [azuread_group.aks_admins.id],
+  )
   rbac_aad_managed                  = true
   role_based_access_control_enabled = true
   local_account_disabled            = true

@@ -14,7 +14,7 @@ variables {
   # ------ AKS ------ #
   aks_net_profile_service_cidr   = "10.32.0.0/24"
   aks_net_profile_dns_service_ip = "10.32.0.10"
-  aks_cluster_admin_object_ids   = []
+  aks_cluster_admin_group_object_ids   = []
 }
 
 run "values_validation__subnet_aks_nodes" {

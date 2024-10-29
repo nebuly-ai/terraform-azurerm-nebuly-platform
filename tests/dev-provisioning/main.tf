@@ -87,15 +87,16 @@ module "platform" {
   }
   azure_openai_deployment_gpt4o_mini = {
     rate_limit = 1
-    enabled = false
+    enabled    = false
   }
 
   aks_sku_tier = "Standard"
 
   key_vault_public_network_access_enabled = true
 
-  aks_cluster_admin_object_ids = [data.azuread_group.engineering.id]
-  resource_prefix              = var.resource_prefix
+  aks_cluster_admin_group_object_ids = [data.azuread_group.engineering.object_id]
+  aks_cluster_admin_users            = ["m.zanotti@nebuly.ai"]
+  resource_prefix                    = var.resource_prefix
 
   tags = var.tags
 }

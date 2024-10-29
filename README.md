@@ -145,7 +145,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aks_cluster_admin_object_ids"></a> [aks\_cluster\_admin\_object\_ids](#input\_aks\_cluster\_admin\_object\_ids) | Object IDs that are granted the Cluster Admin role over the AKS cluster | `set(string)` | n/a | yes |
+| <a name="input_aks_cluster_admin_group_object_ids"></a> [aks\_cluster\_admin\_group\_object\_ids](#input\_aks\_cluster\_admin\_group\_object\_ids) | Object IDs that are granted the Cluster Admin role over the AKS cluster | `set(string)` | n/a | yes |
 | <a name="input_aks_kubernetes_version"></a> [aks\_kubernetes\_version](#input\_aks\_kubernetes\_version) | The Kubernetes version to use. | <pre>object({<br/>    workers       = string<br/>    control_plane = string<br/>  })</pre> | <pre>{<br/>  "control_plane": "1.30.3",<br/>  "workers": "1.30.3"<br/>}</pre> | no |
 | <a name="input_aks_log_analytics_workspace"></a> [aks\_log\_analytics\_workspace](#input\_aks\_log\_analytics\_workspace) | Existing azurerm\_log\_analytics\_workspace to attach azurerm\_log\_analytics\_solution. Providing the config disables creation of azurerm\_log\_analytics\_workspace. | <pre>object({<br/>    id                  = string<br/>    name                = string<br/>    location            = optional(string)<br/>    resource_group_name = optional(string)<br/>  })</pre> | `null` | no |
 | <a name="input_aks_net_profile_dns_service_ip"></a> [aks\_net\_profile\_dns\_service\_ip](#input\_aks\_net\_profile\_dns\_service\_ip) | IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net\_profile\_cidr. Example: 10.32.0.10 | `string` | `"10.32.0.10"` | no |
@@ -195,6 +195,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 
 
 - resource.azuread_application.main (/terraform-docs/main.tf#226)
+- resource.azuread_group.aks_admins (/terraform-docs/main.tf#550)
 - resource.azuread_service_principal.main (/terraform-docs/main.tf#232)
 - resource.azuread_service_principal_password.main (/terraform-docs/main.tf#237)
 - resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#444)
@@ -204,14 +205,14 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#498)
 - resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#241)
 - resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#250)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#676)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#682)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#263)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#272)
-- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#688)
-- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#699)
+- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#694)
+- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#705)
 - resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#427)
 - resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#418)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#633)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#639)
 - resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#361)
 - resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#369)
 - resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#291)
@@ -221,7 +222,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_postgresql_flexible_server_database.auth (/terraform-docs/main.tf#349)
 - resource.azurerm_private_dns_zone.flexible_postgres (/terraform-docs/main.tf#164)
 - resource.azurerm_private_dns_zone_virtual_network_link.flexible_postgres (/terraform-docs/main.tf#170)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#628)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#634)
 - resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#216)
 - resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#208)
 - resource.azurerm_role_assignment.storage_container_models__data_contributor (/terraform-docs/main.tf#536)
@@ -232,9 +233,9 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#134)
 - resource.azurerm_virtual_network.main (/terraform-docs/main.tf#112)
 - resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#286)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#615)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#621)
 - resource.tls_private_key.aks (/terraform-docs/main.tf#546)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#672)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#678)
 - data source.azurerm_client_config.current (/terraform-docs/main.tf#73)
 - data source.azurerm_resource_group.main (/terraform-docs/main.tf#70)
 - data source.azurerm_subnet.aks_nodes (/terraform-docs/main.tf#81)

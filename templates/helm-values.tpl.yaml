@@ -83,6 +83,17 @@ aiModels:
         name: ${secret_provider_class_secret_name}
         clientIdKey: ${k8s_secret_key_nebuly_client_id}
         clientSecretKey: ${k8s_secret_key_nebuly_client_secret}
+    volumeMounts:
+      - name: secrets-store
+        mountPath: /mnt/secrets-store
+        readOnly: true
+    volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: ${secret_provider_class_name}
 
 lionLinguist:
   image:

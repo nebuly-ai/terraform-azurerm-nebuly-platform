@@ -94,7 +94,7 @@ Refer to the [chart documentation](https://github.com/nebuly-ai/helm-charts/tree
 helm install <your-release-name> oci://ghcr.io/nebuly-ai/helm-charts/nebuly-platform \
   --namespace nebuly \
   -f values.yaml \
-  --timeout 10m 
+  --timeout 30m 
 ```
 
 > ℹ️  During the initial installation of the chart, all required Nebuly LLMs are uploaded to your model registry. 

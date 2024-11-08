@@ -65,9 +65,6 @@ eventIngestion:
         hosts:
           - ${platform_domain}
 
-azureml:
-  enabled: false
-
 aiModels:
   registry: azure_storage
   azure:

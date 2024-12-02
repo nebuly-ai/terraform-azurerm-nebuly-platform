@@ -116,6 +116,11 @@ data "azurerm_private_dns_zone" "flexible_postgres" {
 
   name = var.private_dns_zones.flexible_postgres
 }
+data "azurerm_private_dns_zone" "key_vault" {
+  count = var.private_dns_zones.key_vault != null ? 1 : 0
+
+  name = var.private_dns_zones.key_vault
+}
 
 
 # ------ Networking: Networks and Subnets ------ #
@@ -189,6 +194,23 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.flexible_postgres[0].name
 }
+resource "azurerm_private_dns_zone" "key_vault" {
+  count               = var.private_dns_zones.key_vault == null ? 1 : 0
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
+  count = var.private_dns_zones.key_vault == null ? 1 : 0
+
+  name = format(
+    "%s-key-vault-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = azurerm_private_dns_zone.key_vault[0].name
+}
 
 
 # ------ Key Vault ------ #
@@ -235,10 +257,8 @@ resource "azurerm_private_endpoint" "key_vault" {
   }
 
   private_dns_zone_group {
-    name = "privatelink-vaultcore-azure-net"
-    private_dns_zone_ids = [
-      var.private_dns_zones.key_vault,
-    ]
+    name                 = "privatelink-vaultcore-azure-net"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.key_vault) > 0 ? [azurerm_private_dns_zone.key_vault[0].id] : [data.azurerm_private_dns_zone.key_vault[0].id]
   }
 
   tags = var.tags

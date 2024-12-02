@@ -41,7 +41,7 @@ locals {
 
   key_vault_name = format("%snebulykv", var.resource_prefix)
 
-  use_existing_virtual_network          = var.virtual_network_name != null
+  use_existing_virtual_network          = var.virtual_network != null
   use_existing_aks_nodes_subnet         = var.subnet_name_aks_nodes != null
   use_existing_private_endpoints_subnet = var.subnet_name_private_endpoints != null
   use_existing_flexible_postgres_subnet = var.subnet_name_flexible_postgres != null
@@ -75,8 +75,8 @@ data "azurerm_client_config" "current" {
 data "azurerm_virtual_network" "main" {
   count = local.use_existing_virtual_network ? 1 : 0
 
-  resource_group_name = var.resource_group_name
-  name                = var.virtual_network_name
+  resource_group_name = var.virtual_network.resource_group_name
+  name                = var.virtual_network.name
 }
 data "azuread_user" "aks_admins" {
   for_each = var.aks_cluster_admin_users
@@ -110,6 +110,11 @@ data "azurerm_subnet" "flexible_postgres" {
       error_message = "`virtual_network_name` must be provided and must point to a valid virtual network."
     }
   }
+}
+data "azurerm_private_dns_zone" "flexible_postgres" {
+  count = var.private_dns_zones.flexible_postgres != null ? 1 : 0
+
+  name = var.private_dns_zones.flexible_postgres
 }
 
 
@@ -312,7 +317,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   public_network_access_enabled = false
 
   delegated_subnet_id = local.flexible_postgres_subnet.id
-  private_dns_zone_id = length(azurerm_private_dns_zone.flexible_postgres) > 0 ? azurerm_private_dns_zone.flexible_postgres[0].id : var.private_dns_zones.flexible_postgres.id
+  private_dns_zone_id = length(azurerm_private_dns_zone.flexible_postgres) > 0 ? azurerm_private_dns_zone.flexible_postgres[0].id : data.azurerm_private_dns_zone.flexible_postgres[0].id
 
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}

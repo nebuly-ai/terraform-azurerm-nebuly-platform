@@ -6,4 +6,5 @@ tags = {
   "project" : "self-hosted"
   "managed-by" : "terraform-test"
 }
+resource_group_name = "rg-platform-inttest"
 

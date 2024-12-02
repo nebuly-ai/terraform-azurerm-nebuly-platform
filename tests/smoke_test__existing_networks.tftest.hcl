@@ -16,7 +16,7 @@ run "smoke_test_plan__existing_networks" {
   command = plan
 
   variables {
-    resource_group_name = "rg-platform-inttest"
+    resource_group_name = var.resource_group_name
     location            = "EastUS"
     platform_domain     = "intest.nebuly.ai"
     nebuly_credentials = {
@@ -25,7 +25,10 @@ run "smoke_test_plan__existing_networks" {
     }
 
     # ------ Networking ------#
-    virtual_network_name  = run.setup.azurerm_virtual_network.name
+    virtual_network  = {
+      name= run.setup.azurerm_virtual_network.name
+      resource_group_name = var.resource_group_name
+    }
     subnet_name_aks_nodes = run.setup.azurerm_subnet.name
 
     # ------ AKS ------ #

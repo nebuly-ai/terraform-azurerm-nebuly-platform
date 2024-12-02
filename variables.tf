@@ -224,13 +224,16 @@ variable "whitelisted_ips" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
-variable "virtual_network_name" {
+variable "virtual_network" {
   description = <<EOT
   Optional name of the virtual network in which to create the resources. 
   If not provided, a new virtual network is created.
   EOT
-  type        = string
-  default     = null
+  type = object({
+    name                = string
+    resource_group_name = string
+  })
+  default = null
 }
 variable "virtual_network_address_space" {
   description = <<EOT
@@ -249,8 +252,8 @@ variable "subnet_name_aks_nodes" {
   default     = null
 
   validation {
-    condition     = var.virtual_network_name != null || var.subnet_name_aks_nodes == null
-    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+    condition     = var.virtual_network != null || var.subnet_name_aks_nodes == null
+    error_message = "`virtual_network` cannot be null when specifying existing subnet name."
   }
 }
 variable "subnet_address_space_aks_nodes" {
@@ -270,8 +273,8 @@ variable "subnet_name_private_endpoints" {
   default     = null
 
   validation {
-    condition     = var.virtual_network_name != null || var.subnet_name_private_endpoints == null
-    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+    condition     = var.virtual_network != null || var.subnet_name_private_endpoints == null
+    error_message = "`virtual_network` cannot be null when specifying existing subnet name."
   }
 }
 variable "subnet_address_space_private_endpoints" {
@@ -291,8 +294,8 @@ variable "subnet_name_flexible_postgres" {
   default     = null
 
   validation {
-    condition     = var.virtual_network_name != null || var.subnet_name_flexible_postgres == null
-    error_message = "`virtual_network_name` cannot be null when specifying existing subnet name."
+    condition     = var.virtual_network != null || var.subnet_name_flexible_postgres == null
+    error_message = "`virtual_network` cannot be null when specifying existing subnet name."
   }
 }
 variable "subnet_address_space_flexible_postgres" {
@@ -309,10 +312,7 @@ variable "private_dns_zones" {
   is created and linked to the respective subnet.
   EOT
   type = object({
-    flexible_postgres = optional(object({
-      name : string
-      id : string
-    }), null)
+    flexible_postgres = optional(string, null)
   })
   default = {}
 }

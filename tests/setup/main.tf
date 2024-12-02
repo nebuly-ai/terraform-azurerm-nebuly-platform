@@ -24,11 +24,14 @@ variable "tags" {
 variable "resource_prefix" {
   type = string
 }
+variable "resource_group_name" {
+  type = string
+}
 
 
 # ----------- Data Sources ----------- #
 data "azurerm_resource_group" "main" {
-  name = "rg-platform-inttest"
+  name = var.resource_group_name
 }
 
 # ----------- Resources ----------- #

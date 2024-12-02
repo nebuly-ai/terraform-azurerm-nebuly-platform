@@ -312,8 +312,14 @@ variable "private_dns_zones" {
   is created and linked to the respective subnet.
   EOT
   type = object({
-    flexible_postgres = optional(string, null)
-    key_vault         = optional(string, null)
+    flexible_postgres = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
+    key_vault = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
   })
   default = {}
 }

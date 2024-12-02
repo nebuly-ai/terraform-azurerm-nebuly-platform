@@ -114,12 +114,14 @@ data "azurerm_subnet" "flexible_postgres" {
 data "azurerm_private_dns_zone" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres != null ? 1 : 0
 
-  name = var.private_dns_zones.flexible_postgres
+  name                = var.private_dns_zones.flexible_postgres.name
+  resource_group_name = var.private_dns_zones.key_vault.resource_group_name
 }
 data "azurerm_private_dns_zone" "key_vault" {
   count = var.private_dns_zones.key_vault != null ? 1 : 0
 
-  name = var.private_dns_zones.key_vault
+  name                = var.private_dns_zones.key_vault.name
+  resource_group_name = var.private_dns_zones.key_vault.resource_group_name
 }
 
 

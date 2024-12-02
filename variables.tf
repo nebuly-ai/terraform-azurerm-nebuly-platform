@@ -313,6 +313,7 @@ variable "private_dns_zones" {
   EOT
   type = object({
     flexible_postgres = optional(string, null)
+    key_vault         = optional(string, null)
   })
   default = {}
 }

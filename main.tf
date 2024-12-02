@@ -600,7 +600,7 @@ locals {
   storage_account_generated_name = (
     var.resource_suffix == null ?
     format("%smodels", var.resource_prefix) :
-    format("%smodels%s", var.resource_suffix)
+    format("%smodels%s", var.resource_prefix, var.resource_suffix)
 
   )
   storage_account_name = (

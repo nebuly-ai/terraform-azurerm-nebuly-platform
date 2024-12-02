@@ -61,11 +61,6 @@ variable "postgres_server_sku" {
   }
   description = "The SKU of the PostgreSQL Server, including the Tier and the Name. Examples: B_Standard_B1ms, GP_Standard_D2s_v3, MO_Standard_E4s_v3"
 }
-variable "postgres_override_name" {
-  type        = string
-  default     = null
-  description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
-}
 variable "postgres_server_admin_username" {
   type        = string
   default     = "nebulyadmin"
@@ -210,6 +205,19 @@ variable "storage_account_override_name" {
   type        = string
   default     = null
   description = "Override the name of the Storage Account. If not provided, the name is generated based on the resource_prefix."
+}
+
+
+# ------ Override Names ------ #
+variable "postgres_override_name" {
+  type        = string
+  default     = null
+  description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
+}
+variable "azuread_identity_override_name" {
+  type        = string
+  default     = null
+  description = "Override the name of the Service Account representing the platform identity. If not provided, the name is generated based on the resource_prefix."
 }
 
 

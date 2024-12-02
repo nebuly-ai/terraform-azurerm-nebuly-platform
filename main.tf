@@ -284,7 +284,7 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
 
 # ------ Identity ------ #
 resource "azuread_application" "main" {
-  display_name     = format("%s.nebuly.platform", var.resource_prefix)
+  display_name     = var.azuread_identity_override_name == null ? format("%s.nebuly.platform", var.resource_prefix) : var.azuread_identity_override_name
   owners           = [data.azurerm_client_config.current.object_id]
   sign_in_audience = "AzureADMyOrg" # default
   identifier_uris  = []

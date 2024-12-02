@@ -86,7 +86,7 @@ data "azuread_user" "aks_admins" {
 data "azurerm_subnet" "aks_nodes" {
   count = local.use_existing_aks_nodes_subnet ? 1 : 0
 
-  resource_group_name  = data.azurerm_resource_group.main.name
+  resource_group_name  = data.azurerm_virtual_network.main[0].resource_group_name
   virtual_network_name = data.azurerm_virtual_network.main[0].name
   name                 = var.subnet_name_aks_nodes
 
@@ -100,7 +100,7 @@ data "azurerm_subnet" "aks_nodes" {
 data "azurerm_subnet" "flexible_postgres" {
   count = local.use_existing_flexible_postgres_subnet ? 1 : 0
 
-  resource_group_name  = data.azurerm_resource_group.main.name
+  resource_group_name  = data.azurerm_virtual_network.main[0].resource_group_name
   virtual_network_name = data.azurerm_virtual_network.main[0].name
   name                 = var.subnet_name_flexible_postgres
 

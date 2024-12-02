@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.0
+
+- Allow resource suffix for custom resource names
+
 ## v0.6.0
 
 - Support network in different resource groups

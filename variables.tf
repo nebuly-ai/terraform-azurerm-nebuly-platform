@@ -3,6 +3,11 @@ variable "resource_prefix" {
   type        = string
   description = "The prefix that is used for generating resource names."
 }
+variable "resource_suffix" {
+  type        = string
+  description = "The suffix that is used for generating resource names."
+  default     = null
+}
 variable "tags" {
   type        = map(string)
   default     = {}
@@ -82,6 +87,11 @@ variable "postgres_server_high_availability" {
     enabled = true
     mode    = "SameZone"
   }
+}
+variable "postgres_override_name" {
+  type        = string
+  default     = null
+  description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
 }
 variable "postgres_server_maintenance_window" {
   type = object({
@@ -205,19 +215,6 @@ variable "storage_account_override_name" {
   type        = string
   default     = null
   description = "Override the name of the Storage Account. If not provided, the name is generated based on the resource_prefix."
-}
-
-
-# ------ Override Names ------ #
-variable "postgres_override_name" {
-  type        = string
-  default     = null
-  description = "Override the name of the PostgreSQL Server. If not provided, the name is generated based on the resource_prefix."
-}
-variable "azuread_identity_override_name" {
-  type        = string
-  default     = null
-  description = "Override the name of the Service Account representing the platform identity. If not provided, the name is generated based on the resource_prefix."
 }
 
 

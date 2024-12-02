@@ -29,17 +29,32 @@ terraform {
 
 # ------ Locals ------ #
 locals {
-  aks_cluster_name = format("%snebuly", var.resource_prefix)
+  aks_cluster_name = (
+    var.resource_suffix == null ?
+    format("%snebuly", var.resource_prefix) :
+    format("%snebuly%s", var.resource_suffix)
+  )
 
   whitelisted_ips = var.whitelisted_ips
 
-  postgres_server_name = var.postgres_override_name == null ? format("%snebulydb", var.resource_prefix) : var.postgres_override_name
+  postgres_server_generated_name = (
+    var.resource_suffix == null ?
+    format("%snebulydb", var.resource_prefix) :
+    format("%snebulydb%s", var.resource_prefix, var.resource_suffix)
+  )
+  postgres_server_name = (
+    var.postgres_override_name == null ? local.postgres_server_generated_name : var.postgres_override_name
+  )
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
   }
 
-  key_vault_name = format("%snebulykv", var.resource_prefix)
+  key_vault_name = (
+    var.resource_suffix == null ?
+    format("%snebulykv", var.resource_prefix) :
+    format("%snebulykv%s", var.resource_prefix, var.resource_suffix)
+  )
 
   use_existing_virtual_network          = var.virtual_network != null
   use_existing_aks_nodes_subnet         = var.subnet_name_aks_nodes != null
@@ -129,7 +144,11 @@ data "azurerm_private_dns_zone" "key_vault" {
 resource "azurerm_virtual_network" "main" {
   count = local.use_existing_virtual_network ? 0 : 1
 
-  name                = format("%s-nebuly-vnet", var.resource_prefix)
+  name = (
+    var.resource_suffix == null ?
+    format("%s-nebuly-vnet", var.resource_prefix) :
+    format("%s-nebuly-%s-vnet", var.resource_prefix, var.resource_suffix)
+  )
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
   address_space       = var.virtual_network_address_space
@@ -284,7 +303,11 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
 
 # ------ Identity ------ #
 resource "azuread_application" "main" {
-  display_name     = var.azuread_identity_override_name == null ? format("%s.nebuly.platform", var.resource_prefix) : var.azuread_identity_override_name
+  display_name = (
+    var.resource_suffix == null ?
+    format("%s.nebuly.platform", var.resource_prefix) :
+    format("%s.nebuly.platform.%s", var.resource_prefix, var.resource_suffix)
+  )
   owners           = [data.azurerm_client_config.current.object_id]
   sign_in_audience = "AzureADMyOrg" # default
   identifier_uris  = []
@@ -499,7 +522,11 @@ resource "azurerm_key_vault_secret" "postgres_password" {
 
 # ------ Azure OpenAI ------ #
 locals {
-  azure_openai_account_name = format("%snebuly", var.resource_prefix)
+  azure_openai_account_name = (
+    var.resource_suffix == null ?
+    format("%snebuly", var.resource_prefix) :
+    format("%snebuly%s", var.resource_prefix, var.resource_suffix)
+  )
 }
 resource "azurerm_cognitive_account" "main" {
   name                = local.azure_openai_account_name
@@ -569,8 +596,21 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
 
 
 # ------ Model Registry ------ #
+locals {
+  storage_account_generated_name = (
+    var.resource_suffix == null ?
+    format("%smodels", var.resource_prefix) :
+    format("%smodels%s", var.resource_suffix)
+
+  )
+  storage_account_name = (
+    var.storage_account_override_name == null ?
+    local.storage_account_generated_name :
+    var.storage_account_override_name
+  )
+}
 resource "azurerm_storage_account" "main" {
-  name                = var.storage_account_override_name == null ? format("%smodels", var.resource_prefix) : var.storage_account_override_name
+  name                = local.storage_account_name
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
 

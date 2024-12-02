@@ -32,7 +32,7 @@ locals {
   aks_cluster_name = (
     var.resource_suffix == null ?
     format("%snebuly", var.resource_prefix) :
-    format("%snebuly%s", var.resource_suffix)
+    format("%snebuly%s", var.resource_prefix, var.resource_suffix)
   )
 
   whitelisted_ips = var.whitelisted_ips

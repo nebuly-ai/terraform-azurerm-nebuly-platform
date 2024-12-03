@@ -648,7 +648,11 @@ resource "tls_private_key" "aks" {
   rsa_bits  = "4096"
 }
 resource "azuread_group" "aks_admins" {
-  display_name     = "${var.resource_prefix}-aks-admins"
+  display_name = (
+    var.resource_suffix == null ?
+    "${var.resource_prefix}.nebuly.aks-admins" :
+    "${var.resource_prefix}-nebuly.aks-admins.${var.resource_suffix}"
+  )
   security_enabled = true
 }
 resource "azuread_group_member" "aks_admin_users" {

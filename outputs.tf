@@ -24,3 +24,11 @@ output "aks_get_credentials" {
   description = "Command for getting the credentials for connecting to the provisioned AKS cluster."
   value       = "az aks get-credentials --resource-group ${var.resource_group_name} --name ${module.aks.aks_name}"
 }
+
+output "azurerm_kubernetes_cluster" {
+  description = "The AKS cluster resource."
+  value = {
+    name = module.aks.aks_name
+    id   = module.aks.aks_id
+  }
+}

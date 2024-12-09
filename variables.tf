@@ -383,8 +383,8 @@ variable "azure_openai_location" {
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {
-    workers       = "1.30.3"
-    control_plane = "1.30.3"
+    workers       = "1.30.6"
+    control_plane = "1.30.6"
   }
   type = object({
     workers       = string

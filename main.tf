@@ -29,11 +29,15 @@ terraform {
 
 # ------ Locals ------ #
 locals {
-  aks_cluster_name = (
+  aks_cluster_generated_name = (
     var.resource_suffix == null ?
     format("%snebuly", var.resource_prefix) :
     format("%snebuly%s", var.resource_prefix, var.resource_suffix)
   )
+  aks_cluster_name = (
+    var.aks_override_name == null ? local.aks_cluster_generated_name : var.aks_override_name
+  )
+
 
   whitelisted_ips = var.whitelisted_ips
 

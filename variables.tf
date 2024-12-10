@@ -380,6 +380,11 @@ variable "azure_openai_location" {
 
 
 # ------ AKS ------ #
+variable "aks_override_name" {
+  type        = string
+  description = "Override the name of the Azure Kubernetes Service resource. If not provided, the name is generated based on the resource_prefix."
+  default     = null
+}
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {

@@ -406,8 +406,13 @@ variable "aks_net_profile_dns_service_ip" {
   description = " IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
   default     = "10.32.0.10"
 }
+variable "aks_log_analytics_workspace_enabled" {
+  description = "Enable the integration of azurerm_log_analytics_workspace and azurerm_log_analytics_solution."
+  type        = bool
+  default     = true
+}
 variable "aks_log_analytics_workspace" {
-  description = " Existing azurerm_log_analytics_workspace to attach azurerm_log_analytics_solution. Providing the config disables creation of azurerm_log_analytics_workspace."
+  description = "Existing azurerm_log_analytics_workspace to attach azurerm_log_analytics_solution. Providing the config disables creation of azurerm_log_analytics_workspace."
   type = object({
     id                  = string
     name                = string
@@ -417,7 +422,7 @@ variable "aks_log_analytics_workspace" {
   default = null
 }
 variable "aks_log_analytics_solution" {
-  description = " Existing azurerm_log_analytics_solution to be attached to the azurerm_log_analytics_workspace. Providing the config disables creation of azurerm_log_analytics_solution."
+  description = "Existing azurerm_log_analytics_solution to be attached to the azurerm_log_analytics_workspace. Providing the config disables creation of azurerm_log_analytics_solution."
   type = object({
     id                  = string
     name                = string

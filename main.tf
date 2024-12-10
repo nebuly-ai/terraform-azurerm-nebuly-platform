@@ -688,8 +688,9 @@ module "aks" {
   local_account_disabled            = true
   private_cluster_enabled           = false
 
-  log_analytics_workspace = var.aks_log_analytics_workspace
-  log_analytics_solution  = var.aks_log_analytics_solution
+  log_analytics_workspace         = var.aks_log_analytics_workspace
+  log_analytics_workspace_enabled = var.aks_log_analytics_workspace_enabled
+  log_analytics_solution          = var.aks_log_analytics_solution
 
   temporary_name_for_rotation = "systemback"
 

@@ -416,6 +416,16 @@ variable "aks_log_analytics_workspace" {
   })
   default = null
 }
+variable "aks_log_analytics_solution" {
+  description = " Existing azurerm_log_analytics_solution to be attached to the azurerm_log_analytics_workspace. Providing the config disables creation of azurerm_log_analytics_solution."
+  type = object({
+    id                  = string
+    name                = string
+    location            = optional(string)
+    resource_group_name = optional(string)
+  })
+  default = null
+}
 variable "aks_cluster_admin_users" {
   description = "User Principal Names (UPNs) of the users that are granted the Cluster Admin role over the AKS cluster."
   type        = set(string)

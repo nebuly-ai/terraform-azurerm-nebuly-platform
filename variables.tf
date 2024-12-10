@@ -184,6 +184,11 @@ variable "postgres_version" {
 
 
 # ------ Key Vault ------ #
+variable "key_vault_override_name" {
+  type        = string
+  default     = null
+  description = "Override the name of the Key Vault. If not provided, the name is generated based on the resource_prefix."
+}
 variable "key_vault_sku_name" {
   type        = string
   default     = "Standard"

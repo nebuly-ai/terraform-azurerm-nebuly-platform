@@ -54,10 +54,13 @@ locals {
     "shared_preload_libraries" : "pgaudit",
   }
 
-  key_vault_name = (
+  key_vault_generated_name = (
     var.resource_suffix == null ?
     format("%snebulykv", var.resource_prefix) :
     format("%snebulykv%s", var.resource_prefix, var.resource_suffix)
+  )
+  key_vault_name = (
+    var.key_vault_override_name == null ? local.key_vault_generated_name : var.key_vault_override_name
   )
 
   use_existing_virtual_network          = var.virtual_network != null

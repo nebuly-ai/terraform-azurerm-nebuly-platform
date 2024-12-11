@@ -136,6 +136,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 | Name | Description |
 |------|-------------|
 | <a name="output_aks_get_credentials"></a> [aks\_get\_credentials](#output\_aks\_get\_credentials) | Command for getting the credentials for connecting to the provisioned AKS cluster. |
+| <a name="output_azurerm_key_vault"></a> [azurerm\_key\_vault](#output\_azurerm\_key\_vault) | The Key Vault resource. |
 | <a name="output_azurerm_kubernetes_cluster"></a> [azurerm\_kubernetes\_cluster](#output\_azurerm\_kubernetes\_cluster) | The AKS cluster resource. |
 | <a name="output_helm_values"></a> [helm\_values](#output\_helm\_values) | The `values.yaml` file for installing Nebuly with Helm.<br/><br/>  The default standard configuration is used, which uses Nginx as ingress controller and exposes the application to the Internet. This configuration can be customized according to specific needs. |
 | <a name="output_helm_values_bootstrap"></a> [helm\_values\_bootstrap](#output\_helm\_values\_bootstrap) | The `bootrap.values.yaml` file for installing the Nebuly Azure Boostrap chart with Helm. |

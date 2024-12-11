@@ -32,3 +32,8 @@ output "azurerm_kubernetes_cluster" {
     id   = module.aks.aks_id
   }
 }
+output "azurerm_key_vault" {
+  description = "The Key Vault resource."
+  value       = azurerm_key_vault.main
+  sensitive   = true
+}

@@ -208,7 +208,7 @@ resource "azurerm_private_dns_zone" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
 
   name                = "${var.resource_prefix}.nebuly.postgres.database.azure.com"
-  resource_group_name = var.private_dns_zones.flexible_postgres.resource_group_name
+  resource_group_name = data.azurerm_resource_group.main
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres == null ? 1 : 0

@@ -328,6 +328,11 @@ resource "azuread_service_principal_password" "main" {
   service_principal_id = azuread_service_principal.main.id
   end_date_relative    = null
 }
+resource "azurerm_role_assignment" "nebuly_secrets_officer" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = azuread_service_principal.main.object_id
+}
 resource "azurerm_key_vault_secret" "azuread_application_client_id" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-id", var.resource_prefix)

@@ -340,7 +340,7 @@ resource "azurerm_key_vault_secret" "azuread_application_client_id" {
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-secret", var.resource_prefix)
-  value        = azuread_application.main.client_id
+  value        = azuread_service_principal_password.main.value
 
   depends_on = [
     azurerm_role_assignment.key_vault_secret_officer__current

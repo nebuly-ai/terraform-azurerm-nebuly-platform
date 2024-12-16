@@ -37,3 +37,16 @@ output "azurerm_key_vault" {
   value       = azurerm_key_vault.main
   sensitive   = true
 }
+output "azurerm_flexible_postgres" {
+  description = "The Flexible Server for PostgreSQL resource."
+  value       = azurerm_postgresql_flexible_server.main
+  sensitive   = true
+}
+output "postgres_server_admin" {
+  description = "The administrator login for the PostgreSQL server."
+  value = {
+    login    = var.postgres_server_admin_username
+    password = random_password.postgres_server_admin_password.result
+  }
+  sensitive = true
+}

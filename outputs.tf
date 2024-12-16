@@ -37,7 +37,7 @@ output "azurerm_key_vault" {
   value       = azurerm_key_vault.main
   sensitive   = true
 }
-output "azurerm_flexible_postgres" {
+output "azurerm_postgresql_flexible_server" {
   description = "The Flexible Server for PostgreSQL resource."
   value       = azurerm_postgresql_flexible_server.main
   sensitive   = true

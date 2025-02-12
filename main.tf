@@ -615,7 +615,7 @@ resource "azurerm_cognitive_deployment" "gpt_4o" {
 
   cognitive_account_id = azurerm_cognitive_account.main.id
   name                 = "${var.resource_prefix}-gpt-4o"
-  rai_policy_name      = "Microsoft.Default"
+  rai_policy_name      = var.azure_openai_deployment_gpt4o.rai_policy_name
 
   model {
     format  = "OpenAI"
@@ -632,7 +632,7 @@ resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
 
   cognitive_account_id = azurerm_cognitive_account.main.id
   name                 = "${var.resource_prefix}-gpt-4o-mini"
-  rai_policy_name      = "Microsoft.Default"
+  rai_policy_name      = var.azure_openai_deployment_gpt4o_mini.rai_policy_name
 
   model {
     format  = "OpenAI"

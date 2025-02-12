@@ -362,6 +362,7 @@ variable "azure_openai_deployment_gpt4o" {
     name : optional(string, "gpt-4o")
     version : optional(string, "2024-08-06")
     rate_limit : optional(number, 80)
+    rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
   })
   default = {}
@@ -372,6 +373,7 @@ variable "azure_openai_deployment_gpt4o_mini" {
     name : optional(string, "gpt-4o-mini")
     version : optional(string, "2024-07-18")
     rate_limit : optional(number, 80)
+    rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
   })
   default = {}

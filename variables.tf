@@ -403,8 +403,8 @@ variable "aks_override_name" {
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {
-    workers       = "1.30.6"
-    control_plane = "1.30.6"
+    workers       = "1.31.3"
+    control_plane = "1.31.3"
   }
   type = object({
     workers       = string

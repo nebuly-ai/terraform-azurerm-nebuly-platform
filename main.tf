@@ -706,8 +706,8 @@ resource "azurerm_role_assignment" "storage_container_models__data_contributor" 
 locals {
   backups_storage_account_generated_name = (
     var.resource_suffix == null ?
-    format("%smodels", var.resource_prefix) :
-    format("%smodels%s", var.resource_prefix, var.resource_suffix)
+    format("%sbackups", var.resource_prefix) :
+    format("%sbackups%s", var.resource_prefix, var.resource_suffix)
 
   )
   backups_storage_account_name = local.backups_storage_account_generated_name

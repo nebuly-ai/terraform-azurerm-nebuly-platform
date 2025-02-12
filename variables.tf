@@ -330,6 +330,14 @@ variable "private_dns_zones" {
       name : string
       resource_group_name : string
     }), null)
+    blob = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
+    dfs = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
   })
   default = {}
 }
@@ -548,3 +556,29 @@ variable "aks_worker_pools" {
   }
 }
 
+
+# ------ Backups ------ #
+variable "backups_storage_replication_type" {
+  description = "The replication type of the backups storage account. Possible values are: LRS, GRS, RAGRS, ZRS."
+  type        = string
+  default     = "GRS"
+
+  validation {
+    condition     = contains(["LRS", "GRS", "RAGRS", "ZRS"], var.backups_storage_replication_type)
+    error_message = "Invalid replication type."
+  }
+}
+variable "backups_storage_delete_retention_days" {
+  description = "The number of days that backups should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days."
+  type        = number
+  default     = 7
+  validation {
+    condition     = var.backups_storage_delete_retention_days >= 7 && var.backups_storage_delete_retention_days <= 90
+    error_message = "The value must be between 7 and 90 days."
+  }
+}
+variable "backups_storage_tier_to_cool_after_days_since_creation_greater_than" {
+  description = "The number of days after which to move the backups to the Cool tier."
+  type        = number
+  default     = 7
+}

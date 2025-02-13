@@ -330,6 +330,14 @@ variable "private_dns_zones" {
       name : string
       resource_group_name : string
     }), null)
+    blob = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
+    dfs = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
   })
   default = {}
 }
@@ -354,6 +362,7 @@ variable "azure_openai_deployment_gpt4o" {
     name : optional(string, "gpt-4o")
     version : optional(string, "2024-08-06")
     rate_limit : optional(number, 80)
+    rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
   })
   default = {}
@@ -364,6 +373,7 @@ variable "azure_openai_deployment_gpt4o_mini" {
     name : optional(string, "gpt-4o-mini")
     version : optional(string, "2024-07-18")
     rate_limit : optional(number, 80)
+    rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
   })
   default = {}
@@ -393,8 +403,8 @@ variable "aks_override_name" {
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {
-    workers       = "1.30.6"
-    control_plane = "1.30.6"
+    workers       = "1.31.3"
+    control_plane = "1.31.3"
   }
   type = object({
     workers       = string
@@ -548,3 +558,29 @@ variable "aks_worker_pools" {
   }
 }
 
+
+# ------ Backups ------ #
+variable "backups_storage_replication_type" {
+  description = "The replication type of the backups storage account. Possible values are: LRS, GRS, RAGRS, ZRS."
+  type        = string
+  default     = "GRS"
+
+  validation {
+    condition     = contains(["LRS", "GRS", "RAGRS", "ZRS"], var.backups_storage_replication_type)
+    error_message = "Invalid replication type."
+  }
+}
+variable "backups_storage_delete_retention_days" {
+  description = "The number of days that backups should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days."
+  type        = number
+  default     = 7
+  validation {
+    condition     = var.backups_storage_delete_retention_days >= 7 && var.backups_storage_delete_retention_days <= 90
+    error_message = "The value must be between 7 and 90 days."
+  }
+}
+variable "backups_storage_tier_to_cool_after_days_since_creation_greater_than" {
+  description = "The number of days after which to move the backups to the Cool tier."
+  type        = number
+  default     = 7
+}

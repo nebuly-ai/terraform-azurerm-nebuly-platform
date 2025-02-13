@@ -145,6 +145,18 @@ data "azurerm_private_dns_zone" "key_vault" {
   name                = var.private_dns_zones.key_vault.name
   resource_group_name = var.private_dns_zones.key_vault.resource_group_name
 }
+data "azurerm_private_dns_zone" "blob" {
+  count = var.private_dns_zones.blob != null ? 1 : 0
+
+  name                = var.private_dns_zones.blob.name
+  resource_group_name = var.private_dns_zones.blob.resource_group_name
+}
+data "azurerm_private_dns_zone" "dfs" {
+  count = var.private_dns_zones.dfs != null ? 1 : 0
+
+  name                = var.private_dns_zones.dfs.name
+  resource_group_name = var.private_dns_zones.dfs.resource_group_name
+}
 
 
 # ------ Networking: Networks and Subnets ------ #
@@ -204,6 +216,7 @@ resource "azurerm_subnet" "flexible_postgres" {
 
 
 # ------ Networking: Private DNS Zones ------ #
+# - postgres
 resource "azurerm_private_dns_zone" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
 
@@ -222,6 +235,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.flexible_postgres[0].name
 }
+# - key vault
 resource "azurerm_private_dns_zone" "key_vault" {
   count               = var.private_dns_zones.key_vault == null ? 1 : 0
   name                = "privatelink.vaultcore.azure.net"
@@ -238,6 +252,42 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = azurerm_private_dns_zone.key_vault[0].name
+}
+# - blob
+resource "azurerm_private_dns_zone" "blob" {
+  count               = var.private_dns_zones.blob == null ? 1 : 0
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
+  count = var.private_dns_zones.blob == null ? 1 : 0
+
+  name = format(
+    "%s-blob-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = azurerm_private_dns_zone.blob[0].name
+}
+# - dfs
+resource "azurerm_private_dns_zone" "dfs" {
+  count               = var.private_dns_zones.dfs == null ? 1 : 0
+  name                = "privatelink.dfs.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
+  count = var.private_dns_zones.dfs == null ? 1 : 0
+
+  name = format(
+    "%s-dfs-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
 }
 
 
@@ -565,7 +615,7 @@ resource "azurerm_cognitive_deployment" "gpt_4o" {
 
   cognitive_account_id = azurerm_cognitive_account.main.id
   name                 = "${var.resource_prefix}-gpt-4o"
-  rai_policy_name      = "Microsoft.Default"
+  rai_policy_name      = var.azure_openai_deployment_gpt4o.rai_policy_name
 
   model {
     format  = "OpenAI"
@@ -582,7 +632,7 @@ resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
 
   cognitive_account_id = azurerm_cognitive_account.main.id
   name                 = "${var.resource_prefix}-gpt-4o-mini"
-  rai_policy_name      = "Microsoft.Default"
+  rai_policy_name      = var.azure_openai_deployment_gpt4o_mini.rai_policy_name
 
   model {
     format  = "OpenAI"
@@ -649,6 +699,124 @@ resource "azurerm_role_assignment" "storage_container_models__data_contributor" 
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.aks.kubelet_identity[0].object_id
   scope                = azurerm_storage_container.models.resource_manager_id
+}
+
+
+# ------ Backups Storage ------ #
+locals {
+  backups_storage_account_generated_name = (
+    var.resource_suffix == null ?
+    format("%sbackups", var.resource_prefix) :
+    format("%sbackups%s", var.resource_prefix, var.resource_suffix)
+
+  )
+  backups_storage_account_name = local.backups_storage_account_generated_name
+}
+resource "azurerm_storage_account" "backups" {
+  name                = local.backups_storage_account_name
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+
+  account_tier             = "Standard"
+  account_replication_type = var.backups_storage_replication_type
+  access_tier              = "Hot"
+
+  public_network_access_enabled = false
+  is_hns_enabled                = false
+
+  blob_properties {
+    versioning_enabled = true
+
+    delete_retention_policy {
+      days = var.backups_storage_delete_retention_days
+    }
+  }
+  tags = var.tags
+}
+resource "azurerm_storage_container" "clickhouse" {
+  storage_account_name = azurerm_storage_account.backups.name
+  name                 = "clickhouse"
+}
+resource "azurerm_private_endpoint" "backups_blob" {
+  count = var.private_dns_zones.blob == null ? 0 : 1
+
+  name                = "${azurerm_storage_account.backups.name}-blob"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpints[0].id
+
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.backups.name}-blob"
+    private_connection_resource_id = azurerm_storage_account.backups.id
+    is_manual_connection           = false
+    subresource_names              = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.blob) > 0 ? [azurerm_private_dns_zone.blob[0].id] : [data.azurerm_private_dns_zone.blob[0].id]
+  }
+
+  tags = var.tags
+}
+resource "azurerm_private_endpoint" "backups_dfs" {
+  count = var.private_dns_zones.dfs == null ? 0 : 1
+
+  name                = "${azurerm_storage_account.backups.name}-dfs"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpints[0].id
+
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.backups.name}-dfs"
+    private_connection_resource_id = azurerm_storage_account.backups.id
+    is_manual_connection           = false
+    subresource_names              = ["dfs"]
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.dfs) > 0 ? [azurerm_private_dns_zone.dfs[0].id] : [data.azurerm_private_dns_zone.dfs[0].id]
+  }
+
+  tags = var.tags
+}
+resource "azurerm_storage_management_policy" "backups" {
+  storage_account_id = azurerm_storage_account.backups.id
+
+  rule {
+    enabled = true
+    name    = "delete-previous-versions"
+
+    filters {
+      prefix_match = []
+      blob_types   = ["blockBlob", "appendBlob"]
+    }
+
+    actions {
+      version {
+        delete_after_days_since_creation = var.backups_storage_delete_retention_days
+      }
+    }
+  }
+
+  rule {
+    enabled = true
+    name    = "move-to-cool"
+
+    filters {
+      prefix_match = []
+      blob_types   = ["blockBlob"]
+    }
+
+    actions {
+      base_blob {
+        tier_to_cool_after_days_since_creation_greater_than = var.backups_storage_tier_to_cool_after_days_since_creation_greater_than
+      }
+    }
+  }
 }
 
 

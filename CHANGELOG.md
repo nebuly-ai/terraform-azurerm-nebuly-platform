@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0
+
+- Add backups storage
+- Update default Kubernetes version to 1.31.3
+
 ## v0.7.0
 
 - Allow resource suffix for custom resource names

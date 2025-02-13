@@ -808,7 +808,7 @@ resource "azurerm_storage_management_policy" "backups" {
 
     filters {
       prefix_match = []
-      blob_types   = ["blockBlob", "appendBlob"]
+      blob_types   = ["blockBlob"]
     }
 
     actions {

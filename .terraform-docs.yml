@@ -20,11 +20,22 @@ content: |-
 
   Available on [Terraform Registry](https://registry.terraform.io/modules/nebuly-ai/nebuly-platform/azurerm/latest).
 
-  ## Quickstart
 
-  > ⚠️  **Prerequisite**:
-  > before using this Terraform module, ensure that you have your Nebuly credentials ready. 
-  > These credentials are necessary to activate your installation and should be provided as input via the `nebuly_credentials` input.
+  ## Prerequisite
+
+  ### Nebuly Credentials
+
+  Before using this Terraform module, ensure that you have your Nebuly credentials ready. 
+  These credentials are necessary to activate your installation and should be provided as input via the `nebuly_credentials` input.
+
+  ### Required Azure Quotas
+
+  Ensure that you have the necessary Azure quotas available to provision the resources required for the Nebuly Platform:
+
+  * **Standard NCADS_A100_v4 Family vCPUs**: at least 24 vCPUs
+  * **Azure OpenAI gpt-4o**: at least 80k tokens per minute
+
+  ## Quickstart
 
   To get started with Nebuly installation on Microsoft Azure, you can follow the steps below. 
 

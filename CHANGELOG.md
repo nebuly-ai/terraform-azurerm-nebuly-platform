@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.9.0
+
+- Remove T4 AKS node pool
+- Make Azure AD groups creation optional
+
 ## v0.8.0
 
 - Add backups storage

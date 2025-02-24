@@ -29,6 +29,11 @@ variable "platform_domain" {
     error_message = "The domain name must be a valid domain (e.g., example.com)."
   }
 }
+variable "enable_azuread_groups" {
+  description = "If True, the module will create Azure AD groups for assigning permissions to the resources."
+  type        = bool
+  default     = true
+}
 
 variable "nebuly_credentials" {
   type = object({
@@ -533,27 +538,6 @@ variable "aks_worker_pools" {
       nodes_count : null
       nodes_min_count = 0
       nodes_max_count = 1
-    }
-    "t4workers" : {
-      vm_size  = "Standard_NC4as_T4_v3"
-      priority = "Regular"
-      max_pods : 30
-      disk_size_gb = 128
-      disk_type : "Ephemeral"
-      availability_zones = ["1", "2", "3"]
-      node_taints : [
-        "nvidia.com/gpu=:NoSchedule",
-      ]
-      node_labels : {
-        "nebuly.com/accelerator" : "nvidia-tesla-t4"
-      }
-      # Auto-scaling setttings
-      enable_auto_scaling = true
-      nodes_count : null
-      nodes_min_count = 0
-      nodes_max_count = 1
-      # Tags
-      tags : {}
     }
   }
 }

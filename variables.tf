@@ -29,6 +29,11 @@ variable "platform_domain" {
     error_message = "The domain name must be a valid domain (e.g., example.com)."
   }
 }
+variable "enable_azuread_groups" {
+  description = "If True, the module will create Azure AD groups for assigning permissions to the resources."
+  type        = bool
+  default     = true
+}
 
 variable "nebuly_credentials" {
   type = object({

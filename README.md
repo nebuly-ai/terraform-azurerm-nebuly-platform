@@ -167,6 +167,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 | <a name="input_backups_storage_delete_retention_days"></a> [backups\_storage\_delete\_retention\_days](#input\_backups\_storage\_delete\_retention\_days) | The number of days that backups should be retained for once soft-deleted. This value can be between 7 and 90 (the default) days. | `number` | `7` | no |
 | <a name="input_backups_storage_replication_type"></a> [backups\_storage\_replication\_type](#input\_backups\_storage\_replication\_type) | The replication type of the backups storage account. Possible values are: LRS, GRS, RAGRS, ZRS. | `string` | `"GRS"` | no |
 | <a name="input_backups_storage_tier_to_cool_after_days_since_creation_greater_than"></a> [backups\_storage\_tier\_to\_cool\_after\_days\_since\_creation\_greater\_than](#input\_backups\_storage\_tier\_to\_cool\_after\_days\_since\_creation\_greater\_than) | The number of days after which to move the backups to the Cool tier. | `number` | `7` | no |
+| <a name="input_enable_azuread_groups"></a> [enable\_azuread\_groups](#input\_enable\_azuread\_groups) | If True, the module will create Azure AD groups for assigning permissions to the resources. | `bool` | `true` | no |
 | <a name="input_k8s_image_pull_secret_name"></a> [k8s\_image\_pull\_secret\_name](#input\_k8s\_image\_pull\_secret\_name) | The name of the Kubernetes Image Pull Secret to use. <br/>  This value will be used to auto-generate the values.yaml file for installing the Nebuly Platform Helm chart. | `string` | `"nebuly-docker-pull"` | no |
 | <a name="input_key_vault_override_name"></a> [key\_vault\_override\_name](#input\_key\_vault\_override\_name) | Override the name of the Key Vault. If not provided, the name is generated based on the resource\_prefix. | `string` | `null` | no |
 | <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet, according to the firewall rules?<br/>  Default to true to to allow the Terraform module to be executed even outside the private virtual network. <br/>  When set to true, firewall rules are applied, and all connections are denied by default. | `bool` | `true` | no |
@@ -209,7 +210,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 
 - resource.azuread_application.main (/terraform-docs/main.tf#362)
 - resource.azuread_group.aks_admins (/terraform-docs/main.tf#830)
-- resource.azuread_group_member.aks_admin_users (/terraform-docs/main.tf#838)
+- resource.azuread_group_member.aks_admin_users (/terraform-docs/main.tf#840)
 - resource.azuread_service_principal.main (/terraform-docs/main.tf#372)
 - resource.azuread_service_principal_password.main (/terraform-docs/main.tf#377)
 - resource.azurerm_cognitive_account.main (/terraform-docs/main.tf#593)
@@ -219,14 +220,14 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#647)
 - resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#386)
 - resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#395)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#974)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#976)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#408)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#417)
-- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#986)
-- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#997)
+- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#988)
+- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#999)
 - resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#572)
 - resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#563)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#931)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#933)
 - resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#506)
 - resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#514)
 - resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#436)
@@ -245,7 +246,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_private_endpoint.backups_blob (/terraform-docs/main.tf#740)
 - resource.azurerm_private_endpoint.backups_dfs (/terraform-docs/main.tf#763)
 - resource.azurerm_private_endpoint.key_vault (/terraform-docs/main.tf#321)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#926)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#928)
 - resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#352)
 - resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#344)
 - resource.azurerm_role_assignment.nebuly_secrets_officer (/terraform-docs/main.tf#381)
@@ -260,9 +261,9 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_subnet.private_endpints (/terraform-docs/main.tf#189)
 - resource.azurerm_virtual_network.main (/terraform-docs/main.tf#163)
 - resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#431)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#913)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#915)
 - resource.tls_private_key.aks (/terraform-docs/main.tf#826)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#970)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#972)
 - data source.azuread_user.aks_admins (/terraform-docs/main.tf#103)
 - data source.azurerm_client_config.current (/terraform-docs/main.tf#95)
 - data source.azurerm_private_dns_zone.blob (/terraform-docs/main.tf#148)

@@ -828,6 +828,8 @@ resource "tls_private_key" "aks" {
   rsa_bits  = "4096"
 }
 resource "azuread_group" "aks_admins" {
+  count = var.enable_azuread_groups ? 1 : 0
+
   display_name = (
     var.resource_suffix == null ?
     "${var.resource_prefix}.nebuly.aks-admins" :
@@ -836,9 +838,9 @@ resource "azuread_group" "aks_admins" {
   security_enabled = true
 }
 resource "azuread_group_member" "aks_admin_users" {
-  for_each = data.azuread_user.aks_admins
+  for_each = var.enable_azuread_groups ? data.azuread_user.aks_admins : {}
 
-  group_object_id  = azuread_group.aks_admins.id
+  group_object_id  = azuread_group.aks_admins[0].id
   member_object_id = each.value.object_id
 }
 module "aks" {
@@ -859,10 +861,10 @@ module "aks" {
   net_profile_dns_service_ip      = var.aks_net_profile_dns_service_ip
   api_server_authorized_ip_ranges = local.whitelisted_ips
 
-  rbac_aad_admin_group_object_ids = setunion(
+  rbac_aad_admin_group_object_ids = var.enable_azuread_groups ? setunion(
     var.aks_cluster_admin_group_object_ids,
-    [azuread_group.aks_admins.id],
-  )
+    [azuread_group.aks_admins[0].id],
+  ) : var.aks_cluster_admin_group_object_ids
   rbac_aad_managed                  = true
   role_based_access_control_enabled = true
   local_account_disabled            = true

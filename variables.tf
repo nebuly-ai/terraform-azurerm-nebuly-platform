@@ -408,8 +408,8 @@ variable "aks_override_name" {
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {
-    workers       = "1.31.3"
-    control_plane = "1.31.3"
+    workers       = "1.31.5"
+    control_plane = "1.31.5"
   }
   type = object({
     workers       = string
@@ -540,6 +540,15 @@ variable "aks_worker_pools" {
       nodes_max_count = 1
     }
   }
+}
+variable "aks_network_plugin_mode" {
+  description = "Network plugin mode used for building the Kubernetes network. Possible value is `overlay`."
+  type        = string
+  validation {
+    condition     = var.aks_network_plugin_mode == null || var.aks_network_plugin_mode == "overlay"
+    error_message = "Only overlay network plugin is supported."
+  }
+  default = null
 }
 
 

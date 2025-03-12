@@ -897,8 +897,9 @@ module "aks" {
     "Agent" : "defaultnodepoolagent"
   })
 
-  network_policy = "azure"
-  network_plugin = "azure"
+  network_policy      = "azure"
+  network_plugin      = "azure"
+  network_plugin_mode = var.aks_network_plugin_mode
 
   # We set this to `false` and create the role assignment manually to avoid invalid for_each argument error.
   create_role_assignment_network_contributor = false

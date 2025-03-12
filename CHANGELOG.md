@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.10.0
+
+- Support overlay network plugin for AKS
+- Update default Kubernetes version to 1.31.5
+
 ## v0.9.0
 
 - Remove T4 AKS node pool

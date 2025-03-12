@@ -92,28 +92,6 @@ aiModels:
           volumeAttributes:
             secretProviderClass: ${secret_provider_class_name}
 
-lionLinguist:
-  image:
-    repository: "ghcr.io/nebuly-ai/nebuly-lion-linguist"
-
-  modelsCache:
-    enabled: true
-    storageClassName: managed-csi-zrs
-    accessModes:
-      - ReadWriteOnce
-
-  volumeMounts:
-    - name: secrets-store
-      mountPath: /mnt/secrets-store
-      readOnly: true
-  volumes:
-    - name: secrets-store
-      csi:
-        driver: secrets-store.csi.k8s.io
-        readOnly: true
-        volumeAttributes:
-          secretProviderClass: ${secret_provider_class_name}
-
 ingestionWorker:
   image:
     repository: "ghcr.io/nebuly-ai/nebuly-ingestion-worker"

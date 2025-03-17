@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.11.0
+
+- Make AzureAD application creation optional
+
 ## v0.10.0
 
 - Support overlay network plugin for AKS

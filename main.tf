@@ -360,6 +360,8 @@ resource "azurerm_role_assignment" "key_vault_secret_officer__current" {
 
 # ------ Identity ------ #
 resource "azuread_application" "main" {
+  count = var.enable_azuread_application ? 1 : 0
+
   display_name = (
     var.resource_suffix == null ?
     format("%s.nebuly.platform", var.resource_prefix) :
@@ -370,23 +372,33 @@ resource "azuread_application" "main" {
   identifier_uris  = []
 }
 resource "azuread_service_principal" "main" {
-  client_id                    = azuread_application.main.client_id
+  count = var.enable_azuread_application ? 1 : 0
+
+  client_id                    = azuread_application.main[0].client_id
   owners                       = [data.azurerm_client_config.current.object_id]
   app_role_assignment_required = true
 }
 resource "azuread_service_principal_password" "main" {
-  service_principal_id = azuread_service_principal.main.id
+  count = var.enable_azuread_application ? 1 : 0
+
+  service_principal_id = azuread_service_principal.main[0].id
   end_date_relative    = null
 }
 resource "azurerm_role_assignment" "nebuly_secrets_officer" {
+  count = var.enable_azuread_application ? 1 : 0
+
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = azuread_service_principal.main.object_id
+  principal_id         = azuread_service_principal.main[0].object_id
 }
 resource "azurerm_key_vault_secret" "azuread_application_client_id" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-id", var.resource_prefix)
-  value        = azuread_application.main.client_id
+  value = (
+    length(azuread_application.main) > 0 ?
+    azuread_application.main[0].client_id :
+    ""
+  )
 
   depends_on = [
     azurerm_role_assignment.key_vault_secret_officer__current
@@ -395,7 +407,11 @@ resource "azurerm_key_vault_secret" "azuread_application_client_id" {
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-secret", var.resource_prefix)
-  value        = azuread_service_principal_password.main.value
+  value = (
+    length(azuread_service_principal_password.main) > 0 ?
+    azuread_service_principal_password.main[0].value :
+    ""
+  )
 
   depends_on = [
     azurerm_role_assignment.key_vault_secret_officer__current

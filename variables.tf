@@ -29,12 +29,6 @@ variable "platform_domain" {
     error_message = "The domain name must be a valid domain (e.g., example.com)."
   }
 }
-variable "enable_azuread_groups" {
-  description = "If True, the module will create Azure AD groups for assigning permissions to the resources."
-  type        = bool
-  default     = true
-}
-
 variable "nebuly_credentials" {
   type = object({
     client_id : string
@@ -44,6 +38,19 @@ variable "nebuly_credentials" {
   The credentials provided by Nebuly are required for activating your platform installation. 
   If you haven't received your credentials or have lost them, please contact support@nebuly.ai.
   EOT
+}
+
+
+# ------ Identity and RBAC ------ #
+variable "enable_azuread_groups" {
+  description = "If True, the module will create Azure AD groups for assigning permissions to the resources."
+  type        = bool
+  default     = true
+}
+variable "enable_azuread_application" {
+  description = "If True, creates a dedicated Azure AD application for accessing the provisioned Key Vault."
+  default     = false
+  type        = bool
 }
 
 

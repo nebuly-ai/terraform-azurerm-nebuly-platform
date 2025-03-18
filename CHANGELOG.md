@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13.0
+
+- Support Azure OpenAI Private Endpoints
+
 ## v0.12.0
 
 - Support private DNS zones links

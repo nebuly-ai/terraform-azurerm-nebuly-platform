@@ -343,6 +343,10 @@ variable "private_dns_zones" {
       name : string
       resource_group_name : string
     }), null)
+    openai = optional(object({
+      name : string
+      resource_group_name : string
+    }), null)
     key_vault = optional(object({
       name : string
       resource_group_name : string

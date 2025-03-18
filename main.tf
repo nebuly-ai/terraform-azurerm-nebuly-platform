@@ -139,6 +139,12 @@ data "azurerm_private_dns_zone" "flexible_postgres" {
   name                = var.private_dns_zones.flexible_postgres.name
   resource_group_name = var.private_dns_zones.flexible_postgres.resource_group_name
 }
+data "azurerm_private_dns_zone" "openai" {
+  count = var.private_dns_zones.openai != null ? 1 : 0
+
+  name                = var.private_dns_zones.openai.name
+  resource_group_name = var.private_dns_zones.openai.resource_group_name
+}
 data "azurerm_private_dns_zone" "key_vault" {
   count = var.private_dns_zones.key_vault != null ? 1 : 0
 
@@ -186,7 +192,7 @@ resource "azurerm_subnet" "aks_nodes" {
     "Microsoft.KeyVault",
   ] : []
 }
-resource "azurerm_subnet" "private_endpints" {
+resource "azurerm_subnet" "private_endpoints" {
   count = local.use_existing_private_endpoints_subnet ? 0 : 1
 
   name                 = "private-endpoints"
@@ -219,6 +225,7 @@ resource "azurerm_subnet" "flexible_postgres" {
 locals {
   private_dns_zones_names = {
     flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres.name : azurerm_private_dns_zone.flexible_postgres[0],
+    openai            = var.private_dns_zones.openai != null ? var.private_dns_zones.openai.name : azurerm_private_dns_zone.openai[0],
     key_vault         = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault.name : azurerm_private_dns_zone.key_vault[0],
     blob              = var.private_dns_zones.blob != null ? var.private_dns_zones.blob.name : azurerm_private_dns_zone.blob[0],
     dfs               = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs.name : azurerm_private_dns_zone.dfs[0],
@@ -289,6 +296,22 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones_names.dfs.name
 }
+# - openai
+resource "azurerm_private_dns_zone" "openai" {
+  count               = var.private_dns_zones.openai == null ? 1 : 0
+  name                = "privatelink.openai.azure.com"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
+  name = format(
+    "%s-openai-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = local.private_dns_zones_names.openai.name
+}
 
 
 # ------ Key Vault ------ #
@@ -319,12 +342,10 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "key_vault" {
-  count = var.private_dns_zones.key_vault == null ? 0 : 1
-
-  name                = azurerm_key_vault.main.name
+  name                = "${azurerm_key_vault.main.name}-kv"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -612,14 +633,18 @@ resource "azurerm_cognitive_account" "main" {
   resource_group_name = data.azurerm_resource_group.main.name
   kind                = "OpenAI"
 
-  sku_name              = "S0"
-  custom_subdomain_name = local.azure_openai_account_name
+  sku_name                      = "S0"
+  custom_subdomain_name         = local.azure_openai_account_name
+  public_network_access_enabled = var.enable_service_endpoints
 
-  network_acls {
-    default_action = "Deny"
+  dynamic "network_acls" {
+    for_each = var.enable_service_endpoints ? [""] : []
+    content {
+      default_action = "Deny"
 
-    virtual_network_rules {
-      subnet_id = local.aks_nodes_subnet.id
+      virtual_network_rules {
+        subnet_id = local.aks_nodes_subnet.id
+      }
     }
   }
 
@@ -669,6 +694,26 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
     azurerm_role_assignment.key_vault_secret_officer__current
   ]
 }
+resource "azurerm_private_endpoint" "openai" {
+  name                = "${azurerm_cognitive_account.main.name}-openai"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+
+  private_service_connection {
+    name                           = azurerm_cognitive_account.main.name
+    private_connection_resource_id = azurerm_cognitive_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["account"]
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink-openai"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.openai) > 0 ? [azurerm_private_dns_zone.openai[0].id] : [data.azurerm_private_dns_zone.openai[0].id]
+  }
+
+  tags = var.tags
+}
 
 
 
@@ -696,7 +741,7 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
   access_tier              = "Hot"
 
-  public_network_access_enabled = true # TODO
+  public_network_access_enabled = var.enable_service_endpoints
   is_hns_enabled                = false
 
   dynamic "network_rules" {
@@ -718,6 +763,48 @@ resource "azurerm_role_assignment" "storage_container_models__data_contributor" 
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.aks.kubelet_identity[0].object_id
   scope                = azurerm_storage_container.models.resource_manager_id
+}
+resource "azurerm_private_endpoint" "models_blob" {
+  name                = "${azurerm_storage_account.main.name}-blob"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.main.name}-blob"
+    private_connection_resource_id = azurerm_storage_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.blob) > 0 ? [azurerm_private_dns_zone.blob[0].id] : [data.azurerm_private_dns_zone.blob[0].id]
+  }
+
+  tags = var.tags
+}
+resource "azurerm_private_endpoint" "models_dfs" {
+  name                = "${azurerm_storage_account.main.name}-dfs"
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+
+
+  private_service_connection {
+    name                           = "${azurerm_storage_account.main.name}-dfs"
+    private_connection_resource_id = azurerm_storage_account.main.id
+    is_manual_connection           = false
+    subresource_names              = ["dfs"]
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink-blob-core-windows-net"
+    private_dns_zone_ids = length(azurerm_private_dns_zone.dfs) > 0 ? [azurerm_private_dns_zone.dfs[0].id] : [data.azurerm_private_dns_zone.dfs[0].id]
+  }
+
+  tags = var.tags
 }
 
 
@@ -757,12 +844,10 @@ resource "azurerm_storage_account" "backups" {
 #  name                 = "clickhouse"
 #}
 resource "azurerm_private_endpoint" "backups_blob" {
-  count = var.private_dns_zones.blob == null ? 0 : 1
-
   name                = "${azurerm_storage_account.backups.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -780,12 +865,10 @@ resource "azurerm_private_endpoint" "backups_blob" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "backups_dfs" {
-  count = var.private_dns_zones.dfs == null ? 0 : 1
-
   name                = "${azurerm_storage_account.backups.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {

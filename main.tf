@@ -180,7 +180,7 @@ resource "azurerm_subnet" "aks_nodes" {
   resource_group_name  = data.azurerm_resource_group.main.name
   address_prefixes     = var.subnet_address_space_aks_nodes
 
-  service_endpoints = var.enable_service_endpoints ?[
+  service_endpoints = var.enable_service_endpoints ? [
     "Microsoft.Storage",
     "Microsoft.CognitiveServices",
     "Microsoft.KeyVault",

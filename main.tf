@@ -180,11 +180,11 @@ resource "azurerm_subnet" "aks_nodes" {
   resource_group_name  = data.azurerm_resource_group.main.name
   address_prefixes     = var.subnet_address_space_aks_nodes
 
-  service_endpoints = [
+  service_endpoints = var.enable_service_endpoints ? [
     "Microsoft.Storage",
     "Microsoft.CognitiveServices",
     "Microsoft.KeyVault",
-  ]
+  ] : []
 }
 resource "azurerm_subnet" "private_endpints" {
   count = local.use_existing_private_endpoints_subnet ? 0 : 1
@@ -216,6 +216,14 @@ resource "azurerm_subnet" "flexible_postgres" {
 
 
 # ------ Networking: Private DNS Zones ------ #
+locals {
+  private_dns_zones_names = {
+    flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres.name : azurerm_private_dns_zone.flexible_postgres[0],
+    key_vault         = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault.name : azurerm_private_dns_zone.key_vault[0],
+    blob              = var.private_dns_zones.blob != null ? var.private_dns_zones.blob.name : azurerm_private_dns_zone.blob[0],
+    dfs               = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs.name : azurerm_private_dns_zone.dfs[0],
+  }
+}
 # - postgres
 resource "azurerm_private_dns_zone" "flexible_postgres" {
   count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
@@ -224,8 +232,6 @@ resource "azurerm_private_dns_zone" "flexible_postgres" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
-  count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
-
   name = format(
     "%s-flexible-postgres-%s",
     var.resource_prefix,
@@ -233,7 +239,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.flexible_postgres[0].name
+  private_dns_zone_name = local.private_dns_zones_names.flexible_postgres.name
 }
 # - key vault
 resource "azurerm_private_dns_zone" "key_vault" {
@@ -242,8 +248,6 @@ resource "azurerm_private_dns_zone" "key_vault" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
-  count = var.private_dns_zones.key_vault == null ? 1 : 0
-
   name = format(
     "%s-key-vault-%s",
     var.resource_prefix,
@@ -251,7 +255,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.key_vault[0].name
+  private_dns_zone_name = local.private_dns_zones_names.key_vault.name
 }
 # - blob
 resource "azurerm_private_dns_zone" "blob" {
@@ -260,8 +264,6 @@ resource "azurerm_private_dns_zone" "blob" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
-  count = var.private_dns_zones.blob == null ? 1 : 0
-
   name = format(
     "%s-blob-%s",
     var.resource_prefix,
@@ -269,7 +271,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.blob[0].name
+  private_dns_zone_name = local.private_dns_zones_names.blob.name
 }
 # - dfs
 resource "azurerm_private_dns_zone" "dfs" {
@@ -278,8 +280,6 @@ resource "azurerm_private_dns_zone" "dfs" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
-  count = var.private_dns_zones.dfs == null ? 1 : 0
-
   name = format(
     "%s-dfs-%s",
     var.resource_prefix,
@@ -287,7 +287,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = azurerm_private_dns_zone.dfs[0].name
+  private_dns_zone_name = local.private_dns_zones_names.dfs.name
 }
 
 
@@ -307,7 +307,7 @@ resource "azurerm_key_vault" "main" {
   sku_name = lower(var.key_vault_sku_name)
 
   dynamic "network_acls" {
-    for_each = var.private_dns_zones.key_vault == null ? [""] : []
+    for_each = var.enable_service_endpoints ? [""] : []
     content {
       bypass                     = "AzureServices"
       default_action             = "Deny"
@@ -699,10 +699,13 @@ resource "azurerm_storage_account" "main" {
   public_network_access_enabled = true # TODO
   is_hns_enabled                = false
 
-  network_rules {
-    default_action             = "Deny"
-    ip_rules                   = local.whitelisted_ips
-    virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
+  dynamic "network_rules" {
+    for_each = var.enable_service_endpoints ? [""] : []
+    content {
+      default_action             = "Deny"
+      ip_rules                   = local.whitelisted_ips
+      virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
+    }
   }
 
   tags = var.tags
@@ -749,10 +752,10 @@ resource "azurerm_storage_account" "backups" {
   }
   tags = var.tags
 }
-resource "azurerm_storage_container" "clickhouse" {
-  storage_account_name = azurerm_storage_account.backups.name
-  name                 = "clickhouse"
-}
+#resource "azurerm_storage_container" "clickhouse" {
+#  storage_account_name = azurerm_storage_account.backups.name
+#  name                 = "clickhouse"
+#}
 resource "azurerm_private_endpoint" "backups_blob" {
   count = var.private_dns_zones.blob == null ? 0 : 1
 

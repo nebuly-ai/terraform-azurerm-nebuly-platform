@@ -328,6 +328,11 @@ variable "subnet_address_space_flexible_postgres" {
   type        = list(string)
   default     = ["10.0.12.0/26"]
 }
+variable "enable_service_endpoints" {
+  description = "If True, the module will create service endpoints on the speficied networks, and configure network rules."
+  default     = false
+  type        = bool
+}
 variable "private_dns_zones" {
   description = <<EOT
   Private DNS zones to use for Private Endpoint connections. If not provided, a new DNS Zone 

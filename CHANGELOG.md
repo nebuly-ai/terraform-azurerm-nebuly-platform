@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.12.0
+
+- Support private DNS zones links
+
 ## v0.11.0
 
 - Make AzureAD application creation optional

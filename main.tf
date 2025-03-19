@@ -78,6 +78,11 @@ locals {
     data.azurerm_subnet.aks_nodes[0] :
     azurerm_subnet.aks_nodes[0]
   )
+  private_endpoints_subnet = (
+    local.use_existing_private_endpoints_subnet ?
+    data.azurerm_subnet.private_endpoints[0] :
+    azurerm_subnet.private_endpoints[0]
+  )
   flexible_postgres_subnet = (
     local.use_existing_flexible_postgres_subnet ?
     data.azurerm_subnet.flexible_postgres[0] :
@@ -111,6 +116,20 @@ data "azurerm_subnet" "aks_nodes" {
   resource_group_name  = data.azurerm_virtual_network.main[0].resource_group_name
   virtual_network_name = data.azurerm_virtual_network.main[0].name
   name                 = var.subnet_name_aks_nodes
+
+  lifecycle {
+    precondition {
+      condition     = length(data.azurerm_virtual_network.main) > 0
+      error_message = "`virtual_network_name` must be provided and must point to a valid virtual network."
+    }
+  }
+}
+data "azurerm_subnet" "private_endpoints" {
+  count = local.use_existing_private_endpoints_subnet ? 1 : 0
+
+  resource_group_name  = data.azurerm_virtual_network.main[0].resource_group_name
+  virtual_network_name = data.azurerm_virtual_network.main[0].name
+  name                 = var.subnet_name_private_endpoints
 
   lifecycle {
     precondition {
@@ -345,7 +364,7 @@ resource "azurerm_private_endpoint" "key_vault" {
   name                = "${azurerm_key_vault.main.name}-kv"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -698,7 +717,7 @@ resource "azurerm_private_endpoint" "openai" {
   name                = "${azurerm_cognitive_account.main.name}-openai"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
   private_service_connection {
     name                           = azurerm_cognitive_account.main.name
@@ -768,7 +787,7 @@ resource "azurerm_private_endpoint" "models_blob" {
   name                = "${azurerm_storage_account.main.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -789,7 +808,7 @@ resource "azurerm_private_endpoint" "models_dfs" {
   name                = "${azurerm_storage_account.main.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -847,7 +866,7 @@ resource "azurerm_private_endpoint" "backups_blob" {
   name                = "${azurerm_storage_account.backups.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {
@@ -868,7 +887,7 @@ resource "azurerm_private_endpoint" "backups_dfs" {
   name                = "${azurerm_storage_account.backups.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = local.use_existing_private_endpoints_subnet ? local.aks_nodes_subnet.id : azurerm_subnet.private_endpoints[0].id
+  subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
 
   private_service_connection {

@@ -224,11 +224,11 @@ resource "azurerm_subnet" "flexible_postgres" {
 # ------ Networking: Private DNS Zones ------ #
 locals {
   private_dns_zones_names = {
-    flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres.name : azurerm_private_dns_zone.flexible_postgres[0],
-    openai            = var.private_dns_zones.openai != null ? var.private_dns_zones.openai.name : azurerm_private_dns_zone.openai[0],
-    key_vault         = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault.name : azurerm_private_dns_zone.key_vault[0],
-    blob              = var.private_dns_zones.blob != null ? var.private_dns_zones.blob.name : azurerm_private_dns_zone.blob[0],
-    dfs               = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs.name : azurerm_private_dns_zone.dfs[0],
+    flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres.name : azurerm_private_dns_zone.flexible_postgres[0].name,
+    openai            = var.private_dns_zones.openai != null ? var.private_dns_zones.openai.name : azurerm_private_dns_zone.openai[0].name,
+    key_vault         = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault.name : azurerm_private_dns_zone.key_vault[0].name,
+    blob              = var.private_dns_zones.blob != null ? var.private_dns_zones.blob.name : azurerm_private_dns_zone.blob[0].name,
+    dfs               = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs.name : azurerm_private_dns_zone.dfs[0].name,
   }
 }
 # - postgres
@@ -246,7 +246,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = local.private_dns_zones_names.flexible_postgres.name
+  private_dns_zone_name = local.private_dns_zones_names.flexible_postgres
 }
 # - key vault
 resource "azurerm_private_dns_zone" "key_vault" {
@@ -262,7 +262,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = local.private_dns_zones_names.key_vault.name
+  private_dns_zone_name = local.private_dns_zones_names.key_vault
 }
 # - blob
 resource "azurerm_private_dns_zone" "blob" {
@@ -278,7 +278,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = local.private_dns_zones_names.blob.name
+  private_dns_zone_name = local.private_dns_zones_names.blob
 }
 # - dfs
 resource "azurerm_private_dns_zone" "dfs" {
@@ -294,7 +294,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = local.private_dns_zones_names.dfs.name
+  private_dns_zone_name = local.private_dns_zones_names.dfs
 }
 # - openai
 resource "azurerm_private_dns_zone" "openai" {
@@ -310,7 +310,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
   )
   resource_group_name   = data.azurerm_resource_group.main.name
   virtual_network_id    = local.virtual_network.id
-  private_dns_zone_name = local.private_dns_zones_names.openai.name
+  private_dns_zone_name = local.private_dns_zones_names.openai
 }
 
 
@@ -920,6 +920,15 @@ resource "azurerm_storage_management_policy" "backups" {
     }
   }
 }
+#resource "azurerm_key_vault_secret" "backups_storage_primary_key" {
+#  name         = "${var.resource_prefix}-backups-storage-primary-key"
+#  value        = azurerm_storage_account.backups.primary_access_key
+#  key_vault_id = azurerm_key_vault.main.id
+#
+#  depends_on = [
+#    azurerm_role_assignment.key_vault_secret_officer__current
+#  ]
+#}
 
 
 

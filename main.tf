@@ -209,7 +209,9 @@ resource "azurerm_subnet" "aks_nodes" {
     "Microsoft.Storage",
     "Microsoft.CognitiveServices",
     "Microsoft.KeyVault",
-  ] : []
+    ] : [
+    "Microsoft.Storage" # Required by Flexible Postgres
+  ]
 }
 resource "azurerm_subnet" "private_endpoints" {
   count = local.use_existing_private_endpoints_subnet ? 0 : 1
@@ -432,6 +434,8 @@ resource "azurerm_role_assignment" "nebuly_secrets_officer" {
   principal_id         = azuread_service_principal.main[0].object_id
 }
 resource "azurerm_key_vault_secret" "azuread_application_client_id" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-id", var.resource_prefix)
   value = (
@@ -445,6 +449,7 @@ resource "azurerm_key_vault_secret" "azuread_application_client_id" {
   ]
 }
 resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
+  count        = var.enable_key_vault_secrets ? 1 : 0
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-azure-client-secret", var.resource_prefix)
   value = (
@@ -462,6 +467,8 @@ resource "azurerm_key_vault_secret" "azuread_application_client_secret" {
 
 # ------ Nebuly Identity for pulling LLMs ------ # 
 resource "azurerm_key_vault_secret" "nebuly_azure_client_id" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-nebuly-azure-client-id", var.resource_prefix)
   value        = var.nebuly_credentials.client_id
@@ -471,6 +478,8 @@ resource "azurerm_key_vault_secret" "nebuly_azure_client_id" {
   ]
 }
 resource "azurerm_key_vault_secret" "nebuly_azure_client_secret" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-nebuly-azure-client-secret", var.resource_prefix)
   value        = var.nebuly_credentials.client_secret
@@ -617,6 +626,8 @@ resource "azurerm_monitor_metric_alert" "postgres_server_alerts" {
   tags = var.tags
 }
 resource "azurerm_key_vault_secret" "postgres_user" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   name         = "${var.resource_prefix}-postgres-username"
   value        = var.postgres_server_admin_username
   key_vault_id = azurerm_key_vault.main.id
@@ -626,6 +637,8 @@ resource "azurerm_key_vault_secret" "postgres_user" {
   ]
 }
 resource "azurerm_key_vault_secret" "postgres_password" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   name         = "${var.resource_prefix}-postgres-password"
   value        = random_password.postgres_server_admin_password.result
   key_vault_id = azurerm_key_vault.main.id
@@ -705,6 +718,8 @@ resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
   }
 }
 resource "azurerm_key_vault_secret" "azure_openai_api_key" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   name         = "${var.resource_prefix}-openai-api-key"
   value        = azurerm_cognitive_account.main.primary_access_key
   key_vault_id = azurerm_key_vault.main.id
@@ -775,13 +790,17 @@ resource "azurerm_storage_account" "main" {
   tags = var.tags
 }
 resource "azurerm_storage_container" "models" {
+  count = var.enable_storage_containers ? 1 : 0
+
   storage_account_name = azurerm_storage_account.main.name
   name                 = "models"
 }
 resource "azurerm_role_assignment" "storage_container_models__data_contributor" {
+  count = var.enable_storage_containers ? 1 : 0
+
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = module.aks.kubelet_identity[0].object_id
-  scope                = azurerm_storage_container.models.resource_manager_id
+  scope                = azurerm_storage_container.models[0].resource_manager_id
 }
 resource "azurerm_private_endpoint" "models_blob" {
   name                = "${azurerm_storage_account.main.name}-blob"
@@ -1105,6 +1124,8 @@ resource "tls_private_key" "jwt_signing_key" {
   rsa_bits  = 4096
 }
 resource "azurerm_key_vault_secret" "jwt_signing_key" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
   key_vault_id = azurerm_key_vault.main.id
   name         = format("%s-jwt-signing-key", var.resource_prefix)
   value        = tls_private_key.jwt_signing_key.private_key_pem
@@ -1117,7 +1138,7 @@ resource "azurerm_key_vault_secret" "jwt_signing_key" {
 
 # ------ External Secrets ------ #
 resource "azurerm_key_vault_secret" "okta_sso_client_id" {
-  count = var.okta_sso == null ? 0 : 1
+  count = (var.okta_sso != null && var.enable_key_vault_secrets) ? 1 : 0
 
   name         = "${var.resource_prefix}-okta-sso-client-id"
   value        = var.okta_sso.client_id
@@ -1142,6 +1163,7 @@ resource "azurerm_key_vault_secret" "okta_sso_client_secret" {
 
 # ------ Post provisioning ------ #
 locals {
+  missing_value_placeholder         = "TODO"
   secret_provider_class_name        = "nebuly-platform"
   secret_provider_class_secret_name = "nebuly-platform-credentials"
 
@@ -1188,7 +1210,7 @@ locals {
 
       kubelet_identity_client_id = module.aks.kubelet_identity[0].client_id
       storage_account_name       = azurerm_storage_account.main.name
-      storage_container_name     = azurerm_storage_container.models.name
+      storage_container_name     = try(azurerm_storage_container.models[0].name, "")
       tenant_id                  = data.azurerm_client_config.current.tenant_id
     },
   )
@@ -1209,14 +1231,14 @@ locals {
       tenant_id               = data.azurerm_client_config.current.tenant_id
       aks_managed_identity_id = try(module.aks.key_vault_secrets_provider.secret_identity[0].client_id, "TODO")
 
-      secret_name_jwt_signing_key        = azurerm_key_vault_secret.jwt_signing_key.name
-      secret_name_db_username            = azurerm_key_vault_secret.postgres_user.name
-      secret_name_db_password            = azurerm_key_vault_secret.postgres_password.name
-      secret_name_openai_api_key         = azurerm_key_vault_secret.azure_openai_api_key.name
-      secret_name_azure_client_id        = azurerm_key_vault_secret.azuread_application_client_id.name
-      secret_name_azure_client_secret    = azurerm_key_vault_secret.azuread_application_client_secret.name
-      secret_name_nebuly_client_id       = azurerm_key_vault_secret.nebuly_azure_client_id.name
-      secret_name_nebuly_client_secret   = azurerm_key_vault_secret.nebuly_azure_client_secret.name
+      secret_name_jwt_signing_key        = try(azurerm_key_vault_secret.jwt_signing_key[0].name, local.missing_value_placeholder)
+      secret_name_db_username            = try(azurerm_key_vault_secret.postgres_user[0].name, local.missing_value_placeholder)
+      secret_name_db_password            = try(azurerm_key_vault_secret.postgres_password[0].name, local.missing_value_placeholder)
+      secret_name_openai_api_key         = try(azurerm_key_vault_secret.azure_openai_api_key[0].name, local.missing_value_placeholder)
+      secret_name_azure_client_id        = try(azurerm_key_vault_secret.azuread_application_client_id[0].name, local.missing_value_placeholder)
+      secret_name_azure_client_secret    = try(azurerm_key_vault_secret.azuread_application_client_secret[0].name, local.missing_value_placeholder)
+      secret_name_nebuly_client_id       = try(azurerm_key_vault_secret.nebuly_azure_client_id[0].name, local.missing_value_placeholder)
+      secret_name_nebuly_client_secret   = try(azurerm_key_vault_secret.nebuly_azure_client_secret[0].name, local.missing_value_placeholder)
       secret_name_okta_sso_client_id     = var.okta_sso == null ? "" : azurerm_key_vault_secret.okta_sso_client_id[0].name
       secret_name_okta_sso_client_secret = var.okta_sso == null ? "" : azurerm_key_vault_secret.okta_sso_client_secret[0].name
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.14.0
+
+- Optional Key Vault secrets
+- Optional Storage Containers
+
 ## v0.13.0
 
 - Support Azure OpenAI Private Endpoints

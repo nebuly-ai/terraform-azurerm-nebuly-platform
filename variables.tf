@@ -41,7 +41,7 @@ variable "nebuly_credentials" {
 }
 
 
-# ------ Identity and RBAC ------ #
+# ------ Feature Flags ------ #
 variable "enable_azuread_groups" {
   description = "If True, the module will create Azure AD groups for assigning permissions to the resources."
   type        = bool
@@ -50,6 +50,27 @@ variable "enable_azuread_groups" {
 variable "enable_azuread_application" {
   description = "If True, creates a dedicated Azure AD application for accessing the provisioned Key Vault."
   default     = false
+  type        = bool
+}
+variable "enable_service_endpoints" {
+  description = "If True, the module will create service endpoints on the speficied networks, and configure network rules."
+  default     = false
+  type        = bool
+}
+variable "enable_key_vault_secrets" {
+  description = <<EOT
+  If True, the module will create secrets in the Key Vault.
+  When enabled, the networking must be configured so that Terraform can access the Key Vault over the Private Endpoint.
+  EOT
+  default     = true
+  type        = bool
+}
+variable "enable_storage_containers" {
+  description = <<EOT
+  If True, the module will create the required storage containers for the platform.
+  When enabled, the networking must be configured so that Terraform can access the Storage Accounts over the Private Endpoint.
+  EOT
+  default     = true
   type        = bool
 }
 
@@ -327,11 +348,6 @@ variable "subnet_address_space_flexible_postgres" {
   EOT
   type        = list(string)
   default     = ["10.0.12.0/26"]
-}
-variable "enable_service_endpoints" {
-  description = "If True, the module will create service endpoints on the speficied networks, and configure network rules."
-  default     = false
-  type        = bool
 }
 variable "private_dns_zones" {
   description = <<EOT

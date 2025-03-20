@@ -1,9 +1,13 @@
 # Changelog
 
-## v0.14.0
+## v0.15.0
 
 - Optional Key Vault secrets
 - Optional Storage Containers
+
+## v0.14.0
+
+- Private Endpoint fixes (use private endpoints subnet instead of AKS)
 
 ## v0.13.0
 

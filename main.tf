@@ -333,7 +333,32 @@ resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones_names.openai
 }
+# - AKS private ingress controller
+resource "azurerm_private_dns_zone" "web_app_routing" {
+  count = var.enable_web_routing_addon ? 1 : 0
 
+  name                = var.platform_domain
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "web_app_routing" {
+  count = var.enable_web_routing_addon ? 1 : 0
+
+  name = format(
+    "%s-web-app-routing-%s",
+    var.resource_prefix,
+    local.virtual_network.name,
+  )
+  resource_group_name   = data.azurerm_resource_group.main.name
+  virtual_network_id    = local.virtual_network.id
+  private_dns_zone_name = azurerm_private_dns_zone.web_app_routing[0].name
+}
+resource "azurerm_role_assignment" "web_app_routing_identity__dns_zone" {
+  count = length(module.aks.kubelet_identity) > 0 ? 1 : 0
+
+  scope                = data.azurerm_resource_group.main.id
+  role_definition_name = "Private DNS Zone Contributor"
+  principal_id         = module.aks.web_app_routing_identity[0].object_id
+}
 
 # ------ Key Vault ------ #
 resource "azurerm_key_vault" "main" {
@@ -1024,6 +1049,10 @@ module "aks" {
   log_analytics_solution          = var.aks_log_analytics_solution
 
   temporary_name_for_rotation = "systemback"
+
+  web_app_routing = length(azurerm_private_dns_zone.web_app_routing) > 0 ? {
+    dns_zone_id = azurerm_private_dns_zone.web_app_routing[0].id
+  } : null
 
   os_disk_size_gb              = var.aks_sys_pool.disk_size_gb
   os_disk_type                 = var.aks_sys_pool.disk_type

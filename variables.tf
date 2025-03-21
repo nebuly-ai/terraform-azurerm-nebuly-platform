@@ -73,6 +73,14 @@ variable "enable_storage_containers" {
   default     = true
   type        = bool
 }
+variable "enable_web_routing_addon" {
+  description = <<EOT
+  If True, the module will enable the web routing add-on and create a Private DNS Zone for the Ingress Controller, 
+  using the domain provided as input variable.
+  EOT
+  default     = false
+  type        = bool
+}
 
 
 # ------ Kubernetes ------ #

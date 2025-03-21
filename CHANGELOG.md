@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.16.0
+
+- Enable optional web app routing add-on
+
 ## v0.15.0
 
 - Optional Key Vault secrets

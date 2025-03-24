@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.17.0
+
+- Support private AKS cluster
+
 ## v0.16.1
 
 - Fix resource count

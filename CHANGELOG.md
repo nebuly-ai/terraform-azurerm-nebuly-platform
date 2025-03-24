@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.17.1
+
+- Fix private DNS zone for web-app routing
+- Fix ingress class name in helm_values when web app routing is enabled
+
 ## v0.17.0
 
 - Support private AKS cluster

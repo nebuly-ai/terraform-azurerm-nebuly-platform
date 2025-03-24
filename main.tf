@@ -337,7 +337,12 @@ resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
 resource "azurerm_private_dns_zone" "web_app_routing" {
   count = var.enable_web_routing_addon ? 1 : 0
 
-  name                = var.platform_domain
+  name = join(".",
+    coalesce(
+      length(split(".", var.platform_domain)) > 2 ? slice(split(".", var.platform_domain), 1, length(split(".", var.platform_domain))) : split(".", var.platform_domain)
+    )
+  )
+
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "web_app_routing" {
@@ -388,6 +393,8 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "key_vault" {
+  count = var.enable_service_endpoints ? 1 : 0
+
   name                = "${azurerm_key_vault.main.name}-kv"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -1243,6 +1250,12 @@ locals {
       storage_account_name       = azurerm_storage_account.main.name
       storage_container_name     = try(azurerm_storage_container.models[0].name, "")
       tenant_id                  = data.azurerm_client_config.current.tenant_id
+
+      ingress_class_name = (
+        var.enable_web_routing_addon ?
+        "webapprouting.kubernetes.azure.com" :
+        "nginx"
+      )
     },
   )
   helm_values_bootstrap = templatefile(

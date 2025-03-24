@@ -16,7 +16,7 @@ backend:
       cert-manager.io/cluster-issuer: letsencrypt
       # ------------
     enabled: true
-    className: "nginx"
+    className: ${ingress_class_name}
     hosts:
       - host: ${platform_domain}
         paths:
@@ -54,7 +54,7 @@ eventIngestion:
       cert-manager.io/cluster-issuer: letsencrypt
       # ------------
     enabled: true
-    className: "nginx"
+    className: ${ingress_class_name}
     hosts:
       - host: ${platform_domain}
         paths:
@@ -229,7 +229,7 @@ auth:
       cert-manager.io/cluster-issuer: letsencrypt
       # ------------
     enabled: true
-    className: "nginx"
+    className: ${ingress_class_name}
     hosts:
       - host: ${platform_domain}
         paths:
@@ -255,7 +255,7 @@ frontend:
       # Remove this section if you're not using cert-manager for SSL certificates.
       cert-manager.io/cluster-issuer: letsencrypt
       # ------------
-    className: "nginx"
+    className: ${ingress_class_name}
     hosts:
       - host: ${platform_domain}
         paths:

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.16.1
+
+- Fix resource count
+
 ## v0.16.0
 
 - Enable optional web app routing add-on

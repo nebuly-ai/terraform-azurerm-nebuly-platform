@@ -353,7 +353,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "web_app_routing" {
   private_dns_zone_name = azurerm_private_dns_zone.web_app_routing[0].name
 }
 resource "azurerm_role_assignment" "web_app_routing_identity__dns_zone" {
-  count = length(module.aks.web_app_routing_identity) > 0 ? 1 : 0
+  count = var.enable_web_routing_addon ? 1 : 0
 
   scope                = data.azurerm_resource_group.main.id
   role_definition_name = "Private DNS Zone Contributor"

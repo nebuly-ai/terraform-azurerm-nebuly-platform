@@ -590,6 +590,11 @@ variable "aks_network_plugin_mode" {
   }
   default = null
 }
+variable "aks_private_cluster_enabled" {
+  description = "If true cluster API server will be exposed only on internal IP address and available only in cluster vnet.	"
+  type        = bool
+  default     = false
+}
 
 
 # ------ Backups ------ #

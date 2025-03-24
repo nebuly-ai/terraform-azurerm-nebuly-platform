@@ -1019,7 +1019,7 @@ resource "azuread_group_member" "aks_admin_users" {
 }
 module "aks" {
   source  = "Azure/aks/azurerm"
-  version = "9.1.0"
+  version = "9.4.1"
 
   prefix              = var.resource_prefix
   cluster_name        = local.aks_cluster_name
@@ -1030,10 +1030,13 @@ module "aks" {
   orchestrator_version = var.aks_kubernetes_version.workers
   sku_tier             = var.aks_sku_tier
 
-  vnet_subnet_id                  = local.aks_nodes_subnet.id
-  net_profile_service_cidr        = var.aks_net_profile_service_cidr
-  net_profile_dns_service_ip      = var.aks_net_profile_dns_service_ip
-  api_server_authorized_ip_ranges = local.whitelisted_ips
+  vnet_subnet_id             = local.aks_nodes_subnet.id
+  net_profile_service_cidr   = var.aks_net_profile_service_cidr
+  net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
+
+  private_cluster_enabled         = var.aks_private_cluster_enabled
+  private_dns_zone_id             = var.aks_private_cluster_enabled ? "System" : null
+  api_server_authorized_ip_ranges = var.aks_private_cluster_enabled ? null : local.whitelisted_ips
 
   rbac_aad_admin_group_object_ids = var.enable_azuread_groups ? setunion(
     var.aks_cluster_admin_group_object_ids,
@@ -1042,7 +1045,6 @@ module "aks" {
   rbac_aad_managed                  = true
   role_based_access_control_enabled = true
   local_account_disabled            = true
-  private_cluster_enabled           = false
 
   log_analytics_workspace         = var.aks_log_analytics_workspace
   log_analytics_workspace_enabled = var.aks_log_analytics_workspace_enabled

@@ -170,6 +170,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 | <a name="input_aks_net_profile_service_cidr"></a> [aks\_net\_profile\_service\_cidr](#input\_aks\_net\_profile\_service\_cidr) | The Network Range used by the Kubernetes service. Must not overlap with the AKS Nodes address space. Example: 10.32.0.0/24 | `string` | `"10.32.0.0/24"` | no |
 | <a name="input_aks_network_plugin_mode"></a> [aks\_network\_plugin\_mode](#input\_aks\_network\_plugin\_mode) | Network plugin mode used for building the Kubernetes network. Possible value is `overlay`. | `string` | `null` | no |
 | <a name="input_aks_override_name"></a> [aks\_override\_name](#input\_aks\_override\_name) | Override the name of the Azure Kubernetes Service resource. If not provided, the name is generated based on the resource\_prefix. | `string` | `null` | no |
+| <a name="input_aks_private_cluster_enabled"></a> [aks\_private\_cluster\_enabled](#input\_aks\_private\_cluster\_enabled) | If true cluster API server will be exposed only on internal IP address and available only in cluster vnet. | `bool` | `false` | no |
 | <a name="input_aks_sku_tier"></a> [aks\_sku\_tier](#input\_aks\_sku\_tier) | The AKS tier. Possible values are: Free, Standard, Premium. It is recommended to use Standard or Premium for production workloads. | `string` | `"Standard"` | no |
 | <a name="input_aks_sys_pool"></a> [aks\_sys\_pool](#input\_aks\_sys\_pool) | The configuration of the AKS System Nodes Pool. | <pre>object({<br/>    vm_size : string<br/>    nodes_max_pods : number<br/>    name : string<br/>    availability_zones : list(string)<br/>    disk_size_gb : number<br/>    disk_type : string<br/>    nodes_labels : optional(map(string), {})<br/>    nodes_tags : optional(map(string), {})<br/>    only_critical_addons_enabled : optional(bool, false)<br/>    # Auto-scaling settings<br/>    nodes_count : optional(number, null)<br/>    enable_auto_scaling : optional(bool, false)<br/>    agents_min_count : optional(number, null)<br/>    agents_max_count : optional(number, null)<br/>  })</pre> | <pre>{<br/>  "agents_max_count": 1,<br/>  "agents_min_count": 1,<br/>  "availability_zones": [<br/>    "1",<br/>    "2",<br/>    "3"<br/>  ],<br/>  "disk_size_gb": 128,<br/>  "disk_type": "Ephemeral",<br/>  "enable_auto_scaling": true,<br/>  "name": "system",<br/>  "nodes_max_pods": 60,<br/>  "only_critical_addons_enabled": false,<br/>  "vm_size": "Standard_E4ads_v5"<br/>}</pre> | no |
 | <a name="input_aks_worker_pools"></a> [aks\_worker\_pools](#input\_aks\_worker\_pools) | The worker pools of the AKS cluster, each with the respective configuration.<br/>  The default configuration uses a single worker node, with no HA. | <pre>map(object({<br/>    enabled : optional(bool, true)<br/>    vm_size : string<br/>    priority : optional(string, "Regular")<br/>    tags : map(string)<br/>    max_pods : number<br/>    disk_size_gb : optional(number, 128)<br/>    disk_type : string<br/>    availability_zones : list(string)<br/>    node_taints : optional(list(string), [])<br/>    node_labels : optional(map(string), {})<br/>    # Auto-scaling settings<br/>    nodes_count : optional(number, null)<br/>    enable_auto_scaling : optional(bool, false)<br/>    nodes_min_count : optional(number, null)<br/>    nodes_max_count : optional(number, null)<br/>  }))</pre> | <pre>{<br/>  "a100wr": {<br/>    "availability_zones": [<br/>      "1",<br/>      "2",<br/>      "3"<br/>    ],<br/>    "disk_size_gb": 128,<br/>    "disk_type": "Ephemeral",<br/>    "enable_auto_scaling": true,<br/>    "max_pods": 30,<br/>    "node_labels": {<br/>      "nebuly.com/accelerator": "nvidia-ampere-a100"<br/>    },<br/>    "node_taints": [<br/>      "nvidia.com/gpu=:NoSchedule"<br/>    ],<br/>    "nodes_count": null,<br/>    "nodes_max_count": 1,<br/>    "nodes_min_count": 0,<br/>    "priority": "Regular",<br/>    "tags": {},<br/>    "vm_size": "Standard_NC24ads_A100_v4"<br/>  }<br/>}</pre> | no |
@@ -237,14 +238,14 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#745)
 - resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#461)
 - resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#476)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#1155)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#1157)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#494)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#505)
-- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#1169)
-- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#1180)
+- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#1171)
+- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#1182)
 - resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#664)
 - resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#653)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#1112)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#1114)
 - resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#596)
 - resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#604)
 - resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#526)
@@ -270,7 +271,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_private_endpoint.models_blob (/terraform-docs/main.tf#830)
 - resource.azurerm_private_endpoint.models_dfs (/terraform-docs/main.tf#851)
 - resource.azurerm_private_endpoint.openai (/terraform-docs/main.tf#756)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#1107)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#1109)
 - resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#419)
 - resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#411)
 - resource.azurerm_role_assignment.nebuly_secrets_officer (/terraform-docs/main.tf#454)
@@ -285,9 +286,9 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_subnet.private_endpoints (/terraform-docs/main.tf#216)
 - resource.azurerm_virtual_network.main (/terraform-docs/main.tf#188)
 - resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#521)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#1094)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#1096)
 - resource.tls_private_key.aks (/terraform-docs/main.tf#1000)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#1151)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#1153)
 - data source.azuread_user.aks_admins (/terraform-docs/main.tf#108)
 - data source.azurerm_client_config.current (/terraform-docs/main.tf#100)
 - data source.azurerm_private_dns_zone.blob (/terraform-docs/main.tf#173)

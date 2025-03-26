@@ -61,7 +61,11 @@ module "platform" {
   google_sso = {
     client_id     = "<your-google-client-id>"
     client_secret = "<your-google-client-secret>"
-    role_map      = "<your-role-map>"
+    role_mapping = {
+      "viewer" = "<viewer-group-email>"
+      "member" = "<member-group-email>"
+      "admin"  = "<admin-group-email>"
+    }
   }
 
   key_vault_public_network_access_enabled = true

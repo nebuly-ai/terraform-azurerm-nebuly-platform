@@ -1197,6 +1197,28 @@ resource "azurerm_key_vault_secret" "okta_sso_client_secret" {
     azurerm_role_assignment.key_vault_secret_officer__current
   ]
 }
+resource "azurerm_key_vault_secret" "google_sso_client_id" {
+  count = (var.google_sso != null && var.enable_key_vault_secrets) ? 1 : 0
+
+  name         = "${var.resource_prefix}-google-sso-client-id"
+  value        = var.google_sso.client_id
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
+resource "azurerm_key_vault_secret" "google_sso_client_secret" {
+  count = var.google_sso == null ? 0 : 1
+
+  name         = "${var.resource_prefix}-google-sso-client-secret"
+  value        = var.okta_sso.client_secret
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
 
 
 # ------ Post provisioning ------ #
@@ -1206,16 +1228,19 @@ locals {
   secret_provider_class_secret_name = "nebuly-platform-credentials"
 
   # k8s secrets keys
-  k8s_secret_key_db_username            = "db-username"
-  k8s_secret_key_db_password            = "db-password"
-  k8s_secret_key_jwt_signing_key        = "jwt-signing-key"
-  k8s_secret_key_openai_api_key         = "openai-api-key"
-  k8s_secret_key_azure_client_id        = "azure-client-id"
-  k8s_secret_key_azure_client_secret    = "azure-client-secret"
-  k8s_secret_key_nebuly_client_id       = "nebuly-azure-client-id"
-  k8s_secret_key_nebuly_client_secret   = "nebuly-azure-client-secret"
-  k8s_secret_key_okta_sso_client_id     = "okta-sso-client-id"
-  k8s_secret_key_okta_sso_client_secret = "okta-sso-client-secret"
+  k8s_secret_key_db_username          = "db-username"
+  k8s_secret_key_db_password          = "db-password"
+  k8s_secret_key_jwt_signing_key      = "jwt-signing-key"
+  k8s_secret_key_openai_api_key       = "openai-api-key"
+  k8s_secret_key_azure_client_id      = "azure-client-id"
+  k8s_secret_key_azure_client_secret  = "azure-client-secret"
+  k8s_secret_key_nebuly_client_id     = "nebuly-azure-client-id"
+  k8s_secret_key_nebuly_client_secret = "nebuly-azure-client-secret"
+
+  k8s_secret_key_okta_sso_client_id       = "okta-sso-client-id"
+  k8s_secret_key_okta_sso_client_secret   = "okta-sso-client-secret"
+  k8s_secret_key_google_sso_client_id     = "google-sso-client-id"
+  k8s_secret_key_google_sso_client_secret = "google-sso-client-secret"
 
   helm_values = templatefile(
     "${path.module}/templates/helm-values.tpl.yaml",
@@ -1241,10 +1266,16 @@ locals {
       postgres_auth_database_name      = azurerm_postgresql_flexible_server_database.auth.name
       postgres_analytics_database_name = azurerm_postgresql_flexible_server_database.analytics.name
 
-      okta_sso_enabled                      = var.okta_sso != null
-      okta_sso_issuer                       = var.okta_sso != null ? var.okta_sso.issuer : ""
-      k8s_secret_key_okta_sso_client_id     = local.k8s_secret_key_okta_sso_client_id
-      k8s_secret_key_okta_sso_client_secret = local.k8s_secret_key_okta_sso_client_secret
+      okta_sso_enabled        = var.okta_sso != null
+      okta_sso_issuer         = var.okta_sso != null ? var.okta_sso.issuer : ""
+      google_sso_enabled      = var.google_sso != null
+      google_sso_issuer       = var.google_sso != null ? var.google_sso.issuer : ""
+      google_sso_role_mapping = var.google_sso != null ? join(",", [for role, group in var.google_sso.role_mapping : "${role}:${group}"]) : ""
+
+      k8s_secret_key_okta_sso_client_id       = local.k8s_secret_key_okta_sso_client_id
+      k8s_secret_key_okta_sso_client_secret   = local.k8s_secret_key_okta_sso_client_secret
+      k8s_secret_key_google_sso_client_id     = local.k8s_secret_key_google_sso_client_id
+      k8s_secret_key_google_sso_client_secret = local.k8s_secret_key_google_sso_client_secret
 
       kubelet_identity_client_id = module.aks.kubelet_identity[0].client_id
       storage_account_name       = azurerm_storage_account.main.name

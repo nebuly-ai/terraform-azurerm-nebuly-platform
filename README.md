@@ -186,6 +186,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 | <a name="input_enable_service_endpoints"></a> [enable\_service\_endpoints](#input\_enable\_service\_endpoints) | If True, the module will create service endpoints on the speficied networks, and configure network rules. | `bool` | `false` | no |
 | <a name="input_enable_storage_containers"></a> [enable\_storage\_containers](#input\_enable\_storage\_containers) | If True, the module will create the required storage containers for the platform.<br/>  When enabled, the networking must be configured so that Terraform can access the Storage Accounts over the Private Endpoint. | `bool` | `true` | no |
 | <a name="input_enable_web_routing_addon"></a> [enable\_web\_routing\_addon](#input\_enable\_web\_routing\_addon) | If True, the module will enable the web routing add-on and create a Private DNS Zone for the Ingress Controller, <br/>  using the domain provided as input variable. | `bool` | `false` | no |
+| <a name="input_google_sso"></a> [google\_sso](#input\_google\_sso) | Settings for configuring the Google SSO integration. | <pre>object({<br/>    client_id : string<br/>    client_secret : string<br/>    role_mapping : map(string)<br/>  })</pre> | `null` | no |
 | <a name="input_k8s_image_pull_secret_name"></a> [k8s\_image\_pull\_secret\_name](#input\_k8s\_image\_pull\_secret\_name) | The name of the Kubernetes Image Pull Secret to use. <br/>  This value will be used to auto-generate the values.yaml file for installing the Nebuly Platform Helm chart. | `string` | `"nebuly-docker-pull"` | no |
 | <a name="input_key_vault_override_name"></a> [key\_vault\_override\_name](#input\_key\_vault\_override\_name) | Override the name of the Key Vault. If not provided, the name is generated based on the resource\_prefix. | `string` | `null` | no |
 | <a name="input_key_vault_public_network_access_enabled"></a> [key\_vault\_public\_network\_access\_enabled](#input\_key\_vault\_public\_network\_access\_enabled) | Can the Key Vault be accessed from the Internet, according to the firewall rules?<br/>  Default to true to to allow the Terraform module to be executed even outside the private virtual network. <br/>  When set to true, firewall rules are applied, and all connections are denied by default. | `bool` | `true` | no |
@@ -238,6 +239,8 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.azure_openai_api_key (/terraform-docs/main.tf#752)
 - resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#468)
 - resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#483)
+- resource.azurerm_key_vault_secret.google_sso_client_id (/terraform-docs/main.tf#1200)
+- resource.azurerm_key_vault_secret.google_sso_client_secret (/terraform-docs/main.tf#1211)
 - resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#1164)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#501)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#512)

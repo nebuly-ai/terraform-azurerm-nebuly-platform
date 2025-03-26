@@ -398,6 +398,15 @@ variable "okta_sso" {
   })
   default = null
 }
+variable "google_sso" {
+  description = "Settings for configuring the Google SSO integration."
+  type = object({
+    client_id : string
+    client_secret : string
+    role_mapping : map(string)
+  })
+  default = null
+}
 
 
 # ------ Azure OpenAI ------ #

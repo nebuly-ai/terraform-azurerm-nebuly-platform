@@ -191,12 +191,15 @@ auth:
 
   %{ if okta_sso_enabled }
   loginModes: "okta"
+  %{ endif }
+  %{ if google_sso_enabled }
+  loginModes: "google"
   %{ else }
   loginModes: "password"
   %{ endif }
 
-  # Optional Okta SSO
   %{ if okta_sso_enabled }
+  # Optional Okta SSO
   okta:
     enabled: ${okta_sso_enabled}
     issuer: ${okta_sso_issuer}
@@ -205,6 +208,18 @@ auth:
       name: ${secret_provider_class_secret_name}
       clientIdKey: ${k8s_secret_key_okta_sso_client_id}
       clientSecretKey: ${k8s_secret_key_okta_sso_client_secret}
+  %{ endif }
+
+  %{ if google_sso_enabled }
+  # Optional Google SSO
+  google:
+    enabled: ${google_sso_enabled}
+    redirectUri: https://${platform_domain}/backend/auth/oauth/google/callback
+    roleMapping: ${google_sso_role_mapping}
+    existingSecret:
+      name: ${secret_provider_class_secret_name}
+      clientIdKey: ${k8s_secret_key_google_sso_client_id}
+      clientSecretKey: ${k8s_secret_key_google_sso_client_secret}
   %{ endif }
 
 

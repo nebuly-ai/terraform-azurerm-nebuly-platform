@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Support Google SSO
+
 ## v0.17.1
 
 - Fix private DNS zone for web-app routing

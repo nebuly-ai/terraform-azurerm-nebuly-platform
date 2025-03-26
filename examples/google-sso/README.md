@@ -67,6 +67,10 @@ To enable Google OAuth authentication in Nebuly, you need to provide the followi
 google_sso = {
     client_id       = "<client-id-from-step-1>"
     client_secret   = "<client-secret-from-step-1>"
-    role_map        = "viewer:<viewer-group-email>, admin: <admin-group-email>, member: <member-group-email>"
+    role_mapping    =  {
+      "viewer" = "<viewer-group-email>"
+      "member" = "<member-group-email>"
+      "admin"  = "<admin-group-email>"
+    }
 }
 ```

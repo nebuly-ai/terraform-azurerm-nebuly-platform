@@ -1269,7 +1269,6 @@ locals {
       okta_sso_enabled        = var.okta_sso != null
       okta_sso_issuer         = var.okta_sso != null ? var.okta_sso.issuer : ""
       google_sso_enabled      = var.google_sso != null
-      google_sso_issuer       = var.google_sso != null ? var.google_sso.issuer : ""
       google_sso_role_mapping = var.google_sso != null ? join(",", [for role, group in var.google_sso.role_mapping : "${role}:${group}"]) : ""
 
       k8s_secret_key_okta_sso_client_id       = local.k8s_secret_key_okta_sso_client_id

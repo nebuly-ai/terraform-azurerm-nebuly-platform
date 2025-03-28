@@ -423,7 +423,7 @@ resource "azurerm_key_vault" "main" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "key_vault" {
-  count = var.enable_service_endpoints ? 1 : 0
+  count = var.enable_service_endpoints ? 0 : 1
 
   name                = "${azurerm_key_vault.main.name}-kv"
   location            = var.location

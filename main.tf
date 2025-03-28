@@ -909,10 +909,12 @@ resource "azurerm_storage_account" "backups" {
   }
   tags = var.tags
 }
-#resource "azurerm_storage_container" "clickhouse" {
-#  storage_account_name = azurerm_storage_account.backups.name
-#  name                 = "clickhouse"
-#}
+resource "azurerm_storage_container" "clickhouse" {
+  count = var.enable_storage_containers ? 1 : 0
+
+  storage_account_name = azurerm_storage_account.backups.name
+  name                 = "clickhouse"
+}
 resource "azurerm_private_endpoint" "backups_blob" {
   name                = "${azurerm_storage_account.backups.name}-blob"
   location            = var.location
@@ -990,15 +992,17 @@ resource "azurerm_storage_management_policy" "backups" {
     }
   }
 }
-#resource "azurerm_key_vault_secret" "backups_storage_primary_key" {
-#  name         = "${var.resource_prefix}-backups-storage-primary-key"
-#  value        = azurerm_storage_account.backups.primary_access_key
-#  key_vault_id = azurerm_key_vault.main.id
-#
-#  depends_on = [
-#    azurerm_role_assignment.key_vault_secret_officer__current
-#  ]
-#}
+resource "azurerm_key_vault_secret" "backups_storage_primary_key" {
+  count = var.enable_key_vault_secrets ? 1 : 0
+
+  name         = "${var.resource_prefix}-backups-storage-primary-key"
+  value        = azurerm_storage_account.backups.primary_access_key
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_role_assignment.key_vault_secret_officer__current
+  ]
+}
 
 
 

@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.18.0
 
 - Support Google SSO
+- ClickHouse storage container
 
 ## v0.17.1
 

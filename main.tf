@@ -280,7 +280,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
     var.resource_prefix,
     local.virtual_network.name,
   )
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = local.private_dns_zones.flexible_postgres.resource_group_name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones.flexible_postgres.name
 }
@@ -296,7 +296,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
     var.resource_prefix,
     local.virtual_network.name,
   )
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = local.private_dns_zones.key_vault.resource_group_name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones.key_vault.name
 }
@@ -312,7 +312,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
     var.resource_prefix,
     local.virtual_network.name,
   )
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = local.private_dns_zones.blob.resource_group_name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones.blob.name
 }
@@ -328,7 +328,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
     var.resource_prefix,
     local.virtual_network.name,
   )
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = local.private_dns_zones.dfs.resource_group_name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones.dfs.name
 }
@@ -344,7 +344,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
     var.resource_prefix,
     local.virtual_network.name,
   )
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = local.private_dns_zones.openai.resource_group_name
   virtual_network_id    = local.virtual_network.id
   private_dns_zone_name = local.private_dns_zones.openai.name
 }

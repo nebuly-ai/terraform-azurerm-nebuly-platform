@@ -931,7 +931,7 @@ resource "azurerm_storage_account" "backups" {
   account_replication_type = var.backups_storage_replication_type
   access_tier              = "Hot"
 
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_service_endpoints
   is_hns_enabled                = false
 
   blob_properties {

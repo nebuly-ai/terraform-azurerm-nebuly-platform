@@ -248,22 +248,27 @@ locals {
     flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres : {
       name : azurerm_private_dns_zone.flexible_postgres[0].name
       resource_group_name : azurerm_private_dns_zone.flexible_postgres[0].resource_group_name
+      link_vnet : true
     },
     openai = var.private_dns_zones.openai != null ? var.private_dns_zones.openai : {
       name : azurerm_private_dns_zone.openai[0].name
       resource_group_name : azurerm_private_dns_zone.openai[0].resource_group_name
+      link_vnet : true
     },
     key_vault = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault : {
       name : azurerm_private_dns_zone.key_vault[0].name
       resource_group_name : azurerm_private_dns_zone.key_vault[0].resource_group_name
+      link_vnet : true
     },
     blob = var.private_dns_zones.blob != null ? var.private_dns_zones.blob : {
       name : azurerm_private_dns_zone.blob[0].name,
       resource_group_name : azurerm_private_dns_zone.blob[0].resource_group_name,
+      link_vnet : true
     }
     dfs = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs : {
       name : azurerm_private_dns_zone.dfs[0].name,
       resource_group_name : azurerm_private_dns_zone.dfs[0].resource_group_name,
+      link_vnet : true
     }
   }
 }
@@ -275,6 +280,8 @@ resource "azurerm_private_dns_zone" "flexible_postgres" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
+  count = local.private_dns_zones.flexible_postgres.link_vnet ? 1 : 0
+
   name = format(
     "%s-flexible-postgres-%s",
     var.resource_prefix,
@@ -291,6 +298,8 @@ resource "azurerm_private_dns_zone" "key_vault" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
+  count = local.private_dns_zones.key_vault.link_vnet ? 1 : 0
+
   name = format(
     "%s-key-vault-%s",
     var.resource_prefix,
@@ -307,6 +316,8 @@ resource "azurerm_private_dns_zone" "blob" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
+  count = local.private_dns_zones.blob.link_vnet ? 1 : 0
+
   name = format(
     "%s-blob-%s",
     var.resource_prefix,
@@ -323,6 +334,8 @@ resource "azurerm_private_dns_zone" "dfs" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
+  count = local.private_dns_zones.dfs.link_vnet ? 1 : 0
+
   name = format(
     "%s-dfs-%s",
     var.resource_prefix,
@@ -339,6 +352,8 @@ resource "azurerm_private_dns_zone" "openai" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
+  count = var.private_dns_zones.openai == null ? 1 : 0
+
   name = format(
     "%s-openai-%s",
     var.resource_prefix,

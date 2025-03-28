@@ -366,22 +366,27 @@ variable "private_dns_zones" {
     flexible_postgres = optional(object({
       name : string
       resource_group_name : string
+      link_vnet : optional(bool, true)
     }), null)
     openai = optional(object({
       name : string
       resource_group_name : string
+      link_vnet : optional(bool, true)
     }), null)
     key_vault = optional(object({
       name : string
       resource_group_name : string
+      link_vnet : optional(bool, true)
     }), null)
     blob = optional(object({
       name : string
       resource_group_name : string
+      link_vnet : optional(bool, true)
     }), null)
     dfs = optional(object({
       name : string
       resource_group_name : string
+      link_vnet : optional(bool, true)
     }), null)
   })
   default = {}

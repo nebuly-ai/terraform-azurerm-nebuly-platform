@@ -865,6 +865,8 @@ resource "azurerm_role_assignment" "storage_container_models__data_contributor" 
   scope                = azurerm_storage_container.models[0].resource_manager_id
 }
 resource "azurerm_private_endpoint" "models_blob" {
+  count = var.enable_service_endpoints ? 0 : 1
+
   name                = "${azurerm_storage_account.main.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -886,6 +888,8 @@ resource "azurerm_private_endpoint" "models_blob" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "models_dfs" {
+  count = var.enable_service_endpoints ? 0 : 1
+
   name                = "${azurerm_storage_account.main.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -937,6 +941,15 @@ resource "azurerm_storage_account" "backups" {
       days = var.backups_storage_delete_retention_days
     }
   }
+
+  dynamic "network_rules" {
+    for_each = var.enable_service_endpoints ? [""] : []
+    content {
+      default_action             = "Deny"
+      ip_rules                   = local.whitelisted_ips
+      virtual_network_subnet_ids = [local.aks_nodes_subnet.id]
+    }
+  }
   tags = var.tags
 }
 resource "azurerm_storage_container" "clickhouse" {
@@ -946,6 +959,8 @@ resource "azurerm_storage_container" "clickhouse" {
   name                 = "clickhouse"
 }
 resource "azurerm_private_endpoint" "backups_blob" {
+  count = var.enable_service_endpoints ? 0 : 1
+
   name                = "${azurerm_storage_account.backups.name}-blob"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -967,6 +982,8 @@ resource "azurerm_private_endpoint" "backups_blob" {
   tags = var.tags
 }
 resource "azurerm_private_endpoint" "backups_dfs" {
+  count = var.enable_service_endpoints ? 0 : 1
+
   name                = "${azurerm_storage_account.backups.name}-dfs"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name

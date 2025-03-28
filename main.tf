@@ -919,7 +919,7 @@ locals {
   backups_storage_account_name = local.backups_storage_account_generated_name
 }
 resource "azurerm_storage_account" "backups" {
-  name                = local.backups_storage_account_name
+  name                = replace(local.backups_storage_account_name, "-", "")
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
 

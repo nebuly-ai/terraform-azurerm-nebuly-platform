@@ -109,7 +109,6 @@ variable "postgres_server_sku" {
 }
 variable "postgres_server_extra_databases" {
   type = map(object({
-    name : string
     charset : optional(string, "UTF8")
     collation : optional(string, "en_US.UTF8")
   }))

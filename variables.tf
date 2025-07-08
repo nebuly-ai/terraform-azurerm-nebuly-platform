@@ -109,8 +109,8 @@ variable "postgres_server_sku" {
 }
 variable "postgres_server_extra_databases" {
   type = map(object({
-    charset : optional(string, "UTF8")
-    collation : optional(string, "en_US.UTF8")
+    charset : optional(string, "utf8")
+    collation : optional(string, "en_US.utf8")
   }))
   default     = {}
   description = "List of additional databases to create on the PostgreSQL Server. The default database is always created."

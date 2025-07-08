@@ -107,6 +107,15 @@ variable "postgres_server_sku" {
   }
   description = "The SKU of the PostgreSQL Server, including the Tier and the Name. Examples: B_Standard_B1ms, GP_Standard_D2s_v3, MO_Standard_E4s_v3"
 }
+variable "postgres_server_extra_databases" {
+  type = map(object({
+    name : string
+    charset : optional(string, "UTF8")
+    collation : optional(string, "en_US.UTF8")
+  }))
+  default     = {}
+  description = "List of additional databases to create on the PostgreSQL Server. The default database is always created."
+}
 variable "postgres_server_admin_username" {
   type        = string
   default     = "nebulyadmin"

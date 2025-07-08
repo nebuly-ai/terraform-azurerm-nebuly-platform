@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.19.0
+
+- Support additional databases
+
 ## v0.18.0
 
 - Support Google SSO

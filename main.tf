@@ -618,6 +618,14 @@ resource "azurerm_postgresql_flexible_server_configuration" "mandatory_configura
   server_id = azurerm_postgresql_flexible_server.main.id
   value     = each.value
 }
+resource "azurerm_postgresql_flexible_server_database" "extras" {
+  for_each = var.postgres_server_extra_databases
+
+  name      = each.key
+  server_id = azurerm_postgresql_flexible_server.main.id
+  collation = each.value.collation
+  charset   = each.value.charset
+}
 resource "azurerm_postgresql_flexible_server_database" "auth" {
   name      = "auth"
   server_id = azurerm_postgresql_flexible_server.main.id

@@ -375,7 +375,6 @@ variable "private_dns_zones" {
       name : optional(string)
       resource_group_name : optional(string)
       link_vnet : optional(bool, true)
-      link_dns_zone_group : optional(bool, true)
       create : optional(bool, true)
     }), null)
     openai = optional(object({

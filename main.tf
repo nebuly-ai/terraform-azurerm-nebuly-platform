@@ -1117,6 +1117,7 @@ module "aks" {
   log_analytics_solution          = var.aks_log_analytics_solution
 
   temporary_name_for_rotation = "systemback"
+  automatic_channel_upgrade   = var.aks_automatic_channel_upgrade
 
   web_app_routing = length(azurerm_private_dns_zone.web_app_routing) > 0 ? {
     dns_zone_id = azurerm_private_dns_zone.web_app_routing[0].id

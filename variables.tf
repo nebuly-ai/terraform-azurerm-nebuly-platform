@@ -617,7 +617,27 @@ variable "aks_private_cluster_enabled" {
   type        = bool
   default     = false
 }
+variable "aks_automatic_channel_upgrade" {
+  description = <<EOT
+(Optional) Defines the automatic upgrade channel for the AKS cluster.
 
+Allowed values:
+  - "patch": upgrades to the latest patch version within the specified minor version in `kubernetes_version`. 
+             (Requires `kubernetes_version` to be set only up to the minor version, e.g. "1.29".)
+  - "stable", "rapid", "node-image": upgrade automatically without `kubernetes_version`.
+             (When using these, both `kubernetes_version` and `orchestrator_version` must be `null`.)
+
+Default: disabled (null).
+EOT
+
+  type    = string
+  default = null
+
+  validation {
+    condition     = var.aks_automatic_channel_upgrade == null || contains(["patch", "stable", "rapid", "node-image"], var.aks_automatic_channel_upgrade)
+    error_message = "Allowed values: null, patch, stable, rapid, node-image."
+  }
+}
 
 # ------ Backups ------ #
 variable "backups_storage_replication_type" {

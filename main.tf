@@ -153,31 +153,31 @@ data "azurerm_subnet" "flexible_postgres" {
   }
 }
 data "azurerm_private_dns_zone" "flexible_postgres" {
-  count = var.private_dns_zones.flexible_postgres != null ? 1 : 0
+  count = (!var.private_dns_zones.flexible_postgres.create && var.private_dns_zones.flexible_postgres.link_vnet) ? 1 : 0
 
   name                = var.private_dns_zones.flexible_postgres.name
   resource_group_name = var.private_dns_zones.flexible_postgres.resource_group_name
 }
 data "azurerm_private_dns_zone" "openai" {
-  count = var.private_dns_zones.openai != null ? 1 : 0
+  count = (!var.private_dns_zones.openai.create && var.private_dns_zones.openai.link_vnet) ? 1 : 0
 
   name                = var.private_dns_zones.openai.name
   resource_group_name = var.private_dns_zones.openai.resource_group_name
 }
 data "azurerm_private_dns_zone" "key_vault" {
-  count = var.private_dns_zones.key_vault != null ? 1 : 0
+  count = (!var.private_dns_zones.key_vault.create && var.private_dns_zones.key_vault.link_vnet) ? 1 : 0
 
   name                = var.private_dns_zones.key_vault.name
   resource_group_name = var.private_dns_zones.key_vault.resource_group_name
 }
 data "azurerm_private_dns_zone" "blob" {
-  count = var.private_dns_zones.blob != null ? 1 : 0
+  count = (!var.private_dns_zones.blob.create && var.private_dns_zones.blob.link_vnet) ? 1 : 0
 
   name                = var.private_dns_zones.blob.name
   resource_group_name = var.private_dns_zones.blob.resource_group_name
 }
 data "azurerm_private_dns_zone" "dfs" {
-  count = var.private_dns_zones.dfs != null ? 1 : 0
+  count = (!var.private_dns_zones.dfs.create && var.private_dns_zones.dfs.link_vnet) ? 1 : 0
 
   name                = var.private_dns_zones.dfs.name
   resource_group_name = var.private_dns_zones.dfs.resource_group_name
@@ -245,42 +245,42 @@ resource "azurerm_subnet" "flexible_postgres" {
 # ------ Networking: Private DNS Zones ------ #
 locals {
   private_dns_zones = {
-    flexible_postgres = var.private_dns_zones.flexible_postgres != null ? var.private_dns_zones.flexible_postgres : {
-      name : azurerm_private_dns_zone.flexible_postgres[0].name
-      resource_group_name : azurerm_private_dns_zone.flexible_postgres[0].resource_group_name
-      link_vnet : true
-    },
-    openai = var.private_dns_zones.openai != null ? var.private_dns_zones.openai : {
-      name : azurerm_private_dns_zone.openai[0].name
-      resource_group_name : azurerm_private_dns_zone.openai[0].resource_group_name
-      link_vnet : true
-    },
-    key_vault = var.private_dns_zones.key_vault != null ? var.private_dns_zones.key_vault : {
-      name : azurerm_private_dns_zone.key_vault[0].name
-      resource_group_name : azurerm_private_dns_zone.key_vault[0].resource_group_name
-      link_vnet : true
-    },
-    blob = var.private_dns_zones.blob != null ? var.private_dns_zones.blob : {
-      name : azurerm_private_dns_zone.blob[0].name,
-      resource_group_name : azurerm_private_dns_zone.blob[0].resource_group_name,
-      link_vnet : true
-    }
-    dfs = var.private_dns_zones.dfs != null ? var.private_dns_zones.dfs : {
-      name : azurerm_private_dns_zone.dfs[0].name,
-      resource_group_name : azurerm_private_dns_zone.dfs[0].resource_group_name,
-      link_vnet : true
-    }
+    flexible_postgres = (
+      var.private_dns_zones.flexible_postgres.create ?
+      azurerm_private_dns_zone.flexible_postgres[0] :
+      try(data.azurerm_private_dns_zone.flexible_postgres[0], null)
+    )
+    openai = (
+      var.private_dns_zones.openai.create ?
+      azurerm_private_dns_zone.openai[0] :
+      try(data.azurerm_private_dns_zone.openai[0], null)
+    )
+    key_vault = (
+      var.private_dns_zones.key_vault.create ?
+      azurerm_private_dns_zone.key_vault[0] :
+      try(data.azurerm_private_dns_zone.key_vault[0], null)
+    )
+    blob = (
+      var.private_dns_zones.blob.create ?
+      azurerm_private_dns_zone.blob[0] :
+      try(data.azurerm_private_dns_zone.blob[0], null)
+    )
+    dfs = (
+      var.private_dns_zones.dfs.create ?
+      azurerm_private_dns_zone.dfs[0] :
+      try(data.azurerm_private_dns_zone.dfs[0], null)
+    )
   }
 }
 # - postgres
 resource "azurerm_private_dns_zone" "flexible_postgres" {
-  count = var.private_dns_zones.flexible_postgres == null ? 1 : 0
+  count = var.private_dns_zones.flexible_postgres.create ? 1 : 0
 
   name                = "${var.resource_prefix}.nebuly.postgres.database.azure.com"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
-  count = local.private_dns_zones.flexible_postgres.link_vnet ? 1 : 0
+  count = var.private_dns_zones.flexible_postgres.link_vnet ? 1 : 0
 
   name = format(
     "%s-flexible-postgres-%s",
@@ -293,12 +293,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "flexible_postgres" {
 }
 # - key vault
 resource "azurerm_private_dns_zone" "key_vault" {
-  count               = var.private_dns_zones.key_vault == null ? 1 : 0
+  count = var.private_dns_zones.key_vault.create ? 1 : 0
+
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
-  count = local.private_dns_zones.key_vault.link_vnet ? 1 : 0
+  count = var.private_dns_zones.key_vault.link_vnet ? 1 : 0
 
   name = format(
     "%s-key-vault-%s",
@@ -311,12 +312,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
 }
 # - blob
 resource "azurerm_private_dns_zone" "blob" {
-  count               = var.private_dns_zones.blob == null ? 1 : 0
+  count = var.private_dns_zones.blob.create ? 1 : 0
+
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
-  count = local.private_dns_zones.blob.link_vnet ? 1 : 0
+  count = var.private_dns_zones.blob.link_vnet ? 1 : 0
 
   name = format(
     "%s-blob-%s",
@@ -329,12 +331,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
 }
 # - dfs
 resource "azurerm_private_dns_zone" "dfs" {
-  count               = var.private_dns_zones.dfs == null ? 1 : 0
+  count = var.private_dns_zones.dfs.create ? 1 : 0
+
   name                = "privatelink.dfs.core.windows.net"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
-  count = local.private_dns_zones.dfs.link_vnet ? 1 : 0
+  count = var.private_dns_zones.dfs.link_vnet ? 1 : 0
 
   name = format(
     "%s-dfs-%s",
@@ -347,12 +350,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfs" {
 }
 # - openai
 resource "azurerm_private_dns_zone" "openai" {
-  count               = var.private_dns_zones.openai == null ? 1 : 0
+  count = var.private_dns_zones.openai.create ? 1 : 0
+
   name                = "privatelink.openai.azure.com"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
-  count = var.private_dns_zones.openai == null ? 1 : 0
+  count = var.private_dns_zones.openai.link_vnet ? 1 : 0
 
   name = format(
     "%s-openai-%s",
@@ -440,7 +444,7 @@ resource "azurerm_private_endpoint" "key_vault" {
 
   private_dns_zone_group {
     name                 = "privatelink-vaultcore-azure-net"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.key_vault) > 0 ? [azurerm_private_dns_zone.key_vault[0].id] : [data.azurerm_private_dns_zone.key_vault[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.key_vault.id], [])
   }
 
   tags = var.tags
@@ -579,7 +583,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   public_network_access_enabled = false
 
   delegated_subnet_id = local.flexible_postgres_subnet.id
-  private_dns_zone_id = length(azurerm_private_dns_zone.flexible_postgres) > 0 ? azurerm_private_dns_zone.flexible_postgres[0].id : data.azurerm_private_dns_zone.flexible_postgres[0].id
+  private_dns_zone_id = try(local.private_dns_zones.flexible_postgres.id, null)
 
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}
@@ -813,7 +817,7 @@ resource "azurerm_private_endpoint" "openai" {
 
   private_dns_zone_group {
     name                 = "privatelink-openai"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.openai) > 0 ? [azurerm_private_dns_zone.openai[0].id] : [data.azurerm_private_dns_zone.openai[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.openai.id], [])
   }
 
   tags = var.tags
@@ -890,7 +894,7 @@ resource "azurerm_private_endpoint" "models_blob" {
 
   private_dns_zone_group {
     name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.blob) > 0 ? [azurerm_private_dns_zone.blob[0].id] : [data.azurerm_private_dns_zone.blob[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.blob.id], [])
   }
 
   tags = var.tags
@@ -913,7 +917,7 @@ resource "azurerm_private_endpoint" "models_dfs" {
 
   private_dns_zone_group {
     name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.dfs) > 0 ? [azurerm_private_dns_zone.dfs[0].id] : [data.azurerm_private_dns_zone.dfs[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.dfs.id], [])
   }
 
   tags = var.tags
@@ -984,7 +988,7 @@ resource "azurerm_private_endpoint" "backups_blob" {
 
   private_dns_zone_group {
     name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.blob) > 0 ? [azurerm_private_dns_zone.blob[0].id] : [data.azurerm_private_dns_zone.blob[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.blob.id], [])
   }
 
   tags = var.tags
@@ -1007,7 +1011,7 @@ resource "azurerm_private_endpoint" "backups_dfs" {
 
   private_dns_zone_group {
     name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = length(azurerm_private_dns_zone.dfs) > 0 ? [azurerm_private_dns_zone.dfs[0].id] : [data.azurerm_private_dns_zone.dfs[0].id]
+    private_dns_zone_ids = try([local.private_dns_zones.dfs.id], [])
   }
 
   tags = var.tags

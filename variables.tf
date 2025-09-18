@@ -372,32 +372,43 @@ variable "private_dns_zones" {
   EOT
   type = object({
     flexible_postgres = optional(object({
-      name : string
-      resource_group_name : string
+      name : optional(string)
+      resource_group_name : optional(string)
       link_vnet : optional(bool, true)
+      create : optional(bool, true)
     }), null)
     openai = optional(object({
-      name : string
-      resource_group_name : string
+      name : optional(string)
+      resource_group_name : optional(string)
       link_vnet : optional(bool, true)
+      create : optional(bool, true)
     }), null)
     key_vault = optional(object({
-      name : string
-      resource_group_name : string
+      name : optional(string)
+      resource_group_name : optional(string)
       link_vnet : optional(bool, true)
+      create : optional(bool, true)
     }), null)
     blob = optional(object({
-      name : string
-      resource_group_name : string
-      link_vnet : optional(bool, true)
+      name : optional(string)
+      resource_group_name : optional(string)
+      link_vnet : optional(bool, false)
+      create : optional(bool, true)
     }), null)
     dfs = optional(object({
-      name : string
-      resource_group_name : string
+      name : optional(string)
+      resource_group_name : optional(string)
       link_vnet : optional(bool, true)
+      create : optional(bool, true)
     }), null)
   })
-  default = {}
+  default = {
+    flexible_postgres = {}
+    openai            = {}
+    key_vault         = {}
+    blob              = {}
+    dfs               = {}
+  }
 }
 
 

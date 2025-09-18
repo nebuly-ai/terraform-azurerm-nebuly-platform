@@ -442,9 +442,12 @@ resource "azurerm_private_endpoint" "key_vault" {
     subresource_names              = ["vault"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-vaultcore-azure-net"
-    private_dns_zone_ids = try([local.private_dns_zones.key_vault.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.key_vault.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-vaultcore-azure-net"
+      private_dns_zone_ids = [local.private_dns_zones.key_vault.id]
+    }
   }
 
   tags = var.tags
@@ -583,7 +586,11 @@ resource "azurerm_postgresql_flexible_server" "main" {
   public_network_access_enabled = false
 
   delegated_subnet_id = local.flexible_postgres_subnet.id
-  private_dns_zone_id = try(local.private_dns_zones.flexible_postgres.id, null)
+  private_dns_zone_id = (
+    var.private_dns_zones.flexible_postgres.link_dns_zone_group ?
+    local.private_dns_zones.flexible_postgres.id :
+    null
+  )
 
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}
@@ -815,9 +822,12 @@ resource "azurerm_private_endpoint" "openai" {
     subresource_names              = ["account"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-openai"
-    private_dns_zone_ids = try([local.private_dns_zones.openai.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.openai.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-openai"
+      private_dns_zone_ids = [local.private_dns_zones.openai.id]
+    }
   }
 
   tags = var.tags
@@ -892,9 +902,12 @@ resource "azurerm_private_endpoint" "models_blob" {
     subresource_names              = ["blob"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = try([local.private_dns_zones.blob.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.blob.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-blob-core-windows-net"
+      private_dns_zone_ids = [local.private_dns_zones.blob.id]
+    }
   }
 
   tags = var.tags
@@ -915,9 +928,12 @@ resource "azurerm_private_endpoint" "models_dfs" {
     subresource_names              = ["dfs"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = try([local.private_dns_zones.dfs.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.dfs.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-blob-core-windows-net"
+      private_dns_zone_ids = [local.private_dns_zones.dfs.id]
+    }
   }
 
   tags = var.tags
@@ -986,9 +1002,12 @@ resource "azurerm_private_endpoint" "backups_blob" {
     subresource_names              = ["blob"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = try([local.private_dns_zones.blob.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.blob.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-blob-core-windows-net"
+      private_dns_zone_ids = [local.private_dns_zones.blob.id]
+    }
   }
 
   tags = var.tags
@@ -1009,9 +1028,12 @@ resource "azurerm_private_endpoint" "backups_dfs" {
     subresource_names              = ["dfs"]
   }
 
-  private_dns_zone_group {
-    name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = try([local.private_dns_zones.dfs.id], [])
+  dynamic "private_dns_zone_group" {
+    for_each = var.private_dns_zones.dfs.link_dns_zone_group ? { "" : "" } : {}
+    content {
+      name                 = "privatelink-blob-core-windows-net"
+      private_dns_zone_ids = [local.private_dns_zones.dfs.id]
+    }
   }
 
   tags = var.tags

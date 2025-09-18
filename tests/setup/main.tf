@@ -52,31 +52,18 @@ resource "azurerm_subnet" "main" {
   resource_group_name  = data.azurerm_resource_group.main.name
 }
 
-resource "azurerm_private_dns_zone" "flexible_postgres" {
-  name                = "${var.resource_prefix}.nebuly.postgres.database.azure.com"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone" "key_vault" {
-  name                = "privatelink.vaultcore.azure.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone" "blob" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone" "dfs" {
-  name                = "privatelink.dfs.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-resource "azurerm_private_dns_zone" "openai" {
-  name                = "privatelink.openai.azure.com"
-  resource_group_name = data.azurerm_resource_group.main.name
-}
-
 # ----------- Outputs ----------- #
 output "azurerm_virtual_network" {
   value = azurerm_virtual_network.main
 }
 output "azurerm_subnet" {
   value = azurerm_subnet.main
+}
+output "azurerm_private_dns_zone" {
+  value = {
+    flexible_postgres : azurerm_private_dns_zone.flexible_postgres
+    openai : azurerm_private_dns_zone.openai
+    blob : azurerm_private_dns_zone.blob
+    dfs : azurerm_private_dns_zone.dfs
+  }
 }

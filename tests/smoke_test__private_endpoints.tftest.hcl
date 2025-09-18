@@ -2,11 +2,43 @@ provider "azurerm" {
   features {}
 }
 
+run "setup" {
+  module {
+    source = "./tests/setup"
+  }
+
+  variables {
+    location = "EastUS"
+  }
+}
+
+
+resource "azurerm_private_dns_zone" "flexible_postgres" {
+  name                = "${var.resource_prefix}.nebuly.postgres.database.azure.com"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone" "key_vault" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone" "blob" {
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone" "dfs" {
+  name                = "privatelink.dfs.core.windows.net"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+resource "azurerm_private_dns_zone" "openai" {
+  name                = "privatelink.openai.azure.com"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+
 run "smoke_test_plan__private_endpoints__no_create_no_link" {
   command = plan
 
   variables {
-    resource_group_name = "rg-platform-inttest"
+    resource_group_name = var.resource_group_name
     location            = "EastUS"
     platform_domain     = "intest.nebuly.ai"
     nebuly_credentials = {
@@ -16,23 +48,23 @@ run "smoke_test_plan__private_endpoints__no_create_no_link" {
 
     private_dns_zones = {
       flexible_postgres = {
-        create = false
+        create    = false
         link_vnet = false
       }
       openai = {
-        create = false
+        create    = false
         link_vnet = false
       }
       key_vault = {
-        create = false
+        create    = false
         link_vnet = false
       }
       blob = {
-        create = false
+        create    = false
         link_vnet = false
       }
       dfs = {
-        create = false
+        create    = false
         link_vnet = false
       }
     }
@@ -57,34 +89,34 @@ run "smoke_test_plan__private_endpoints__no_create_yes_link" {
 
     private_dns_zones = {
       flexible_postgres = {
-        name= run.setup.azurerm_private_dns_zone.flexible_postgres.name
-        resource_group_name= run.setup.azurerm_private_dns_zone.flexible_postgres.resource_group_name
-        create = false
-        link_vnet = true
+        name                = azurerm_private_dns_zone.flexible_postgres.name
+        resource_group_name = azurerm_private_dns_zone.flexible_postgres.resource_group_name
+        create              = false
+        link_vnet           = true
       }
       openai = {
-        name= run.setup.azurerm_private_dns_zone.openai.name
-        resource_group_name= run.setup.azurerm_private_dns_zone.openai.resource_group_name
-        create = false
-        link_vnet = true
+        name                = azurerm_private_dns_zone.openai.name
+        resource_group_name = azurerm_private_dns_zone.openai.resource_group_name
+        create              = false
+        link_vnet           = true
       }
       key_vault = {
-        name= run.setup.azurerm_private_dns_zone.key_vault.name
-        resource_group_name= run.setup.azurerm_private_dns_zone.key_vault.resource_group_name
-        create = false
-        link_vnet = true
+        name                = azurerm_private_dns_zone.key_vault.name
+        resource_group_name = azurerm_private_dns_zone.key_vault.resource_group_name
+        create              = false
+        link_vnet           = true
       }
       blob = {
-        name= run.setup.azurerm_private_dns_zone.blob.name
-        resource_group_name= run.setup.azurerm_private_dns_zone.blob.resource_group_name
-        create = false
-        link_vnet = true
+        name                = setup.azurerm_private_dns_zone.blob.name
+        resource_group_name = azurerm_private_dns_zone.blob.resource_group_name
+        create              = false
+        link_vnet           = true
       }
       dfs = {
-        name= run.setup.azurerm_private_dns_zone.dfs.name
-        resource_group_name= run.setup.azurerm_private_dns_zone.dfs.resource_group_name
-        create = false
-        link_vnet = true
+        name                = azurerm_private_dns_zone.dfs.name
+        resource_group_name = azurerm_private_dns_zone.dfs.resource_group_name
+        create              = false
+        link_vnet           = true
       }
     }
 

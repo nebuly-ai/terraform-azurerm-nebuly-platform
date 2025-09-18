@@ -25,8 +25,8 @@ run "smoke_test_plan__existing_networks" {
     }
 
     # ------ Networking ------#
-    virtual_network  = {
-      name= run.setup.azurerm_virtual_network.name
+    virtual_network = {
+      name                = run.setup.azurerm_virtual_network.name
       resource_group_name = var.resource_group_name
     }
     subnet_name_aks_nodes = run.setup.azurerm_subnet.name

@@ -37,7 +37,7 @@ test: ## Run the tests
 .PHONY: formatting
 formatting:
 	@echo "\033[0;33m[Terraform fmt...]\033[0m"
-	@terraform fmt -check 
+	@terraform fmt -check . ./tests 
 	@echo "${OK}"
 
 

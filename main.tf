@@ -153,31 +153,31 @@ data "azurerm_subnet" "flexible_postgres" {
   }
 }
 data "azurerm_private_dns_zone" "flexible_postgres" {
-  count = (!var.private_dns_zones.flexible_postgres.create && var.private_dns_zones.flexible_postgres.link_vnet) ? 1 : 0
+  count = (!var.private_dns_zones.flexible_postgres.create && var.private_dns_zones.flexible_postgres.link_dns_zone_group) ? 1 : 0
 
   name                = var.private_dns_zones.flexible_postgres.name
   resource_group_name = var.private_dns_zones.flexible_postgres.resource_group_name
 }
 data "azurerm_private_dns_zone" "openai" {
-  count = (!var.private_dns_zones.openai.create && var.private_dns_zones.openai.link_vnet) ? 1 : 0
+  count = (!var.private_dns_zones.openai.create && var.private_dns_zones.openai.link_dns_zone_group) ? 1 : 0
 
   name                = var.private_dns_zones.openai.name
   resource_group_name = var.private_dns_zones.openai.resource_group_name
 }
 data "azurerm_private_dns_zone" "key_vault" {
-  count = (!var.private_dns_zones.key_vault.create && var.private_dns_zones.key_vault.link_vnet) ? 1 : 0
+  count = (!var.private_dns_zones.key_vault.create && var.private_dns_zones.key_vault.link_dns_zone_group) ? 1 : 0
 
   name                = var.private_dns_zones.key_vault.name
   resource_group_name = var.private_dns_zones.key_vault.resource_group_name
 }
 data "azurerm_private_dns_zone" "blob" {
-  count = (!var.private_dns_zones.blob.create && var.private_dns_zones.blob.link_vnet) ? 1 : 0
+  count = (!var.private_dns_zones.blob.create && var.private_dns_zones.blob.link_dns_zone_group) ? 1 : 0
 
   name                = var.private_dns_zones.blob.name
   resource_group_name = var.private_dns_zones.blob.resource_group_name
 }
 data "azurerm_private_dns_zone" "dfs" {
-  count = (!var.private_dns_zones.dfs.create && var.private_dns_zones.dfs.link_vnet) ? 1 : 0
+  count = (!var.private_dns_zones.dfs.create && var.private_dns_zones.dfs.link_dns_zone_group) ? 1 : 0
 
   name                = var.private_dns_zones.dfs.name
   resource_group_name = var.private_dns_zones.dfs.resource_group_name

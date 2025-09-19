@@ -153,7 +153,7 @@ data "azurerm_subnet" "flexible_postgres" {
   }
 }
 data "azurerm_private_dns_zone" "flexible_postgres" {
-  count = (!var.private_dns_zones.flexible_postgres.create) ? 1 : 0
+  count = (!var.private_dns_zones.flexible_postgres.create && var.private_dns_zones.flexible_postgres.id == null) ? 1 : 0
 
   name                = var.private_dns_zones.flexible_postgres.name
   resource_group_name = var.private_dns_zones.flexible_postgres.resource_group_name
@@ -586,7 +586,11 @@ resource "azurerm_postgresql_flexible_server" "main" {
   public_network_access_enabled = false
 
   delegated_subnet_id = local.flexible_postgres_subnet.id
-  private_dns_zone_id = local.private_dns_zones.flexible_postgres.id
+  private_dns_zone_id = (
+    var.private_dns_zones.flexible_postgres.id == null ?
+    local.private_dns_zones.flexible_postgres.id :
+    var.private_dns_zones.flexible_postgres.id
+  )
 
   dynamic "high_availability" {
     for_each = var.postgres_server_high_availability.enabled ? { "" : var.postgres_server_high_availability } : {}

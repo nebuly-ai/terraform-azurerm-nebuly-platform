@@ -138,6 +138,52 @@ run "smoke_test_plan__private_endpoints__no_create_no_link" {
   }
 }
 
+run "smoke_test_plan__private_endpoints__postgres_id" {
+  command = plan
+
+  variables {
+    resource_group_name = var.resource_group_name
+    location            = "EastUS"
+    platform_domain     = "intest.nebuly.ai"
+    nebuly_credentials = {
+      client_id     = ""
+      client_secret = ""
+    }
+
+    private_dns_zones = {
+      flexible_postgres = {
+        id        = run.setup.azurerm_private_dns_zone.flexible_postgres.id
+        create    = false
+        link_vnet = false
+      }
+      openai = {
+        create              = false
+        link_vnet           = false
+        link_dns_zone_group = false
+      }
+      key_vault = {
+        create              = false
+        link_vnet           = false
+        link_dns_zone_group = false
+      }
+      blob = {
+        create              = false
+        link_vnet           = false
+        link_dns_zone_group = false
+      }
+      dfs = {
+        create              = false
+        link_vnet           = false
+        link_dns_zone_group = false
+      }
+    }
+
+    # ------ AKS ------ #
+    aks_cluster_admin_group_object_ids = []
+    aks_cluster_admin_users            = []
+  }
+}
+
 run "smoke_test_plan__private_endpoints__no_create_yes_link" {
   command = plan
 

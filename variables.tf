@@ -373,6 +373,7 @@ variable "private_dns_zones" {
   type = object({
     flexible_postgres = optional(object({
       name : optional(string)
+      id : optional(string)
       resource_group_name : optional(string)
       link_vnet : optional(bool, true)
       create : optional(bool, true)

@@ -81,7 +81,7 @@ module "platform" {
   }
   postgres_override_name = "nbltstnebulydb3"
 
-  aks_network_plugin_mode = "overlay"
+  aks_network_plugin_mode        = "overlay"
   subnet_address_space_aks_nodes = ["10.0.0.0/28"]
 
   azure_openai_location = "EastUS"

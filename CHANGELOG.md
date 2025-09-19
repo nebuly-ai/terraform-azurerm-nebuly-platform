@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.20.0
+
+- Configurable Private DNS Zones linking
+- Add aks_automatic_channel_upgrade variable
+
 ## v0.19.0
 
 - Support additional databases

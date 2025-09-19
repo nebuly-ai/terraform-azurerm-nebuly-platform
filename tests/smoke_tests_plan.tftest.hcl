@@ -105,9 +105,10 @@ run "smoke_test_plan__private_endpoints__no_create_no_link" {
 
     private_dns_zones = {
       flexible_postgres = {
+        name                = run.setup.azurerm_private_dns_zone.flexible_postgres.name
+        resource_group_name = run.setup.azurerm_private_dns_zone.flexible_postgres.resource_group_name
         create              = false
         link_vnet           = false
-        link_dns_zone_group = false
       }
       openai = {
         create              = false

@@ -506,8 +506,18 @@ variable "aks_net_profile_service_cidr" {
 }
 variable "aks_net_profile_dns_service_ip" {
   type        = string
-  description = " IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
+  description = "IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net_profile_cidr. Example: 10.32.0.10"
   default     = "10.32.0.10"
+}
+variable "aks_net_profile_pod_cidr" {
+  type        = string
+  description = "The CIDR to use for pod IP addresses. This field can only be set when network_plugin is set to kubenet or network_plugin is set to azure and network_plugin_mode is set to overlay."
+  default     = null
+}
+variable "aks_net_profile_profile_outbound_type" {
+  type        = string
+  description = "The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting."
+  default     = "loadBalancer"
 }
 variable "aks_log_analytics_workspace_enabled" {
   description = "Enable the integration of azurerm_log_analytics_workspace and azurerm_log_analytics_solution."

@@ -1125,6 +1125,8 @@ module "aks" {
   vnet_subnet_id             = local.aks_nodes_subnet.id
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
+  net_profile_pod_cidr       = var.aks_net_profile_pod_cidr
+  net_profile_outbound_type  = var.aks_net_profile_profile_outbound_type
 
   private_cluster_enabled         = var.aks_private_cluster_enabled
   private_dns_zone_id             = var.aks_private_cluster_enabled ? "System" : null

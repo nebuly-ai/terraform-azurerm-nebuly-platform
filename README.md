@@ -168,6 +168,8 @@ You can find examples of code that uses this Terraform module in the [examples](
 | <a name="input_aks_log_analytics_workspace"></a> [aks\_log\_analytics\_workspace](#input\_aks\_log\_analytics\_workspace) | Existing azurerm\_log\_analytics\_workspace to attach azurerm\_log\_analytics\_solution. Providing the config disables creation of azurerm\_log\_analytics\_workspace. | <pre>object({<br/>    id                  = string<br/>    name                = string<br/>    location            = optional(string)<br/>    resource_group_name = optional(string)<br/>  })</pre> | `null` | no |
 | <a name="input_aks_log_analytics_workspace_enabled"></a> [aks\_log\_analytics\_workspace\_enabled](#input\_aks\_log\_analytics\_workspace\_enabled) | Enable the integration of azurerm\_log\_analytics\_workspace and azurerm\_log\_analytics\_solution. | `bool` | `true` | no |
 | <a name="input_aks_net_profile_dns_service_ip"></a> [aks\_net\_profile\_dns\_service\_ip](#input\_aks\_net\_profile\_dns\_service\_ip) | IP address within the Kubernetes service address range that is used by cluster service discovery (kube-dns). Must be inluced in net\_profile\_cidr. Example: 10.32.0.10 | `string` | `"10.32.0.10"` | no |
+| <a name="input_aks_net_profile_pod_cidr"></a> [aks\_net\_profile\_pod\_cidr](#input\_aks\_net\_profile\_pod\_cidr) | The CIDR to use for pod IP addresses. This field can only be set when network\_plugin is set to kubenet or network\_plugin is set to azure and network\_plugin\_mode is set to overlay. | `string` | `null` | no |
+| <a name="input_aks_net_profile_profile_outbound_type"></a> [aks\_net\_profile\_profile\_outbound\_type](#input\_aks\_net\_profile\_profile\_outbound\_type) | The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting. | `string` | `"loadBalancer"` | no |
 | <a name="input_aks_net_profile_service_cidr"></a> [aks\_net\_profile\_service\_cidr](#input\_aks\_net\_profile\_service\_cidr) | The Network Range used by the Kubernetes service. Must not overlap with the AKS Nodes address space. Example: 10.32.0.0/24 | `string` | `"10.32.0.0/24"` | no |
 | <a name="input_aks_network_plugin_mode"></a> [aks\_network\_plugin\_mode](#input\_aks\_network\_plugin\_mode) | Network plugin mode used for building the Kubernetes network. Possible value is `overlay`. | `string` | `null` | no |
 | <a name="input_aks_override_name"></a> [aks\_override\_name](#input\_aks\_override\_name) | Override the name of the Azure Kubernetes Service resource. If not provided, the name is generated based on the resource\_prefix. | `string` | `null` | no |
@@ -242,16 +244,16 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_key_vault_secret.azuread_application_client_id (/terraform-docs/main.tf#505)
 - resource.azurerm_key_vault_secret.azuread_application_client_secret (/terraform-docs/main.tf#520)
 - resource.azurerm_key_vault_secret.backups_storage_primary_key (/terraform-docs/main.tf#1076)
-- resource.azurerm_key_vault_secret.google_sso_client_id (/terraform-docs/main.tf#1286)
-- resource.azurerm_key_vault_secret.google_sso_client_secret (/terraform-docs/main.tf#1297)
-- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#1250)
+- resource.azurerm_key_vault_secret.google_sso_client_id (/terraform-docs/main.tf#1288)
+- resource.azurerm_key_vault_secret.google_sso_client_secret (/terraform-docs/main.tf#1299)
+- resource.azurerm_key_vault_secret.jwt_signing_key (/terraform-docs/main.tf#1252)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_id (/terraform-docs/main.tf#538)
 - resource.azurerm_key_vault_secret.nebuly_azure_client_secret (/terraform-docs/main.tf#549)
-- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#1264)
-- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#1275)
+- resource.azurerm_key_vault_secret.okta_sso_client_id (/terraform-docs/main.tf#1266)
+- resource.azurerm_key_vault_secret.okta_sso_client_secret (/terraform-docs/main.tf#1277)
 - resource.azurerm_key_vault_secret.postgres_password (/terraform-docs/main.tf#720)
 - resource.azurerm_key_vault_secret.postgres_user (/terraform-docs/main.tf#709)
-- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#1207)
+- resource.azurerm_kubernetes_cluster_node_pool.linux_pools (/terraform-docs/main.tf#1209)
 - resource.azurerm_management_lock.postgres_server (/terraform-docs/main.tf#652)
 - resource.azurerm_monitor_metric_alert.postgres_server_alerts (/terraform-docs/main.tf#660)
 - resource.azurerm_postgresql_flexible_server.main (/terraform-docs/main.tf#570)
@@ -278,7 +280,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_private_endpoint.models_blob (/terraform-docs/main.tf#889)
 - resource.azurerm_private_endpoint.models_dfs (/terraform-docs/main.tf#915)
 - resource.azurerm_private_endpoint.openai (/terraform-docs/main.tf#812)
-- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#1202)
+- resource.azurerm_role_assignment.aks_network_contributor (/terraform-docs/main.tf#1204)
 - resource.azurerm_role_assignment.key_vault_secret_officer__current (/terraform-docs/main.tf#463)
 - resource.azurerm_role_assignment.key_vault_secret_user__aks (/terraform-docs/main.tf#455)
 - resource.azurerm_role_assignment.nebuly_secrets_officer (/terraform-docs/main.tf#498)
@@ -294,9 +296,9 @@ You can find examples of code that uses this Terraform module in the [examples](
 - resource.azurerm_subnet.private_endpoints (/terraform-docs/main.tf#216)
 - resource.azurerm_virtual_network.main (/terraform-docs/main.tf#188)
 - resource.random_password.postgres_server_admin_password (/terraform-docs/main.tf#565)
-- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#1189)
+- resource.time_sleep.wait_aks_creation (/terraform-docs/main.tf#1191)
 - resource.tls_private_key.aks (/terraform-docs/main.tf#1092)
-- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#1246)
+- resource.tls_private_key.jwt_signing_key (/terraform-docs/main.tf#1248)
 - data source.azuread_user.aks_admins (/terraform-docs/main.tf#108)
 - data source.azurerm_client_config.current (/terraform-docs/main.tf#100)
 - data source.azurerm_private_dns_zone.blob (/terraform-docs/main.tf#173)

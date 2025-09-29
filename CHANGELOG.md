@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.21.0
+
+- Add variables: `aks_net_profile_pod_cidr`, `net_profile_outbound_type`
+
 ## v0.20.0
 
 - Configurable Private DNS Zones linking

@@ -1195,6 +1195,17 @@ resource "time_sleep" "wait_aks_creation" {
     module.aks
   ]
 }
+# Role required for accessing the Cluster (list and get credentials with az CLI).
+resource "azurerm_role_assignment" "aks_cluster_user_roles" {
+  for_each = var.enable_azuread_groups ? setunion(
+    var.aks_cluster_admin_group_object_ids,
+    [azuread_group.aks_admins[0].id],
+  ) : var.aks_cluster_admin_group_object_ids
+
+  scope                = module.aks.aks_id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = each.value
+}
 # The AKS cluster identity has the Contributor role on the AKS second resource group (MC_myResourceGroup_myAKSCluster_eastus)
 # However when using a custom VNET, the AKS cluster identity needs the Network Contributor role on the VNET subnets
 # used by the system node pool and by any additional node pools.

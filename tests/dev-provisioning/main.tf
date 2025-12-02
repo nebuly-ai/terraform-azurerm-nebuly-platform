@@ -101,6 +101,8 @@ module "platform" {
   aks_cluster_admin_users            = ["m.zanotti@nebuly.ai"]
   resource_prefix                    = var.resource_prefix
 
+  enable_service_endpoints = true
+
   tags = var.tags
 }
 

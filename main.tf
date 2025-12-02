@@ -1196,9 +1196,6 @@ resource "time_sleep" "wait_aks_creation" {
   ]
 }
 # Role required for accessing the Cluster (list and get credentials with az CLI).
-#
-# Note that we need to include here all the AAD Groups of users that need to access
-# the AKS clusters.
 resource "azurerm_role_assignment" "aks_cluster_user_roles" {
   for_each = var.enable_azuread_groups ? setunion(
     var.aks_cluster_admin_group_object_ids,

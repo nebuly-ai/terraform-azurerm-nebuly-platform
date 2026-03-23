@@ -690,3 +690,34 @@ variable "backups_storage_tier_to_cool_after_days_since_creation_greater_than" {
   type        = number
   default     = 7
 }
+
+variable "aks_maintenance_window_node_os" {
+  description = <<EOT
+  The node OS versions that are allowed for automatic maintenance operations. 
+  This variable is used to set the maintenance_window_node_os property of the AKS cluster, which defines the node OS versions that are allowed for automatic maintenance operations. 
+  By default, it is set to null, which means that all node OS versions are allowed for maintenance. 
+  It can be set to a comma-separated list of allowed node OS versions (e.g., "Ubuntu,Windows") or to "None" to disable automatic maintenance operations on nodes.
+  EOT
+  type = object({
+    day_of_month = optional(number)
+    day_of_week  = optional(string)
+    duration     = number
+    frequency    = string
+    interval     = number
+    start_date   = optional(string)
+    start_time   = optional(string)
+    utc_offset   = optional(string)
+    week_index   = optional(string)
+    not_allowed = optional(set(object({
+      end   = string
+      start = string
+    })))
+  })
+  default = { # every sunday at 00:00, for a duration of 60 minutes
+    day_of_week = "Sunday"
+    start_time  = "00:00"
+    frequency   = "Weekly"
+    interval    = 1
+    duration    = 4
+  }
+}

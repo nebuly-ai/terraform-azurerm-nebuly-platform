@@ -1122,6 +1122,8 @@ module "aks" {
   orchestrator_version = var.aks_kubernetes_version.workers
   sku_tier             = var.aks_sku_tier
 
+  maintenance_window_node_os = var.aks_maintenance_window_node_os
+
   vnet_subnet_id             = local.aks_nodes_subnet.id
   net_profile_service_cidr   = var.aks_net_profile_service_cidr
   net_profile_dns_service_ip = var.aks_net_profile_dns_service_ip
@@ -1240,6 +1242,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "linux_pools" {
   node_labels = each.value.node_labels
 
   tags = each.value.tags
+
+  upgrade_settings {
+    max_surge                     = "10%"
+    drain_timeout_in_minutes      = 0
+    node_soak_duration_in_minutes = 0
+  }
 
   lifecycle {
     ignore_changes = [

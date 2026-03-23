@@ -5,3 +5,6 @@ secrets.auto.tfvars
 .idea/
 backend.tfvars
 .terraform.lock.hcl
+tests/dev-provisioning/*.yaml
+tests/dev-provisioning/*.json
+tests/dev-provisioning/*.test

@@ -50,7 +50,7 @@ locals {
     var.postgres_override_name == null ? local.postgres_server_generated_name : var.postgres_override_name
   )
   postgres_server_configurations = {
-    "azure.extensions" : "vector,pgaudit,pgcrypto",
+    "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
   }
 

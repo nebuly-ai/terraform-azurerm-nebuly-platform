@@ -1183,7 +1183,7 @@ module "aks" {
 
   public_ssh_key = tls_private_key.aks.public_key_openssh
 
-  oidc_issuer_enabled       = var.aks_oidc_issuer_enabled
+  oidc_issuer_enabled = var.aks_oidc_issuer_enabled
 
   # Plugins
   storage_profile_blob_driver_enabled = true

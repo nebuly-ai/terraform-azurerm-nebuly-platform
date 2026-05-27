@@ -442,8 +442,8 @@ variable "google_sso" {
 variable "azure_openai_deployment_gpt4o" {
   description = ""
   type = object({
-    name : optional(string, "gpt-4o")
-    version : optional(string, "2024-08-06")
+    name : optional(string, "gpt-5.1")
+    version : optional(string, "2025-11-13")
     rate_limit : optional(number, 80)
     rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
@@ -453,8 +453,8 @@ variable "azure_openai_deployment_gpt4o" {
 variable "azure_openai_deployment_gpt4o_mini" {
   description = ""
   type = object({
-    name : optional(string, "gpt-4o-mini")
-    version : optional(string, "2024-07-18")
+    name : optional(string, "gpt-4.1-mini")
+    version : optional(string, "2025-04-14")
     rate_limit : optional(number, 80)
     rai_policy_name : optional(string, "Microsoft.Default")
     enabled : optional(bool, true)
@@ -486,8 +486,8 @@ variable "aks_override_name" {
 variable "aks_kubernetes_version" {
   description = "The Kubernetes version to use."
   default = {
-    workers       = "1.31.5"
-    control_plane = "1.31.5"
+    workers       = "1.34.7"
+    control_plane = "1.34.7"
   }
   type = object({
     workers       = string
@@ -691,6 +691,11 @@ variable "backups_storage_tier_to_cool_after_days_since_creation_greater_than" {
   default     = 7
 }
 
+variable "aks_oidc_issuer_enabled" {
+  type        = bool
+  default     = true
+  description = "Enable the OIDC issuer URL and Workload Identity on the AKS cluster."
+}
 variable "aks_maintenance_window_node_os" {
   description = <<EOT
   The node OS versions that are allowed for automatic maintenance operations. 

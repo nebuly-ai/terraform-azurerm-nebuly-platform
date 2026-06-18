@@ -50,3 +50,25 @@ output "postgres_server_admin" {
   }
   sensitive = true
 }
+output "postgres_entra_access" {
+  description = "Resolved Microsoft Entra access configuration for the PostgreSQL server."
+  value = local.postgres_entra_access_enabled ? {
+    enabled                    = true
+    entra_admin_principal_name = var.postgres_entra_access.entra_admin.principal_name
+    reader_groups              = local.postgres_entra_reader_groups
+    writer_groups              = local.postgres_entra_writer_groups
+    databases                  = local.postgres_entra_databases
+  } : null
+}
+output "postgres_entra_grants_sql" {
+  description = "SQL statements used to bootstrap Entra principals and grants (for audit and troubleshooting)."
+  value = local.postgres_entra_access_enabled ? {
+    principal_creation_sql = local.postgres_entra_principal_creation_sql
+    grants_sql_by_database = local.postgres_entra_grants_sql_by_database
+  } : null
+  sensitive = false
+}
+output "postgres_entra_connection_notes" {
+  description = "Notes for connecting to PostgreSQL with Microsoft Entra authentication."
+  value       = local.postgres_entra_connection_notes
+}

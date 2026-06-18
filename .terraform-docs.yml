@@ -35,6 +35,18 @@ content: |-
   * **Standard NCADS_A100_v4 Family vCPUs**: at least 24 vCPUs
   * **Azure OpenAI gpt-4o**: at least 80k tokens per minute
 
+  ### Hybrid PostgreSQL Auth (optional)
+
+  By default, AKS workloads connect to PostgreSQL using username/password credentials stored in Key Vault.
+
+  You can optionally enable **hybrid authentication** so human operators can connect with Microsoft Entra ID (typically via PIM-eligible reader/writer groups), while AKS continues using password auth.
+
+  Requirements when `postgres_entra_access` is enabled:
+
+  * Pre-create Entra security groups for database readers and writers (object IDs are passed to the module).
+  * Assign an Entra administrator on the PostgreSQL server (`entra_admin` input).
+  * Apply SQL grants manually after provisioning using the `postgres_entra_grants_sql` output.
+
   ## Quickstart
 
   To get started with Nebuly installation on Microsoft Azure, you can follow the steps below. 

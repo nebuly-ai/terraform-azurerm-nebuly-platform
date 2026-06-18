@@ -148,7 +148,18 @@ locals {
 
   postgres_entra_grants_sql_by_database = {
     for database in local.postgres_entra_databases :
-    database => join("\n", concat(
+    database => join("\n\n", concat(
+      [trimspace(<<-SQL
+        -- Connect to "${database}" before running this block.
+        DO $do$
+        BEGIN
+          IF current_database() <> '${replace(database, "'", "''")}' THEN
+            RAISE EXCEPTION 'Run this block while connected to database "%". Current database is "%".', '${replace(database, "'", "''")}', current_database();
+          END IF;
+        END
+        $do$;
+      SQL
+      )],
       [
         for name in values(local.postgres_entra_reader_groups) : trimspace(<<-SQL
           GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";

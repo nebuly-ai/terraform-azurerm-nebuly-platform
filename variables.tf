@@ -263,6 +263,14 @@ variable "postgres_entra_access" {
   }
 
   validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || (
+      var.postgres_entra_access.databases == null ||
+      length(var.postgres_entra_access.databases) > 0
+    )
+    error_message = "When postgres_entra_access is enabled, postgres_entra_access.databases must be null (use default databases) or a non-empty set."
+  }
+
+  validation {
     condition = var.postgres_entra_access == null || contains(
       ["User", "Group", "ServicePrincipal"],
       try(var.postgres_entra_access.entra_admin.principal_type, "User"),

@@ -94,11 +94,6 @@ locals {
     try(var.postgres_entra_access.enabled, true)
   )
 
-  postgres_entra_apply_grants = (
-    local.postgres_entra_access_enabled &&
-    try(var.postgres_entra_access.apply_grants, true)
-  )
-
   postgres_entra_databases = local.postgres_entra_access_enabled ? (
     var.postgres_entra_access.databases != null ?
     var.postgres_entra_access.databases :

@@ -271,7 +271,7 @@ variable "postgres_entra_access" {
   }
 
   validation {
-    condition = var.postgres_entra_access == null || contains(
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || contains(
       ["User", "Group", "ServicePrincipal"],
       try(var.postgres_entra_access.entra_admin.principal_type, "User"),
     )

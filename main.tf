@@ -183,7 +183,6 @@ locals {
           END
           $do$;
 
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT USAGE ON SCHEMAS TO "${replace(name, "\"", "\\\"")}";
           ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT ON TABLES TO "${replace(name, "\"", "\\\"")}";
           ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT ON SEQUENCES TO "${replace(name, "\"", "\\\"")}";
         SQL
@@ -212,7 +211,6 @@ locals {
           END
           $do$;
 
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT USAGE, CREATE ON SCHEMAS TO "${replace(name, "\"", "\\\"")}";
           ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${replace(name, "\"", "\\\"")}";
           ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO "${replace(name, "\"", "\\\"")}";
         SQL

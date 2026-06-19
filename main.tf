@@ -109,24 +109,24 @@ locals {
   ) : toset([])
   postgres_entra_databases_ordered = sort(tolist(local.postgres_entra_databases))
 
-  postgres_entra_reader_group_ids = local.postgres_entra_access_enabled ? try(
-    var.postgres_entra_access.reader_group_object_ids,
+  postgres_entra_reader_group_names = local.postgres_entra_access_enabled ? try(
+    var.postgres_entra_access.reader_group_names,
     toset([]),
   ) : toset([])
 
-  postgres_entra_writer_group_ids = local.postgres_entra_access_enabled ? try(
-    var.postgres_entra_access.writer_group_object_ids,
+  postgres_entra_writer_group_names = local.postgres_entra_access_enabled ? try(
+    var.postgres_entra_access.writer_group_names,
     toset([]),
   ) : toset([])
 
   postgres_entra_reader_groups = {
-    for object_id in local.postgres_entra_reader_group_ids :
-    object_id => data.azuread_group.postgres_entra_readers[object_id].display_name
+    for group_name in local.postgres_entra_reader_group_names :
+    group_name => group_name
   }
 
   postgres_entra_writer_groups = {
-    for object_id in local.postgres_entra_writer_group_ids :
-    object_id => data.azuread_group.postgres_entra_writers[object_id].display_name
+    for group_name in local.postgres_entra_writer_group_names :
+    group_name => group_name
   }
 
   postgres_entra_all_group_names = distinct(concat(
@@ -139,18 +139,31 @@ locals {
     name => replace(name, "'", "''")
   }
 
-  postgres_entra_principal_creation_sql = join("\n\n", [
-    for name in local.postgres_entra_all_group_names : trimspace(<<-SQL
-      SELECT *
-      FROM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false)
-      WHERE NOT EXISTS (
-        SELECT 1
-        FROM pg_catalog.pg_roles
-        WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
-      );
+  postgres_entra_principal_creation_sql = join("\n\n", concat(
+    [trimspace(<<-SQL
+      -- Connect to "postgres" before running this block.
+      DO $do$
+      BEGIN
+        IF current_database() <> 'postgres' THEN
+          RAISE EXCEPTION 'Run principal bootstrap while connected to database "%". Current database is "%".', 'postgres', current_database();
+        END IF;
+      END
+      $do$;
     SQL
-    )
-  ])
+    )],
+    [
+      for name in local.postgres_entra_all_group_names : trimspace(<<-SQL
+        SELECT *
+        FROM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false)
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM pg_catalog.pg_roles
+          WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
+        );
+      SQL
+      )
+    ]
+  ))
 
   postgres_entra_grants_sql_by_database = {
     for database in local.postgres_entra_databases_ordered :
@@ -220,16 +233,6 @@ data "azuread_user" "aks_admins" {
   for_each = var.aks_cluster_admin_users
 
   user_principal_name = each.value
-}
-data "azuread_group" "postgres_entra_readers" {
-  for_each = local.postgres_entra_reader_group_ids
-
-  object_id = each.value
-}
-data "azuread_group" "postgres_entra_writers" {
-  for_each = local.postgres_entra_writer_group_ids
-
-  object_id = each.value
 }
 data "azurerm_subnet" "aks_nodes" {
   count = local.use_existing_aks_nodes_subnet ? 1 : 0

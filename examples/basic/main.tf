@@ -81,11 +81,11 @@ module "platform" {
   #     principal_name = "<entra-admin-upn-or-sp-name>"
   #     principal_type = "User" # User, Group, or ServicePrincipal
   #   }
-  #   reader_group_object_ids = [
-  #     "<pim-reader-group-object-id>",
+  #   reader_group_names = [
+  #     "<pim-reader-group-name>",
   #   ]
-  #   writer_group_object_ids = [
-  #     "<pim-writer-group-object-id>",
+  #   writer_group_names = [
+  #     "<pim-writer-group-name>",
   #   ]
   #   # Apply SQL grants manually using module output `postgres_entra_grants_sql`.
   # }

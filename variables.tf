@@ -238,9 +238,9 @@ variable "postgres_entra_access" {
       principal_name = string
       principal_type = optional(string, "User")
     })
-    reader_group_object_ids = optional(set(string), [])
-    writer_group_object_ids = optional(set(string), [])
-    databases               = optional(set(string), null)
+    reader_group_names = optional(set(string), [])
+    writer_group_names = optional(set(string), [])
+    databases          = optional(set(string), null)
   })
   default     = null
   description = <<EOT
@@ -255,11 +255,11 @@ variable "postgres_entra_access" {
       try(var.postgres_entra_access.entra_admin.object_id, "") != "" &&
       try(var.postgres_entra_access.entra_admin.principal_name, "") != "" &&
       (
-        length(try(var.postgres_entra_access.reader_group_object_ids, toset([]))) +
-        length(try(var.postgres_entra_access.writer_group_object_ids, toset([])))
+        length(try(var.postgres_entra_access.reader_group_names, toset([]))) +
+        length(try(var.postgres_entra_access.writer_group_names, toset([])))
       ) > 0
     )
-    error_message = "When postgres_entra_access is enabled, entra_admin and at least one reader or writer group object ID must be provided."
+    error_message = "When postgres_entra_access is enabled, entra_admin and at least one reader or writer group name must be provided."
   }
 
   validation {
@@ -268,6 +268,22 @@ variable "postgres_entra_access" {
       length(var.postgres_entra_access.databases) > 0
     )
     error_message = "When postgres_entra_access is enabled, postgres_entra_access.databases must be null (use default databases) or a non-empty set."
+  }
+
+  validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || (
+      var.postgres_entra_access.databases == null ||
+      length(
+        setsubtract(
+          var.postgres_entra_access.databases,
+          setunion(
+            toset(["auth", "analytics"]),
+            toset(keys(var.postgres_server_extra_databases)),
+          )
+        )
+      ) == 0
+    )
+    error_message = "When postgres_entra_access.databases is set, every database name must be one of: auth, analytics, or a key in postgres_server_extra_databases."
   }
 
   validation {

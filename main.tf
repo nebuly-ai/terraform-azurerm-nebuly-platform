@@ -52,6 +52,7 @@ locals {
   postgres_server_configurations = {
     "azure.extensions" : "vector,pgaudit",
     "shared_preload_libraries" : "pgaudit",
+    "pgaadauth.enable_group_sync" : "ON",
   }
 
   key_vault_generated_name = (
@@ -163,56 +164,15 @@ locals {
       [
         for name in values(local.postgres_entra_reader_groups) : trimspace(<<-SQL
           GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
-
-          DO $do$
-          DECLARE
-            schema_name text;
-          BEGIN
-            FOR schema_name IN
-              SELECT nspname
-              FROM pg_namespace
-              WHERE nspname <> 'information_schema'
-                AND nspname <> 'pg_catalog'
-                AND nspname NOT LIKE 'pg_toast%'
-                AND nspname NOT LIKE 'pg_temp_%'
-            LOOP
-              EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-              EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-              EXECUTE format('GRANT SELECT ON ALL SEQUENCES IN SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-            END LOOP;
-          END
-          $do$;
-
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT ON TABLES TO "${replace(name, "\"", "\\\"")}";
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT ON SEQUENCES TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
         SQL
         )
       ],
       [
         for name in values(local.postgres_entra_writer_groups) : trimspace(<<-SQL
           GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
-
-          DO $do$
-          DECLARE
-            schema_name text;
-          BEGIN
-            FOR schema_name IN
-              SELECT nspname
-              FROM pg_namespace
-              WHERE nspname <> 'information_schema'
-                AND nspname <> 'pg_catalog'
-                AND nspname NOT LIKE 'pg_toast%'
-                AND nspname NOT LIKE 'pg_temp_%'
-            LOOP
-              EXECUTE format('GRANT USAGE, CREATE ON SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-              EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-              EXECUTE format('GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA %I TO %I', schema_name, '${local.postgres_entra_escape_sql_string[name]}');
-            END LOOP;
-          END
-          $do$;
-
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${replace(name, "\"", "\\\"")}";
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${replace(var.postgres_server_admin_username, "\"", "\\\"")}" GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_write_all_data TO "${replace(name, "\"", "\\\"")}";
         SQL
         )
       ],

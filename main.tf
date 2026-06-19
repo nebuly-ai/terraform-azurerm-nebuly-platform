@@ -49,10 +49,15 @@ locals {
   postgres_server_name = (
     var.postgres_override_name == null ? local.postgres_server_generated_name : var.postgres_override_name
   )
-  postgres_server_configurations = {
-    "azure.extensions" : "vector,pgaudit",
-    "shared_preload_libraries" : "pgaudit",
-  }
+  postgres_server_configurations = merge(
+    {
+      "azure.extensions" : "vector,pgaudit",
+      "shared_preload_libraries" : "pgaudit",
+    },
+    local.postgres_entra_access_enabled ? {
+      "pgaadauth.enable_group_sync" : "ON",
+    } : {},
+  )
 
   key_vault_generated_name = (
     var.resource_suffix == null ?
@@ -88,6 +93,130 @@ locals {
     data.azurerm_subnet.flexible_postgres[0] :
     azurerm_subnet.flexible_postgres[0]
   )
+
+  postgres_entra_access_enabled = (
+    var.postgres_entra_access != null &&
+    try(var.postgres_entra_access.enabled, true)
+  )
+  postgres_entra_admin = local.postgres_entra_access_enabled ? var.postgres_entra_access.entra_admin : null
+
+  postgres_entra_databases = local.postgres_entra_access_enabled ? (
+    var.postgres_entra_access.databases != null ?
+    var.postgres_entra_access.databases :
+    setunion(
+      toset(["auth", "analytics"]),
+      keys(var.postgres_server_extra_databases),
+    )
+  ) : toset([])
+  postgres_entra_databases_ordered = sort(tolist(local.postgres_entra_databases))
+
+  postgres_entra_reader_group_names = local.postgres_entra_access_enabled ? try(
+    var.postgres_entra_access.reader_group_names,
+    toset([]),
+  ) : toset([])
+
+  postgres_entra_writer_group_names = local.postgres_entra_access_enabled ? try(
+    var.postgres_entra_access.writer_group_names,
+    toset([]),
+  ) : toset([])
+
+  postgres_entra_reader_groups = {
+    for group_name in local.postgres_entra_reader_group_names :
+    group_name => group_name
+  }
+
+  postgres_entra_writer_groups = {
+    for group_name in local.postgres_entra_writer_group_names :
+    group_name => group_name
+  }
+
+  postgres_entra_all_group_names = distinct(concat(
+    values(local.postgres_entra_reader_groups),
+    values(local.postgres_entra_writer_groups),
+  ))
+
+  postgres_entra_escape_sql_string = {
+    for name in local.postgres_entra_all_group_names :
+    name => replace(name, "'", "''")
+  }
+
+  postgres_entra_principal_creation_sql = join("\n\n", concat(
+    [trimspace(<<-SQL
+      -- Connect to "postgres" before running this block.
+      DO $do$
+      BEGIN
+        IF current_database() <> 'postgres' THEN
+          RAISE EXCEPTION 'Run principal bootstrap while connected to database "%". Current database is "%".', 'postgres', current_database();
+        END IF;
+      END
+      $do$;
+    SQL
+    )],
+    [
+      for name in local.postgres_entra_all_group_names : trimspace(<<-SQL
+        DO $do$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_catalog.pg_roles
+            WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
+          ) THEN
+            PERFORM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false);
+          END IF;
+        END
+        $do$;
+      SQL
+      )
+    ]
+  ))
+
+  postgres_entra_grants_sql_by_database = {
+    for database in local.postgres_entra_databases_ordered :
+    database => join("\n\n", concat(
+      [trimspace(<<-SQL
+        -- Connect to "${database}" before running this block.
+        DO $do$
+        BEGIN
+          IF current_database() <> '${replace(database, "'", "''")}' THEN
+            RAISE EXCEPTION 'Run this block while connected to database "%". Current database is "%".', '${replace(database, "'", "''")}', current_database();
+          END IF;
+        END
+        $do$;
+      SQL
+      )],
+      [
+        for name in sort(values(local.postgres_entra_reader_groups)) : trimspace(<<-SQL
+          GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
+        SQL
+        )
+      ],
+      [
+        for name in sort(values(local.postgres_entra_writer_groups)) : trimspace(<<-SQL
+          GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
+          GRANT pg_write_all_data TO "${replace(name, "\"", "\\\"")}";
+        SQL
+        )
+      ],
+    ))
+  }
+  postgres_entra_grants_sql = local.postgres_entra_access_enabled ? join("\n\n", concat(
+    [local.postgres_entra_principal_creation_sql],
+    [
+      for database in local.postgres_entra_databases_ordered : local.postgres_entra_grants_sql_by_database[database]
+    ]
+  )) : null
+
+  postgres_entra_connection_notes = local.postgres_entra_access_enabled ? join("\n", [
+    "Connect with Microsoft Entra ID using psql and an access token:",
+    "",
+    "  export PGPASSWORD=\"$(az account get-access-token --resource-type oss-rdbms --query accessToken -o tsv)\"",
+    "  psql \"host=${azurerm_postgresql_flexible_server.main.fqdn} port=5432 dbname=postgres user=<your-entra-upn> sslmode=require\"",
+    "",
+    "Human access is granted via the configured reader/writer Entra groups (typically PIM-eligible).",
+    "AKS workloads continue to use the password credentials stored in Key Vault.",
+  ]) : null
 }
 
 
@@ -606,6 +735,15 @@ resource "azurerm_postgresql_flexible_server" "main" {
     start_minute = var.postgres_server_maintenance_window.start_minute
   }
 
+  dynamic "authentication" {
+    for_each = local.postgres_entra_access_enabled ? [1] : []
+    content {
+      active_directory_auth_enabled = true
+      password_auth_enabled         = true
+      tenant_id                     = data.azurerm_client_config.current.tenant_id
+    }
+  }
+
   tags = var.tags
 
   lifecycle {
@@ -728,9 +866,16 @@ resource "azurerm_key_vault_secret" "postgres_password" {
     azurerm_role_assignment.key_vault_secret_officer__current
   ]
 }
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "entra_admin" {
+  count = local.postgres_entra_access_enabled ? 1 : 0
 
-
-
+  server_name         = azurerm_postgresql_flexible_server.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  object_id           = try(local.postgres_entra_admin.object_id, null)
+  principal_name      = try(local.postgres_entra_admin.principal_name, null)
+  principal_type      = try(local.postgres_entra_admin.principal_type, "User")
+}
 
 # ------ Azure OpenAI ------ #
 locals {

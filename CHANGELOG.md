@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.25.0
+
+- Add optional hybrid PostgreSQL authentication (`postgres_entra_access`) for Entra-based human access with SQL grant statements exposed for manual execution.
+
 ## v0.21.0
 
 - Add variables: `aks_net_profile_pod_cidr`, `net_profile_outbound_type`

@@ -230,6 +230,70 @@ variable "postgres_version" {
   default     = "16"
   description = "The PostgreSQL version to use."
 }
+variable "postgres_entra_access" {
+  type = object({
+    enabled = optional(bool, false)
+    entra_admin = object({
+      object_id      = string
+      principal_name = string
+      principal_type = optional(string, "User")
+    })
+    reader_group_names = optional(set(string), [])
+    writer_group_names = optional(set(string), [])
+    databases          = optional(set(string), null)
+  })
+  default     = null
+  description = <<EOT
+  Optional Microsoft Entra ID access for human operators on the PostgreSQL Flexible Server.
+  When enabled, the server uses hybrid authentication (password for AKS workloads + Entra for humans).
+  Reader and writer Entra groups (typically PIM-eligible) can be granted database privileges
+  with SQL statements exposed via `postgres_entra_grants_sql` output.
+  EOT
+
+  validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || (
+      try(var.postgres_entra_access.entra_admin.object_id, "") != "" &&
+      try(var.postgres_entra_access.entra_admin.principal_name, "") != "" &&
+      (
+        length(try(var.postgres_entra_access.reader_group_names, toset([]))) +
+        length(try(var.postgres_entra_access.writer_group_names, toset([])))
+      ) > 0
+    )
+    error_message = "When postgres_entra_access is enabled, entra_admin and at least one reader or writer group name must be provided."
+  }
+
+  validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || (
+      var.postgres_entra_access.databases == null ||
+      length(var.postgres_entra_access.databases) > 0
+    )
+    error_message = "When postgres_entra_access is enabled, postgres_entra_access.databases must be null (use default databases) or a non-empty set."
+  }
+
+  validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || (
+      var.postgres_entra_access.databases == null ||
+      length(
+        setsubtract(
+          var.postgres_entra_access.databases,
+          setunion(
+            toset(["auth", "analytics"]),
+            toset(keys(var.postgres_server_extra_databases)),
+          )
+        )
+      ) == 0
+    )
+    error_message = "When postgres_entra_access.databases is set, every database name must be one of: auth, analytics, or a key in postgres_server_extra_databases."
+  }
+
+  validation {
+    condition = var.postgres_entra_access == null || !try(var.postgres_entra_access.enabled, false) || contains(
+      ["User", "Group", "ServicePrincipal"],
+      try(var.postgres_entra_access.entra_admin.principal_type, "User"),
+    )
+    error_message = "postgres_entra_access.entra_admin.principal_type must be one of: User, Group, ServicePrincipal."
+  }
+}
 
 
 # ------ Key Vault ------ #
@@ -711,7 +775,7 @@ variable "aks_maintenance_window_node_os" {
     interval     = number
     start_date   = optional(string)
     start_time   = optional(string)
-    utc_offset   = optional(string)
+    utc_offset   = optional(string, "+00:00")
     week_index   = optional(string)
     not_allowed = optional(set(object({
       end   = string
@@ -724,5 +788,6 @@ variable "aks_maintenance_window_node_os" {
     frequency   = "Weekly"
     interval    = 1
     duration    = 4
+    utc_offset  = "+00:00"
   }
 }

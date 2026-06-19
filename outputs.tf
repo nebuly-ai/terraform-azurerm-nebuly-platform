@@ -62,11 +62,8 @@ output "postgres_entra_access" {
 }
 output "postgres_entra_grants_sql" {
   description = "SQL statements used to bootstrap Entra principals and grants (for audit and troubleshooting)."
-  value = local.postgres_entra_access_enabled ? {
-    principal_creation_sql = local.postgres_entra_principal_creation_sql
-    grants_sql_by_database = local.postgres_entra_grants_sql_by_database
-  } : null
-  sensitive = false
+  value       = local.postgres_entra_grants_sql
+  sensitive   = false
 }
 output "postgres_entra_connection_notes" {
   description = "Notes for connecting to PostgreSQL with Microsoft Entra authentication."

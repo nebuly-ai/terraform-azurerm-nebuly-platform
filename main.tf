@@ -49,11 +49,15 @@ locals {
   postgres_server_name = (
     var.postgres_override_name == null ? local.postgres_server_generated_name : var.postgres_override_name
   )
-  postgres_server_configurations = {
-    "azure.extensions" : "vector,pgaudit",
-    "shared_preload_libraries" : "pgaudit",
-    "pgaadauth.enable_group_sync" : "ON",
-  }
+  postgres_server_configurations = merge(
+    {
+      "azure.extensions" : "vector,pgaudit",
+      "shared_preload_libraries" : "pgaudit",
+    },
+    local.postgres_entra_access_enabled ? {
+      "pgaadauth.enable_group_sync" : "ON",
+    } : {},
+  )
 
   key_vault_generated_name = (
     var.resource_suffix == null ?
@@ -103,6 +107,7 @@ locals {
       keys(var.postgres_server_extra_databases),
     )
   ) : toset([])
+  postgres_entra_databases_ordered = sort(tolist(local.postgres_entra_databases))
 
   postgres_entra_reader_group_ids = local.postgres_entra_access_enabled ? try(
     var.postgres_entra_access.reader_group_object_ids,
@@ -136,19 +141,19 @@ locals {
 
   postgres_entra_principal_creation_sql = join("\n\n", [
     for name in local.postgres_entra_all_group_names : trimspace(<<-SQL
-      DO $do$
-      BEGIN
-        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}') THEN
-          PERFORM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false);
-        END IF;
-      END
-      $do$;
+      SELECT *
+      FROM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false)
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM pg_catalog.pg_roles
+        WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
+      );
     SQL
     )
   ])
 
   postgres_entra_grants_sql_by_database = {
-    for database in local.postgres_entra_databases :
+    for database in local.postgres_entra_databases_ordered :
     database => join("\n\n", concat(
       [trimspace(<<-SQL
         -- Connect to "${database}" before running this block.
@@ -162,14 +167,14 @@ locals {
       SQL
       )],
       [
-        for name in values(local.postgres_entra_reader_groups) : trimspace(<<-SQL
+        for name in sort(values(local.postgres_entra_reader_groups)) : trimspace(<<-SQL
           GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
           GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
         SQL
         )
       ],
       [
-        for name in values(local.postgres_entra_writer_groups) : trimspace(<<-SQL
+        for name in sort(values(local.postgres_entra_writer_groups)) : trimspace(<<-SQL
           GRANT CONNECT ON DATABASE "${database}" TO "${replace(name, "\"", "\\\"")}";
           GRANT pg_read_all_data TO "${replace(name, "\"", "\\\"")}";
           GRANT pg_write_all_data TO "${replace(name, "\"", "\\\"")}";
@@ -178,6 +183,12 @@ locals {
       ],
     ))
   }
+  postgres_entra_grants_sql = local.postgres_entra_access_enabled ? join("\n\n", concat(
+    [local.postgres_entra_principal_creation_sql],
+    [
+      for database in local.postgres_entra_databases_ordered : local.postgres_entra_grants_sql_by_database[database]
+    ]
+  )) : null
 
   postgres_entra_connection_notes = local.postgres_entra_access_enabled ? join("\n", [
     "Connect with Microsoft Entra ID using psql and an access token:",

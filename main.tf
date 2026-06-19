@@ -154,13 +154,17 @@ locals {
     )],
     [
       for name in local.postgres_entra_all_group_names : trimspace(<<-SQL
-        SELECT *
-        FROM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false)
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM pg_catalog.pg_roles
-          WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
-        );
+        DO $do$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_catalog.pg_roles
+            WHERE rolname = '${local.postgres_entra_escape_sql_string[name]}'
+          ) THEN
+            PERFORM pgaadauth_create_principal('${local.postgres_entra_escape_sql_string[name]}', false, false);
+          END IF;
+        END
+        $do$;
       SQL
       )
     ]

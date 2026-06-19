@@ -98,6 +98,7 @@ locals {
     var.postgres_entra_access != null &&
     try(var.postgres_entra_access.enabled, true)
   )
+  postgres_entra_admin = local.postgres_entra_access_enabled ? var.postgres_entra_access.entra_admin : null
 
   postgres_entra_databases = local.postgres_entra_access_enabled ? (
     var.postgres_entra_access.databases != null ?
@@ -867,9 +868,9 @@ resource "azurerm_postgresql_flexible_server_active_directory_administrator" "en
   server_name         = azurerm_postgresql_flexible_server.main.name
   resource_group_name = data.azurerm_resource_group.main.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
-  object_id           = var.postgres_entra_access.entra_admin.object_id
-  principal_name      = var.postgres_entra_access.entra_admin.principal_name
-  principal_type      = var.postgres_entra_access.entra_admin.principal_type
+  object_id           = try(local.postgres_entra_admin.object_id, null)
+  principal_name      = try(local.postgres_entra_admin.principal_name, null)
+  principal_type      = try(local.postgres_entra_admin.principal_type, "User")
 }
 
 # ------ Azure OpenAI ------ #

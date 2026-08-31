@@ -920,7 +920,7 @@ resource "azurerm_cognitive_deployment" "tiers" {
   for_each = var.enable_azure_openai ? local.azure_openai_deployments : {}
 
   cognitive_account_id = azurerm_cognitive_account.main[0].id
-  name                 = format("%s-openai-%s", var.resource_prefix, each.value.name)
+  name                 = format("%s-%s", var.resource_prefix, each.value.name)
   rai_policy_name      = each.value.rai_policy_name
 
   model {

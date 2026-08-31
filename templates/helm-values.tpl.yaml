@@ -275,3 +275,26 @@ openAi:
   existingSecret:
     name: ${secret_provider_class_secret_name}
     apiKey: ${k8s_secret_key_openai_api_key}
+
+mcpServer:
+  enabled: true
+  apiEndpoint: "https://${platform_domain}/mcp"
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    enabled: true
+    className: ${ingress_class_name}
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: "/mcp(/|$)(.*)"
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}

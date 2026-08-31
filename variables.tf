@@ -73,6 +73,28 @@ variable "enable_storage_containers" {
   default     = true
   type        = bool
 }
+variable "enable_azure_openai" {
+  description = <<EOT
+  If True, the module provisions Azure OpenAI (account, deployments, private endpoint) and wires Helm to those deployments.
+  If False, Azure OpenAI is skipped and Helm values fall back to the standard OpenAI model names.
+  EOT
+  default     = true
+  type        = bool
+}
+variable "openai_api_key" {
+  description = <<EOT
+  OpenAI API key stored in Key Vault when Azure OpenAI is not provisioned by this module.
+  When enable_azure_openai is true, the Azure Cognitive Account key is used instead.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition     = var.enable_azure_openai || (var.openai_api_key != null && trimspace(var.openai_api_key) != "")
+    error_message = "openai_api_key must be provided when enable_azure_openai is false."
+  }
+}
 variable "enable_web_routing_addon" {
   description = <<EOT
   If True, the module will enable the web routing add-on and create a Private DNS Zone for the Ingress Controller, 
@@ -503,28 +525,39 @@ variable "google_sso" {
 
 
 # ------ Azure OpenAI ------ #
-variable "azure_openai_deployment_gpt4o" {
-  description = ""
+variable "azure_openai_deployments" {
+  description = <<EOT
+  Azure OpenAI model deployments used by Nebuly. All three tiers are required:
+    - tier1: difficult tasks
+    - tier2: medium tasks
+    - tier3: easy tasks
+  EOT
   type = object({
-    name : optional(string, "gpt-5.1")
-    version : optional(string, "2025-11-13")
-    rate_limit : optional(number, 80)
-    rai_policy_name : optional(string, "Microsoft.Default")
-    enabled : optional(bool, true)
+    tier1 = optional(object({
+      name            = optional(string, "gpt-5.6-sol")
+      version         = optional(string, "2026-07-09")
+      type            = optional(string, "GlobalStandard")
+      rate_limit      = optional(number, 100)
+      rai_policy_name = optional(string, "Microsoft.Default")
+    }), {})
+    tier2 = optional(object({
+      name            = optional(string, "gpt-5.6-terra")
+      version         = optional(string, "2026-07-09")
+      type            = optional(string, "GlobalStandard")
+      rate_limit      = optional(number, 100)
+      rai_policy_name = optional(string, "Microsoft.Default")
+    }), {})
+    tier3 = optional(object({
+      name            = optional(string, "gpt-5.6-luna")
+      version         = optional(string, "2026-07-09")
+      type            = optional(string, "GlobalStandard")
+      rate_limit      = optional(number, 100)
+      rai_policy_name = optional(string, "Microsoft.Default")
+    }), {})
   })
   default = {}
 }
-variable "azure_openai_deployment_gpt4o_mini" {
-  description = ""
-  type = object({
-    name : optional(string, "gpt-4.1-mini")
-    version : optional(string, "2025-04-14")
-    rate_limit : optional(number, 80)
-    rai_policy_name : optional(string, "Microsoft.Default")
-    enabled : optional(bool, true)
-  })
-  default = {}
-}
+
 variable "azure_openai_location" {
   description = <<EOT
   The Azure region where to deploy the Azure OpenAI models. 

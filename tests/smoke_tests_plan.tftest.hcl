@@ -2,6 +2,10 @@ provider "azurerm" {
   features {}
 }
 
+variable "resource_group_name" {
+  type = string
+}
+
 run "setup" {
   module {
     source = "./tests/setup"
@@ -254,7 +258,7 @@ run "values_validation__subnet_aks_nodes" {
     aks_cluster_admin_users            = []
 
     # We're provising the existing subnet name without providing an existing vnet: validation should fail. 
-    virtual_network_name  = null
+    virtual_network       = null
     subnet_name_aks_nodes = "my-cool-subnet"
   }
 
@@ -282,7 +286,7 @@ run "values_validation__subnet_private_endpoints" {
     aks_cluster_admin_users            = []
 
     # We're provising the existing subnet name without providing an existing vnet: validation should fail. 
-    virtual_network_name          = null
+    virtual_network               = null
     subnet_name_private_endpoints = "my-cool-subnet"
   }
 

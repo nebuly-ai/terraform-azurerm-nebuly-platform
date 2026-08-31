@@ -884,8 +884,15 @@ locals {
     format("%snebuly", var.resource_prefix) :
     format("%snebuly%s", var.resource_prefix, var.resource_suffix)
   )
+  azure_openai_deployments = {
+    tier1 = var.azure_openai_deployments.tier1
+    tier2 = var.azure_openai_deployments.tier2
+    tier3 = var.azure_openai_deployments.tier3
+  }
 }
 resource "azurerm_cognitive_account" "main" {
+  count = var.enable_azure_openai ? 1 : 0
+
   name                = local.azure_openai_account_name
   location            = var.azure_openai_location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -909,45 +916,28 @@ resource "azurerm_cognitive_account" "main" {
   tags = var.tags
 }
 
-resource "azurerm_cognitive_deployment" "gpt_4o" {
-  count = var.azure_openai_deployment_gpt4o.enabled ? 1 : 0
+resource "azurerm_cognitive_deployment" "tiers" {
+  for_each = var.enable_azure_openai ? local.azure_openai_deployments : {}
 
-  cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = "${var.resource_prefix}-gpt-4o"
-  rai_policy_name      = var.azure_openai_deployment_gpt4o.rai_policy_name
-
-  model {
-    format  = "OpenAI"
-    name    = var.azure_openai_deployment_gpt4o.name
-    version = var.azure_openai_deployment_gpt4o.version
-  }
-  scale {
-    type     = "Standard"
-    capacity = var.azure_openai_deployment_gpt4o.rate_limit
-  }
-}
-resource "azurerm_cognitive_deployment" "gpt_4o_mini" {
-  count = var.azure_openai_deployment_gpt4o_mini.enabled ? 1 : 0
-
-  cognitive_account_id = azurerm_cognitive_account.main.id
-  name                 = "${var.resource_prefix}-gpt-4o-mini"
-  rai_policy_name      = var.azure_openai_deployment_gpt4o_mini.rai_policy_name
+  cognitive_account_id = azurerm_cognitive_account.main[0].id
+  name                 = format("%s-openai-%s", var.resource_prefix, each.key)
+  rai_policy_name      = each.value.rai_policy_name
 
   model {
     format  = "OpenAI"
-    name    = var.azure_openai_deployment_gpt4o_mini.name
-    version = var.azure_openai_deployment_gpt4o_mini.version
+    name    = each.value.name
+    version = each.value.version
   }
   scale {
-    type     = "Standard"
-    capacity = var.azure_openai_deployment_gpt4o_mini.rate_limit
+    type     = each.value.type
+    capacity = each.value.rate_limit
   }
 }
 resource "azurerm_key_vault_secret" "azure_openai_api_key" {
   count = var.enable_key_vault_secrets ? 1 : 0
 
   name         = "${var.resource_prefix}-openai-api-key"
-  value        = azurerm_cognitive_account.main.primary_access_key
+  value        = var.enable_azure_openai ? azurerm_cognitive_account.main[0].primary_access_key : var.openai_api_key
   key_vault_id = azurerm_key_vault.main.id
 
   depends_on = [
@@ -955,14 +945,16 @@ resource "azurerm_key_vault_secret" "azure_openai_api_key" {
   ]
 }
 resource "azurerm_private_endpoint" "openai" {
-  name                = "${azurerm_cognitive_account.main.name}-openai"
+  count = var.enable_azure_openai ? 1 : 0
+
+  name                = "${azurerm_cognitive_account.main[0].name}-openai"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   subnet_id           = local.use_existing_private_endpoints_subnet ? local.private_endpoints_subnet.id : azurerm_subnet.private_endpoints[0].id
 
   private_service_connection {
-    name                           = azurerm_cognitive_account.main.name
-    private_connection_resource_id = azurerm_cognitive_account.main.id
+    name                           = azurerm_cognitive_account.main[0].name
+    private_connection_resource_id = azurerm_cognitive_account.main[0].id
     is_manual_connection           = false
     subresource_names              = ["account"]
   }
@@ -1481,6 +1473,13 @@ locals {
   secret_provider_class_name        = "nebuly-platform"
   secret_provider_class_secret_name = "nebuly-platform-credentials"
 
+  gpu_accelerator_labels = distinct(compact([
+    for pool in var.aks_worker_pools :
+    try(pool.node_labels["nebuly.com/accelerator"], "")
+    if try(pool.enabled, true)
+  ]))
+  gpu_accelerator = one(local.gpu_accelerator_labels)
+
   # k8s secrets keys
   k8s_secret_key_db_username          = "db-username"
   k8s_secret_key_db_password          = "db-password"
@@ -1501,10 +1500,24 @@ locals {
     {
       platform_domain        = var.platform_domain
       image_pull_secret_name = var.k8s_image_pull_secret_name
+      gpu_accelerator        = local.gpu_accelerator
 
-      openai_endpoint               = azurerm_cognitive_account.main.endpoint
-      openai_gpt4o_deployment       = try(azurerm_cognitive_deployment.gpt_4o[0].name, "\"\"")
-      openai_translation_deployment = try(azurerm_cognitive_deployment.gpt_4o_mini[0].name, "\"\"")
+      openai_endpoint = var.enable_azure_openai ? azurerm_cognitive_account.main[0].endpoint : "https://api.openai.com/v1"
+      openai_tier1_deployment = (
+        var.enable_azure_openai ?
+        azurerm_cognitive_deployment.tiers["tier1"].name :
+        local.azure_openai_deployments.tier1.name
+      )
+      openai_tier2_deployment = (
+        var.enable_azure_openai ?
+        azurerm_cognitive_deployment.tiers["tier2"].name :
+        local.azure_openai_deployments.tier2.name
+      )
+      openai_tier3_deployment = (
+        var.enable_azure_openai ?
+        azurerm_cognitive_deployment.tiers["tier3"].name :
+        local.azure_openai_deployments.tier3.name
+      )
 
       secret_provider_class_name        = local.secret_provider_class_name
       secret_provider_class_secret_name = local.secret_provider_class_secret_name

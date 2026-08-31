@@ -267,9 +267,9 @@ frontend:
 
 openAi:
   enabled: true
-  tier1Deployment: ${openai_tier1_deployment}
-  tier2Deployment: ${openai_tier2_deployment}
-  tier3Deployment: ${openai_tier3_deployment}
+  tier1ModelDeployment: ${openai_tier1_deployment}
+  tier2ModelDeployment: ${openai_tier2_deployment}
+  tier3ModelDeployment: ${openai_tier3_deployment}
   endpoint: ${openai_endpoint}
 
   existingSecret:

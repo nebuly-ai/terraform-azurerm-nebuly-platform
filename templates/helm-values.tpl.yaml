@@ -119,23 +119,7 @@ primaryProcessing:
               - key: nebuly.com/accelerator
                 operator: In
                 values:
-                  - nvidia-ampere-a100
-  tolerations:
-    - effect: NoSchedule
-      key: nvidia.com/gpu
-      operator: Exists
-
-secondaryProcessing:
-  schedule: "0 2 * * *" # Every day at 2:00 AM, cluster's timezone
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: nebuly.com/accelerator
-                operator: In
-                values:
-                  - nvidia-tesla-t4
+                  - ${gpu_accelerator}
   tolerations:
     - effect: NoSchedule
       key: nvidia.com/gpu
@@ -190,10 +174,10 @@ auth:
     enabled: false
 
   %{ if okta_sso_enabled }
-  loginModes: "okta"
+  loginModes: "okta,password"
   %{ endif }
   %{ if google_sso_enabled }
-  loginModes: "google"
+  loginModes: "google,password"
   %{ else }
   loginModes: "password"
   %{ endif }
@@ -283,10 +267,34 @@ frontend:
 
 openAi:
   enabled: true
-  gpt4oDeployment: ${openai_gpt4o_deployment}
-  translationDeployment: ${openai_translation_deployment}
+  tier1ModelDeployment: ${openai_tier1_deployment}
+  tier2ModelDeployment: ${openai_tier2_deployment}
+  tier3ModelDeployment: ${openai_tier3_deployment}
   endpoint: ${openai_endpoint}
 
   existingSecret:
     name: ${secret_provider_class_secret_name}
     apiKey: ${k8s_secret_key_openai_api_key}
+
+mcpServer:
+  enabled: true
+  apiEndpoint: "https://${platform_domain}/mcp"
+  ingress:
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      # ------------
+      # Cert-manager issuer.
+      # Remove this section if you're not using cert-manager for SSL certificates.
+      cert-manager.io/cluster-issuer: letsencrypt
+      # ------------
+    enabled: true
+    className: ${ingress_class_name}
+    hosts:
+      - host: ${platform_domain}
+        paths:
+          - path: "/mcp(/|$)(.*)"
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: nebuly-tls
+        hosts:
+          - ${platform_domain}

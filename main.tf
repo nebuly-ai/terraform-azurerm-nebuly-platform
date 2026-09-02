@@ -970,7 +970,18 @@ resource "azurerm_private_endpoint" "openai" {
   tags = var.tags
 }
 
+# Preserve existing Azure OpenAI resources after adding count.
+# Without these, Terraform treats azurerm_cognitive_account.main and
+# azurerm_private_endpoint.openai as destroy/recreate at [0], rotating API keys.
+moved {
+  from = azurerm_cognitive_account.main
+  to   = azurerm_cognitive_account.main[0]
+}
 
+moved {
+  from = azurerm_private_endpoint.openai
+  to   = azurerm_private_endpoint.openai[0]
+}
 
 
 # ------ Model Registry ------ #

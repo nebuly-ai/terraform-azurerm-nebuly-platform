@@ -534,28 +534,39 @@ variable "azure_openai_deployments" {
   EOT
   type = object({
     tier1 = optional(object({
-      name            = optional(string, "gpt-5.6-sol")
-      version         = optional(string, "2026-07-09")
-      type            = optional(string, "GlobalStandard")
-      rate_limit      = optional(number, 100)
-      rai_policy_name = optional(string, "Microsoft.Default")
+      name                   = optional(string, "gpt-5.6-sol")
+      version                = optional(string, "2026-07-09")
+      type                   = optional(string, "GlobalStandard")
+      rate_limit             = optional(number, 100)
+      rai_policy_name        = optional(string, "Microsoft.Default")
+      version_upgrade_option = optional(string, "OnceCurrentVersionExpired")
     }), {})
     tier2 = optional(object({
-      name            = optional(string, "gpt-5.6-terra")
-      version         = optional(string, "2026-07-09")
-      type            = optional(string, "GlobalStandard")
-      rate_limit      = optional(number, 100)
-      rai_policy_name = optional(string, "Microsoft.Default")
+      name                   = optional(string, "gpt-5.6-terra")
+      version                = optional(string, "2026-07-09")
+      type                   = optional(string, "GlobalStandard")
+      rate_limit             = optional(number, 100)
+      rai_policy_name        = optional(string, "Microsoft.Default")
+      version_upgrade_option = optional(string, "OnceCurrentVersionExpired")
     }), {})
     tier3 = optional(object({
-      name            = optional(string, "gpt-5.6-luna")
-      version         = optional(string, "2026-07-09")
-      type            = optional(string, "GlobalStandard")
-      rate_limit      = optional(number, 100)
-      rai_policy_name = optional(string, "Microsoft.Default")
+      name                   = optional(string, "gpt-5.6-luna")
+      version                = optional(string, "2026-07-09")
+      type                   = optional(string, "GlobalStandard")
+      rate_limit             = optional(number, 100)
+      rai_policy_name        = optional(string, "Microsoft.Default")
+      version_upgrade_option = optional(string, "OnceCurrentVersionExpired")
     }), {})
   })
   default = {}
+
+  validation {
+    condition = alltrue([
+      for tier in [var.azure_openai_deployments.tier1, var.azure_openai_deployments.tier2, var.azure_openai_deployments.tier3] :
+      contains(["OnceNewDefaultVersionAvailable", "OnceCurrentVersionExpired", "NoAutoUpgrade"], tier.version_upgrade_option)
+    ])
+    error_message = "version_upgrade_option must be one of: OnceNewDefaultVersionAvailable, OnceCurrentVersionExpired, NoAutoUpgrade."
+  }
 }
 
 variable "azure_openai_location" {

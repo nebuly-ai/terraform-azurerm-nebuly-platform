@@ -34,11 +34,8 @@ output "azurerm_kubernetes_cluster" {
 }
 output "azurerm_key_vault" {
   description = "The Key Vault resource."
-  value = {
-    name = azurerm_key_vault.main.name
-    id   = azurerm_key_vault.main.id
-  }
-  sensitive = true
+  value       = azurerm_key_vault.main
+  sensitive   = true
 }
 output "azurerm_postgresql_flexible_server" {
   description = "The Flexible Server for PostgreSQL resource."

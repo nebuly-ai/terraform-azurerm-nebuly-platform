@@ -149,7 +149,7 @@ You can find examples of code that uses this Terraform module in the [examples](
 |------|---------|
 | <a name="provider_azuread"></a> [azuread](#provider\_azuread) | ~>2.53 |
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~>3.114 |
-| <a name="provider_random"></a> [random](#provider\_random) | ~>3.6 |
+| <a name="provider_random"></a> [random](#provider\_random) | >=3.5.0 |
 | <a name="provider_time"></a> [time](#provider\_time) | ~>0.12 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | ~>4.0 |
 

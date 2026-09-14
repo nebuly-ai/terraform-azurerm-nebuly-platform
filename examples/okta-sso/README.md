@@ -4,6 +4,8 @@ Nebuly supports several authentication methods. This example shows how to use [O
 
 ## Prerequisites
 
+Before applying, complete the [bootstrap guide](../README-bootstrap.md).
+
 Before you begin, ensure you have an Okta account and access to the Okta Admin Console.
 
 ### Step 1: Create an Okta Application

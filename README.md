@@ -17,7 +17,7 @@ These credentials are necessary to activate your installation and should be prov
 Ensure that you have the necessary Azure quotas available to provision the resources required for the Nebuly Platform:
 
 * **Standard NCADS_A100_v4 Family vCPUs**: at least 24 vCPUs
-* **Azure OpenAI gpt-4o**: at least 80k tokens per minute
+* **Azure OpenAI gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna**: at least 100k tokens per minute each
 
 ### Hybrid PostgreSQL Auth (optional)
 

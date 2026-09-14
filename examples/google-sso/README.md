@@ -4,6 +4,8 @@ Nebuly supports several authentication methods. This example shows how to use [G
 
 ## Prerequisites
 
+Before applying, complete the [bootstrap guide](../README-bootstrap.md).
+
 Before you begin, ensure you have a Google Cloud Platform account and access to the Google Cloud Console.
 
 ### Step 1: Create a Google OAuth Application

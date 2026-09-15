@@ -6,13 +6,47 @@ The module is consumed from **your** root module (see [basic](./basic), [Okta SS
 
 After apply, continue with the install steps in the [module README](../README.md#quickstart) (AKS credentials, image pull secret, Helm charts, DNS).
 
-## 1. Get Nebuly credentials
+## 1. Tooling
+
+Install these on the machine or pipeline that will apply:
+
+| Tool | When you need it | Install |
+|------|------------------|---------|
+| [Terraform](https://developer.hashicorp.com/terraform/install) **>= 1.9** | `terraform init` / `plan` / `apply` | [Install Terraform](https://developer.hashicorp.com/terraform/install) |
+| [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) | Auth, resource group, state storage, AKS credentials | [Install Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) | After apply: connect to AKS, apply manifests | [Install kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) |
+| [Helm](https://helm.sh/docs/intro/install/) | After apply: bootstrap and platform charts | [Install Helm](https://helm.sh/docs/intro/install/) |
+
+Helm and kubectl are needed **after** apply, not for the Terraform module itself.
+
+**macOS (Homebrew):**
+
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+brew install azure-cli kubectl helm
+```
+
+**Linux / Windows:** follow the official install pages linked above. On Ubuntu/Debian you can also use Microsoft's Azure CLI packages and HashiCorp's Terraform APT/YUM repos.
+
+Confirm versions:
+
+```bash
+terraform version   # must be >= 1.9
+az version
+kubectl version --client
+helm version
+```
+
+Authenticate with `az login`, or use a service principal (`client_id` / `client_secret` / `tenant_id` / `subscription_id` as in [basic](./basic)).
+
+## 2. Get Nebuly credentials
 
 Ask Nebuly for `nebuly_credentials` (`client_id` and `client_secret`). These activate the platform installation.
 
 If you do not have them, contact [support@nebuly.ai](mailto:support@nebuly.ai).
 
-## 2. Confirm Azure subscription and quotas
+## 3. Confirm Azure subscription and quotas
 
 In the target subscription and region (`location`):
 
@@ -30,7 +64,7 @@ Register these resource providers if they are not already registered:
 - `Microsoft.ManagedIdentity`
 - `Microsoft.OperationalInsights`
 
-## 3. Identity and permissions
+## 4. Identity and permissions
 
 The identity that runs Terraform (user or service principal) needs:
 
@@ -42,7 +76,7 @@ The identity that runs Terraform (user or service principal) needs:
 
 If you cannot create Entra groups, set `enable_azuread_groups = false` and pass existing group object IDs.
 
-## 4. Create the platform resource group
+## 5. Create the platform resource group
 
 The module does **not** create the resource group. It looks up `resource_group_name` as a data source.
 
@@ -52,7 +86,7 @@ Create it first, in the same region you will pass as `location`:
 az group create -n rg-nebuly-prod -l eastus
 ```
 
-## 5. Create remote Terraform state
+## 6. Create remote Terraform state
 
 Use remote state. Do not keep `terraform.tfstate` on a laptop or commit it to git.
 
@@ -127,7 +161,7 @@ The same storage account is fine; separate containers (or keys) are required.
 
 CI/CD must use the same backend and the same Entra identity. Do not keep divergent local copies.
 
-## 6. Decide networking
+## 7. Decide networking
 
 **Default (simplest):** let the module create the virtual network and subnets. Set `location`, `resource_prefix`, and optionally `virtual_network_address_space` if `10.0.0.0/16` conflicts with existin g networks.
 
@@ -141,23 +175,23 @@ Pass them with `virtual_network` and the three `subnet_name_*` variables. Postgr
 
 Also decide **where Terraform runs**. Defaults allow Key Vault and Storage public access with firewall rules so apply can run from a workstation. In a locked-down network, Terraform must run from inside the VNet (or you disable `enable_key_vault_secrets` / `enable_storage_containers` and create those objects yourself).
 
-## 7. Collect required inputs
+## 8. Collect required inputs
 
 These have no defaults:
 
 | Input | What you need |
 |-------|----------------|
 | `location` | Azure region |
-| `resource_group_name` | Existing resource group from step 4 |
+| `resource_group_name` | Existing resource group from step 5 |
 | `resource_prefix` | Short prefix for resource names (storage accounts are globally unique) |
 | `platform_domain` | DNS name you will later point at the load balancer, e.g. `nebuly.contoso.com` |
-| `nebuly_credentials` | From Nebuly (step 1) |
+| `nebuly_credentials` | From Nebuly (step 2) |
 | `aks_cluster_admin_group_object_ids` | Entra **group** object IDs that should be AKS cluster admin |
 | `aks_cluster_admin_users` | User UPNs (emails) that should be AKS cluster admin; can be `[]` if groups are enough |
 
 `platform_domain` is used later for the DNS A record. You do not need the record yet, but you must own the zone and agree the name now (SSO redirect URIs depend on it).
 
-## 8. Optional features (prepare before apply if needed on day one)
+## 9. Optional features (prepare before apply if needed on day one)
 
 **SSO**
 
@@ -172,18 +206,9 @@ These have no defaults:
 
 - Existing VNet and subnets, `whitelisted_ips`, optionally `aks_private_cluster_enabled`, and a runner that can reach private endpoints
 
-## 9. Tooling
-
-On the machine or pipeline that will apply:
-
-- Terraform **>= 1.9**
-- Azure CLI
-- Helm and kubectl (needed **after** apply, not for the module itself)
-- Authentication: `az login`, or a service principal (`client_id` / `client_secret` / `tenant_id` / `subscription_id` as in [basic](./basic))
-
 ## 10. Write the root module, then apply
 
-Copy an example, add the `backend "azurerm"` block from step 5, fill in the required variables, then:
+Copy an example, add the `backend "azurerm"` block from step 6, fill in the required variables, then:
 
 ```bash
 terraform init
